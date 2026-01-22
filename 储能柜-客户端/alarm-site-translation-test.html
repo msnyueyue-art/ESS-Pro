@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>告警管理站点翻译测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #3562E3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3562E3;
+            margin-top: 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9fafb;
+            border-left: 3px solid #3562E3;
+        }
+        .lang-switch {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .lang-switch button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: 2px solid #3562E3;
+            background: white;
+            color: #3562E3;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .lang-switch button.active {
+            background: #3562E3;
+            color: white;
+        }
+        .site-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .site-item {
+            padding: 15px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .site-id {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .site-name {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>告警管理站点翻译测试 <span id="currentLang" class="status success">中文</span></h1>
+
+    <div class="lang-switch">
+        <button id="btnChinese" class="active" onclick="switchLanguage('zh')">切换到中文</button>
+        <button id="btnEnglish" onclick="switchLanguage('en')">Switch to English</button>
+    </div>
+
+    <div class="test-card">
+        <h2>📋 测试说明</h2>
+        <p>此页面用于测试告警管理页面的站点名称翻译功能。</p>
+        <div class="test-item">
+            <strong>✅ 已完成的修改：</strong>
+            <ol>
+                <li>HTML中站点下拉选项已添加 <code>data-translate</code> 属性</li>
+                <li>JavaScript中站点数组使用 <code>getTranslation()</code> 函数</li>
+                <li>common.js中已添加中英文翻译</li>
+                <li>语言切换时重新生成告警数据</li>
+                <li>查询功能已更新以正确处理站点ID</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h2>🏢 站点名称翻译测试</h2>
+        <p>下面显示的是6个站点的翻译ID和对应的翻译文本：</p>
+        <div class="site-list" id="siteList">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h2>🔍 翻译键值对照表</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f3f4f6;">
+                    <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">翻译ID</th>
+                    <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">中文</th>
+                    <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">English</th>
+                </tr>
+            </thead>
+            <tbody id="translationTable">
+                <!-- 动态生成 -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="test-card">
+        <h2>✨ 测试结果</h2>
+        <div id="testResults">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        // 站点翻译ID列表
+        const siteTranslations = [
+            { id: 'site1', key: 'siteNameTech' },
+            { id: 'site2', key: 'siteNameIndustrial' },
+            { id: 'site3', key: 'siteNameCommerce' },
+            { id: 'site4', key: 'siteNameLogistics' },
+            { id: 'site5', key: 'siteNameRD' },
+            { id: 'site6', key: 'siteNameDataCenter' }
+        ];
+
+        // 获取翻译
+        function getTranslation(key) {
+            const lang = localStorage.getItem('language') || 'zh';
+            return translations[lang][key] || key;
+        }
+
+        // 渲染站点列表
+        function renderSiteList() {
+            const container = document.getElementById('siteList');
+            container.innerHTML = siteTranslations.map(site => `
+                <div class="site-item">
+                    <div class="site-id">${site.id}</div>
+                    <div class="site-name">${getTranslation(site.key)}</div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染翻译对照表
+        function renderTranslationTable() {
+            const tbody = document.getElementById('translationTable');
+            tbody.innerHTML = siteTranslations.map(site => `
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><code>${site.key}</code></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">${translations.zh[site.key]}</td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">${translations.en[site.key]}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 运行测试
+        function runTests() {
+            const results = [];
+            let allPass = true;
+
+            // 测试1: 检查中文翻译是否存在
+            siteTranslations.forEach(site => {
+                const zhText = translations.zh[site.key];
+                const pass = zhText && zhText !== site.key;
+                results.push({
+                    name: `中文翻译 - ${site.key}`,
+                    pass: pass,
+                    result: zhText || '❌ 未找到'
+                });
+                if (!pass) allPass = false;
+            });
+
+            // 测试2: 检查英文翻译是否存在
+            siteTranslations.forEach(site => {
+                const enText = translations.en[site.key];
+                const pass = enText && enText !== site.key;
+                results.push({
+                    name: `英文翻译 - ${site.key}`,
+                    pass: pass,
+                    result: enText || '❌ 未找到'
+                });
+                if (!pass) allPass = false;
+            });
+
+            // 渲染测试结果
+            const container = document.getElementById('testResults');
+            container.innerHTML = `
+                <div style="margin-bottom: 20px; padding: 15px; border-radius: 6px; background: ${allPass ? '#d1fae5' : '#fee2e2'}; color: ${allPass ? '#065f46' : '#991b1b'};">
+                    <strong>${allPass ? '✅ 所有测试通过！' : '❌ 部分测试失败'}</strong>
+                </div>
+                ${results.map(r => `
+                    <div class="test-item" style="border-left-color: ${r.pass ? '#10b981' : '#ef4444'};">
+                        <strong>${r.pass ? '✅' : '❌'} ${r.name}:</strong> ${r.result}
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // 切换语言
+        function switchLanguage(lang) {
+            localStorage.setItem('language', lang);
+
+            // 更新按钮状态
+            document.getElementById('btnChinese').className = lang === 'zh' ? 'active' : '';
+            document.getElementById('btnEnglish').className = lang === 'en' ? 'active' : '';
+
+            // 更新当前语言显示
+            document.getElementById('currentLang').textContent = lang === 'zh' ? '中文' : 'English';
+
+            // 重新渲染
+            renderSiteList();
+
+            // 触发语言切换事件（如果在告警管理页面）
+            window.dispatchEvent(new Event('languageChanged'));
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            switchLanguage(currentLang);
+            renderTranslationTable();
+            runTests();
+        });
+    </script>
+</body>
+</html>

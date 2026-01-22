@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">故障分析 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 24px;
+            background: #f8f9fa;
+        }
+
+        /* 顶部Tab切换 */
+        .top-tabs {
+            display: inline-flex;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .top-tab {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .top-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .top-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .top-tab i {
+            font-size: 20px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        /* 站点选择器 */
+        .site-selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .site-selector-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        #siteSelector {
+            min-width: 200px;
+            padding: 10px 16px;
+            font-size: 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        #siteSelector:hover,
+        #timeDimensionSelector:hover {
+            border-color: #3b82f6;
+        }
+
+        #siteSelector:focus,
+        #timeDimensionSelector:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 故障排行榜卡片 */
+        .ranking-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* 排行榜表格 */
+        .ranking-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .ranking-table thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: #f8f9fa;
+            border: none;
+        }
+
+        .ranking-table thead th:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .ranking-table thead th:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .ranking-table tbody tr {
+            background: #fafbfc;
+            transition: all 0.2s;
+        }
+
+        .ranking-table tbody tr:hover {
+            background: #f1f5f9;
+            transform: translateX(4px);
+        }
+
+        .ranking-table tbody td {
+            padding: 16px;
+            border: none;
+        }
+
+        .ranking-table tbody tr td:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .ranking-table tbody tr td:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 排名徽章 */
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .rank-badge.top1 {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+
+        .rank-badge.top2 {
+            background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+            color: #1e293b;
+            box-shadow: 0 2px 8px rgba(203, 213, 225, 0.3);
+        }
+
+        .rank-badge.top3 {
+            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+            color: #7c2d12;
+            box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
+        }
+
+        .rank-badge.normal {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        /* 故障类型标签 */
+        .fault-type {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        /* 数量显示 */
+        .count-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ef4444;
+        }
+
+        .count-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        /* 占比进度条 */
+        .percentage-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #f97316 100%);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .percentage-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 48px;
+            text-align: right;
+        }
+
+        /* 趋势指标 */
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .trend-indicator.up {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .trend-indicator.down {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .trend-indicator.stable {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        /* 每日趋势图表 */
+        .daily-trend-chart {
+            width: 100%;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-body {
+            width: 100%;
+            height: 400px;
+        }
+
+        /* 词云样式 */
+        .alarm-word-cloud-container {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .cloud-content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .cloud-tag {
+            position: absolute;
+            padding: 4px 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            background: none;
+        }
+
+        .cloud-tag:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            z-index: 10;
+        }
+
+        /* Critical级别 - 红色 */
+        .cloud-tag[data-level="critical"] {
+            color: #ef4444;
+        }
+
+        /* Major级别 - 橙色 */
+        .cloud-tag[data-level="major"] {
+            color: #f59e0b;
+        }
+
+        /* Minor/Info级别 - 蓝色 */
+        .cloud-tag[data-level="minor"],
+        .cloud-tag[data-level="info"] {
+            color: #3b82f6;
+        }
+
+        .cloud-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: var(--text-secondary);
+        }
+
+        .cloud-empty i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .cloud-empty-text {
+            font-size: 14px;
+        }
+
+        /* 统计卡片容器 */
+        .stat-card-container {
+            margin-bottom: 24px;
+        }
+
+        /* Tab内容 */
+        .stat-tab-content {
+            display: none;
+        }
+
+        .stat-tab-content.active {
+            display: block;
+        }
+
+        /* 大统计卡片 */
+        .big-stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .big-stat-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .big-stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 标题 */
+        .big-stat-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        /* 主数据行 - 4列网格布局 */
+        .big-stat-data-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+
+        /* 指标项 */
+        .big-stat-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* 指标标签 */
+        .big-stat-metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* 指标值 */
+        .big-stat-metric-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        /* 指标单位 */
+        .big-stat-metric-unit {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        /* 环比标签 */
+        .big-stat-metric-comparison-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-left: 12px;
+        }
+
+        /* 环比数值 */
+        .big-stat-metric-comparison {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-left: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .big-stat-metric-comparison.up {
+            color: #ef4444;
+        }
+
+        .big-stat-metric-comparison.down {
+            color: #10b981;
+        }
+
+        /* 滚动条样式 */
+        .ranking-card div[style*="overflow-y"]::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ranking-card div[style*="overflow-y"]::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .ranking-card div[style*="overflow-y"]::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .ranking-card div[style*="overflow-y"]::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1199px) {
+            .big-stat-card {
+                padding: 24px;
+            }
+
+            .big-stat-data-row {
+                gap: 24px;
+            }
+
+            .big-stat-metric-value {
+                font-size: 42px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ranking-table {
+                font-size: 13px;
+            }
+
+            .ranking-table tbody td {
+                padding: 12px 8px;
+            }
+
+            .count-value {
+                font-size: 16px;
+            }
+
+            .big-stat-card {
+                padding: 20px;
+            }
+
+            .big-stat-data-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .big-stat-metric-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body data-page="alarm-statistics">
+    <div class="app-container">
+        <div class="main-content">
+            <!-- 顶部Tab切换 -->
+            <div class="top-tabs">
+                <div class="top-tab active" onclick="switchStatTab('fault')">
+                    <i class="fas fa-tools"></i>
+                    <span>故障</span>
+                </div>
+                <div class="top-tab" onclick="switchStatTab('alarm')">
+                    <i class="fas fa-bell"></i>
+                    <span>告警</span>
+                </div>
+            </div>
+
+            <!-- 选择器 -->
+            <div class="page-header" style="display: flex; gap: 16px; align-items: center;">
+                <div class="site-selector-wrapper">
+                    <label class="site-selector-label" for="siteSelector">选择站点：</label>
+                    <select id="siteSelector" onchange="filterBySite()">
+                        <option value="all">全部站点</option>
+                        <option value="科技园区站">科技园区站</option>
+                        <option value="工业园区站">工业园区站</option>
+                        <option value="商业中心站">商业中心站</option>
+                    </select>
+                </div>
+
+                <div class="site-selector-wrapper">
+                    <label class="site-selector-label" for="timeDimensionSelector">时间维度：</label>
+                    <select id="timeDimensionSelector" onchange="filterByTimeDimension()" style="
+                        min-width: 160px;
+                        padding: 10px 16px;
+                        font-size: 14px;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 8px;
+                        background: white;
+                        color: var(--text-primary);
+                        cursor: pointer;
+                        outline: none;
+                        transition: all 0.2s;
+                    ">
+                        <option value="yesterday">昨日</option>
+                        <option value="today" selected>今日</option>
+                        <option value="lastMonth">上月</option>
+                        <option value="thisMonth">本月</option>
+                        <option value="total">合计</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 统计模块 -->
+            <div class="stat-card-container">
+
+                <!-- 故障内容 -->
+                <div class="stat-tab-content active" id="faultStatContent">
+                    <div class="big-stat-card">
+                        <div class="big-stat-content">
+                            <!-- 主数据行 - 4列布局 -->
+                            <div class="big-stat-data-row">
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">总数</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="totalFaults">0</span>
+                                        <span class="big-stat-metric-comparison-label">环比：</span>
+                                        <span class="big-stat-metric-comparison" id="faultComparison">+0</span>
+                                    </div>
+                                </div>
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">已修复</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="fixedPercentage">0</span>
+                                        <span class="big-stat-metric-unit">%</span>
+                                    </div>
+                                </div>
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">未修复</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="unfixedCount">0</span>
+                                    </div>
+                                </div>
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">平均修复时长</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="avgRepairTime">0</span>
+                                        <span class="big-stat-metric-unit">小时</span>
+                                        <span class="big-stat-metric-comparison-label">环比:</span>
+                                        <span class="big-stat-metric-comparison" id="repairTimeComparison">+0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 告警内容 -->
+                <div class="stat-tab-content" id="alarmStatContent">
+                    <div class="big-stat-card">
+                        <div class="big-stat-content">
+                            <!-- 主数据行 - 3列布局 -->
+                            <div class="big-stat-data-row" style="grid-template-columns: repeat(3, 1fr);">
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">总数</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="totalAlarms">0</span>
+                                        <span class="big-stat-metric-comparison-label">环比：</span>
+                                        <span class="big-stat-metric-comparison" id="alarmComparison">+0</span>
+                                    </div>
+                                </div>
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">已消警</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="acknowledgedPercentage">0</span>
+                                        <span class="big-stat-metric-unit">%</span>
+                                    </div>
+                                </div>
+                                <div class="big-stat-metric">
+                                    <div class="big-stat-metric-label">未消警</div>
+                                    <div>
+                                        <span class="big-stat-metric-value" id="unacknowledgedCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内容布局：左侧排行榜 + 右侧图表 -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; align-items: stretch;">
+                <!-- 左侧：设备故障统计 -->
+                <div class="ranking-card" style="display: flex; flex-direction: column;">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-bar" style="color: #f59e0b;"></i>
+                            设备故障统计
+                        </h2>
+                    </div>
+
+                    <div style="overflow-y: auto; overflow-x: hidden; max-height: 380px;">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">序号</th>
+                                    <th>设备名称</th>
+                                    <th style="width: 120px;">次数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faultRankingBody">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 右侧:故障类型分布 -->
+                <div class="ranking-card" id="typeDistributionCard" style="display: flex; flex-direction: column;">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-bar" style="color: #ef4444;"></i>
+                            故障类型分布
+                        </h2>
+                    </div>
+
+                    <div style="overflow-y: auto; overflow-x: hidden; max-height: 380px;">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th id="typeColumnHeader">故障类型</th>
+                                    <th style="width: 140px;">次数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faultTypeRankingBody">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 每日故障趋势模块 -->
+            <div class="ranking-card" id="dailyTrendContainer">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-chart-line" style="color: #3b82f6;"></i>
+                        每日故障趋势
+                    </h2>
+                </div>
+                <div class="daily-trend-chart" id="dailyTrendChart" style="height: 400px;"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        // 全局数据
+        let allDeviceData = [];
+        let currentPeriod = 'today';
+        let currentTabType = '故障';  // 当前tab类型: '故障' 或 '告警'
+
+        // 周期故障数量系数
+        const periodMultipliers = {
+            'yesterday': 0.14,   // 昨日约为本周的14%
+            'today': 0.15,       // 今日约为本周的15%
+            'lastMonth': 4.2,    // 上月约为本周的4.2倍
+            'thisMonth': 4.3,    // 本月约为本周的4.3倍
+            'total': 10.0        // 合计约为本周的10倍
+        };
+
+        // 生成设备故障数据（基准数据）
+        function generateDeviceData() {
+            const sites = ['科技园区站', '工业园区站', '商业中心站'];
+            const faultTypes = [
+                '电池过温', 'DC/DC故障', '通信中断', 'SOC过低',
+                '电压异常', '冷却系统故障', 'BMS通信异常', '绝缘故障'
+            ];
+            const data = [];
+
+            sites.forEach(site => {
+                // 每个站点生成8台设备
+                for (let i = 1; i <= 8; i++) {
+                    const deviceName = `储能柜#${i}`;
+                    const baseFaults = Math.floor(Math.random() * 30 + 10); // 基准：本周10-40次故障
+
+                    // 为每个设备随机分配主要故障类型
+                    const mainFaultTypes = [];
+                    const numMainFaults = Math.min(3, Math.floor(Math.random() * 4 + 1));
+
+                    for (let j = 0; j < numMainFaults; j++) {
+                        const faultType = faultTypes[Math.floor(Math.random() * faultTypes.length)];
+                        if (!mainFaultTypes.find(f => f.type === faultType)) {
+                            mainFaultTypes.push({
+                                type: faultType,
+                                baseCount: Math.floor(baseFaults * (Math.random() * 0.3 + 0.2))
+                            });
+                        }
+                    }
+
+                    // 按故障次数排序
+                    mainFaultTypes.sort((a, b) => b.baseCount - a.baseCount);
+
+                    data.push({
+                        device: deviceName,
+                        site: site,
+                        baseFaults: baseFaults,  // 保存基准数据
+                        mainFaults: mainFaultTypes
+                    });
+                }
+            });
+
+            return data;
+        }
+
+        // 根据周期计算实际故障数量
+        function getDeviceDataByPeriod(period) {
+            const multiplier = periodMultipliers[period];
+            return allDeviceData.map(item => ({
+                device: item.device,
+                site: item.site,
+                totalFaults: Math.floor(item.baseFaults * multiplier),
+                mainFaults: item.mainFaults.map(f => ({
+                    type: f.type,
+                    count: Math.floor(f.baseCount * multiplier)
+                }))
+            }));
+        }
+
+        // 渲染排行榜 - 全部站点时显示站点排行，选择特定站点时显示设备排行
+        function renderRanking(data) {
+            const selectedSite = document.getElementById('siteSelector').value;
+            let ranking;
+            let cardTitle;
+            let tableHeader;
+
+            if (selectedSite === 'all') {
+                // 全部站点：按站点聚合数据
+                const siteStats = {};
+                data.forEach(device => {
+                    if (!siteStats[device.site]) {
+                        siteStats[device.site] = {
+                            site: device.site,
+                            totalFaults: 0
+                        };
+                    }
+                    siteStats[device.site].totalFaults += device.totalFaults;
+                });
+
+                // 按故障次数排序，显示所有站点
+                ranking = Object.values(siteStats)
+                    .sort((a, b) => b.totalFaults - a.totalFaults);
+
+                cardTitle = `站点${currentTabType}统计`;
+                tableHeader = '站点名称';
+            } else {
+                // 特定站点：显示所有设备
+                ranking = [...data]
+                    .sort((a, b) => b.totalFaults - a.totalFaults);
+
+                cardTitle = `设备${currentTabType}统计`;
+                tableHeader = '设备名称';
+            }
+
+            // 更新卡片标题
+            const titleElement = document.querySelector('.ranking-card .card-title');
+            if (titleElement) {
+                titleElement.innerHTML = `
+                    <i class="fas fa-chart-bar" style="color: #f59e0b;"></i>
+                    ${cardTitle}
+                `;
+            }
+
+            // 更新表头
+            const headerElement = document.querySelector('.ranking-table thead th:nth-child(2)');
+            if (headerElement) {
+                headerElement.textContent = tableHeader;
+            }
+
+            // 计算总故障数用于百分比计算
+            const totalFaultsSum = data.reduce((sum, device) => sum + device.totalFaults, 0);
+
+            // 渲染表格
+            const tbody = document.getElementById('faultRankingBody');
+            tbody.innerHTML = ranking.map((item, index) => {
+                const rank = index + 1;
+
+                let rankClass = 'normal';
+                if (rank === 1) rankClass = 'top1';
+                else if (rank === 2) rankClass = 'top2';
+                else if (rank === 3) rankClass = 'top3';
+
+                // 根据是否为站点排行显示不同的名称
+                const displayName = selectedSite === 'all' ? item.site : item.device;
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="rank-badge ${rankClass}">${rank}</div>
+                        </td>
+                        <td>
+                            <div class="fault-type">${displayName}</div>
+                        </td>
+                        <td>
+                            <span class="count-value">${item.totalFaults}</span>
+                            <span class="count-label">次</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            return ranking;
+        }
+
+        // 渲染故障类型表格
+        function renderFaultTypeChart(data) {
+            const tbody = document.getElementById('faultTypeRankingBody');
+            if (!tbody) return;
+
+            // 统计故障类型
+            const typeStats = {};
+            data.forEach(device => {
+                device.mainFaults.forEach(fault => {
+                    if (!typeStats[fault.type]) {
+                        typeStats[fault.type] = 0;
+                    }
+                    typeStats[fault.type] += fault.count;
+                });
+            });
+
+            // 转换为数组并降序排序
+            const sortedData = Object.entries(typeStats)
+                .map(([type, count]) => ({
+                    type: type,
+                    count: count
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            // 计算总数用于百分比
+            const totalCount = sortedData.reduce((sum, item) => sum + item.count, 0);
+
+            // 渲染表格 - 显示所有故障类型,降序排列
+            tbody.innerHTML = sortedData.map((item) => {
+                const percentage = totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(1) : 0;
+                return `
+                    <tr>
+                        <td>
+                            <div class="fault-type">${item.type}</div>
+                        </td>
+                        <td>
+                            <span style="font-size: 13px; color: #64748b;">${percentage}%</span>
+                            <span style="margin: 0 6px; color: #cbd5e1;">|</span>
+                            <span class="count-value">${item.count}</span>
+                            <span class="count-label">次</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 时间维度筛选
+        function filterByTimeDimension() {
+            currentPeriod = document.getElementById('timeDimensionSelector').value;
+            updateDisplay();
+        }
+
+        // 站点筛选
+        function filterBySite() {
+            updateDisplay();
+        }
+
+        // Tab切换
+        function switchStatTab(tabName) {
+            // 移除所有active状态
+            document.querySelectorAll('.top-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.stat-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 添加active状态到选中的tab
+            if (tabName === 'fault') {
+                document.querySelector('.top-tab:nth-child(1)').classList.add('active');
+                document.getElementById('faultStatContent').classList.add('active');
+
+                // 更新当前tab类型和相关标题
+                currentTabType = '故障';
+                updateCardTitles(currentTabType);
+            } else if (tabName === 'alarm') {
+                document.querySelector('.top-tab:nth-child(2)').classList.add('active');
+                document.getElementById('alarmStatContent').classList.add('active');
+
+                // 更新当前tab类型和相关标题
+                currentTabType = '告警';
+                updateCardTitles(currentTabType);
+            }
+        }
+
+        // 更新卡片标题
+        function updateCardTitles(type) {
+            const selectedSite = document.getElementById('siteSelector').value;
+
+            // 更新左侧卡片标题
+            const leftTitle = document.querySelector('.ranking-card:first-child .card-title');
+            if (leftTitle) {
+                const isAllSites = selectedSite === 'all';
+                const titleText = isAllSites ? `站点${type}统计` : `设备${type}统计`;
+                leftTitle.innerHTML = `
+                    <i class="fas fa-chart-bar" style="color: #f59e0b;"></i>
+                    ${titleText}
+                `;
+            }
+
+            // 更新右侧卡片标题
+            const rightTitle = document.querySelector('#typeDistributionCard .card-title');
+            if (rightTitle) {
+                rightTitle.innerHTML = `
+                    <i class="fas fa-chart-bar" style="color: #ef4444;"></i>
+                    ${type}类型分布
+                `;
+            }
+
+            // 更新右侧表格表头
+            const typeHeader = document.getElementById('typeColumnHeader');
+            if (typeHeader) {
+                typeHeader.textContent = `${type}类型`;
+            }
+
+            // 更新趋势图表标题
+            const trendTitle = document.querySelector('#dailyTrendContainer .card-title');
+            if (trendTitle) {
+                trendTitle.innerHTML = `
+                    <i class="fas fa-chart-line" style="color: #3b82f6;"></i>
+                    每日${type}趋势
+                `;
+            }
+        }
+
+        // 获取周期对应的上期数据系数
+        function getPreviousPeriodMultiplier(period) {
+            // 上期相当于同样的时间范围,但随机波动±15%
+            const baseMultiplier = periodMultipliers[period];
+            const fluctuation = 1 + (Math.random() * 0.3 - 0.15); // ±15%波动
+            return baseMultiplier * fluctuation;
+        }
+
+        // 计算上期数据
+        function getPreviousDeviceData(period) {
+            const multiplier = getPreviousPeriodMultiplier(period);
+            return allDeviceData.map(item => ({
+                device: item.device,
+                site: item.site,
+                totalFaults: Math.floor(item.baseFaults * multiplier),
+                mainFaults: item.mainFaults.map(f => ({
+                    type: f.type,
+                    count: Math.floor(f.baseCount * multiplier)
+                }))
+            }));
+        }
+
+        // 计算平均修复时长(小时)
+        function calculateAvgRepairTime(totalFaults) {
+            // 基于总故障数,生成合理的平均修复时长(2-8小时)
+            const baseTime = 2 + (totalFaults % 6);
+            const randomVariation = Math.random() * 2 - 1; // ±1小时随机波动
+            return Math.max(1, Math.round((baseTime + randomVariation) * 10) / 10);
+        }
+
+        // 计算平均响应时长(分钟)
+        function calculateAvgResponseTime(totalAlarms) {
+            // 基于总告警数,生成合理的平均响应时长(5-30分钟)
+            const baseTime = 5 + (totalAlarms % 25);
+            const randomVariation = Math.random() * 5 - 2.5; // ±2.5分钟随机波动
+            return Math.max(1, Math.round(baseTime + randomVariation));
+        }
+
+        // 更新环比显示
+        function updateComparison(elementId, changeNumber, unit = '') {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            // 移除所有class
+            element.classList.remove('up', 'down');
+
+            // 格式化数字
+            const sign = changeNumber > 0 ? '+' : '';
+
+            if (changeNumber === 0) {
+                element.textContent = `0${unit}`;
+            } else if (changeNumber > 0) {
+                element.textContent = `${sign}${changeNumber}${unit}`;
+                element.classList.add('up');
+            } else {
+                element.textContent = `${changeNumber}${unit}`;
+                element.classList.add('down');
+            }
+        }
+
+        // 更新统计数据
+        function updateStatistics(deviceData) {
+            // 计算故障总数
+            const totalFaults = deviceData.reduce((sum, device) => sum + device.totalFaults, 0);
+
+            // 获取上期数据
+            const selectedSite = document.getElementById('siteSelector').value;
+            let previousData = getPreviousDeviceData(currentPeriod);
+
+            // 根据站点筛选上期数据
+            if (selectedSite !== 'all') {
+                previousData = previousData.filter(d => d.site === selectedSite);
+            }
+
+            const previousTotalFaults = previousData.reduce((sum, device) => sum + device.totalFaults, 0);
+
+            // 计算环比变化
+            const faultChange = totalFaults - previousTotalFaults;
+
+            // 计算未修复和未消警的数量(固定占比)
+            const unfixedPercentage = 35;
+            const unacknowledgedPercentage = 25;
+            const unfixedCount = Math.floor(totalFaults * unfixedPercentage / 100);
+            const fixedCount = totalFaults - unfixedCount;
+            const unacknowledgedCount = Math.floor(totalFaults * unacknowledgedPercentage / 100);
+            const acknowledgedCount = totalFaults - unacknowledgedCount;
+
+            // 计算实际百分比(仅已修复和已消警)
+            const fixedPercentage = totalFaults > 0 ? Math.round((fixedCount / totalFaults) * 100) : 0;
+            const acknowledgedPercentage = totalFaults > 0 ? Math.round((acknowledgedCount / totalFaults) * 100) : 0;
+
+            // 计算平均时长
+            const avgRepairTime = calculateAvgRepairTime(totalFaults);
+            const avgResponseTime = calculateAvgResponseTime(totalFaults);
+
+            // 计算上期平均时长
+            const prevAvgRepairTime = calculateAvgRepairTime(previousTotalFaults);
+
+            // 计算平均修复时长环比(保留一位小数)
+            const repairTimeChange = Number((avgRepairTime - prevAvgRepairTime).toFixed(1));
+
+            // 更新故障卡片
+            document.getElementById('totalFaults').textContent = totalFaults;
+            updateComparison('faultComparison', faultChange, '次');
+            document.getElementById('fixedPercentage').textContent = fixedPercentage;
+            document.getElementById('unfixedCount').textContent = unfixedCount;
+            document.getElementById('avgRepairTime').textContent = avgRepairTime;
+            updateComparison('repairTimeComparison', repairTimeChange, '小时');
+
+            // 更新告警卡片
+            document.getElementById('totalAlarms').textContent = totalFaults;
+            updateComparison('alarmComparison', faultChange, '次');
+            document.getElementById('acknowledgedPercentage').textContent = acknowledgedPercentage;
+            document.getElementById('unacknowledgedCount').textContent = unacknowledgedCount;
+        }
+
+
+        // 生成每日故障数据
+        function generateDailyData(period) {
+            const days = {
+                'yesterday': 1,
+                'today': 1,
+                'lastMonth': 30,
+                'thisMonth': 30,
+                'total': 90
+            };
+
+            const dayCount = days[period] || 7;
+            const dailyData = [];
+
+            // 根据周期生成每日数据
+            for (let i = dayCount - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+
+                // 生成随机故障数量，符合真实波动
+                const baseFaults = 50 + Math.random() * 100;
+                const weekdayFactor = [0, 6].includes(date.getDay()) ? 0.7 : 1; // 周末故障较少
+                const faults = Math.floor(baseFaults * weekdayFactor);
+
+                dailyData.push({
+                    date: date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
+                    faults: faults
+                });
+            }
+
+            return dailyData;
+        }
+
+        // 渲染每日趋势图表
+        function renderDailyTrendChart(period) {
+            const chartDom = document.getElementById('dailyTrendChart');
+            if (!chartDom) return;
+
+            const myChart = echarts.init(chartDom);
+            const dailyData = generateDailyData(period);
+
+            // 计算修复率(65%-95%之间随机,符合真实情况)
+            const repairRates = dailyData.map(() => {
+                const rate = 65 + Math.random() * 30; // 65-95之间
+                return Math.min(100, rate).toFixed(2); // 确保不超过100%
+            });
+
+            const option = {
+                grid: {
+                    left: '3%',
+                    right: '5%',
+                    bottom: '3%',
+                    top: '10%',
+                    containLabel: true
+                },
+                legend: {
+                    data: ['故障数量', '修复率'],
+                    top: '2%',
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#64748b'
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dailyData.map(d => d.date),
+                    axisLabel: {
+                        fontSize: 11,
+                        color: '#64748b',
+                        interval: Math.ceil(dailyData.length / 10) // 自动间隔显示标签
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e5e7eb'
+                        }
+                    }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '故障数量',
+                        nameTextStyle: {
+                            fontSize: 12,
+                            color: '#64748b'
+                        },
+                        axisLabel: {
+                            fontSize: 11,
+                            color: '#64748b'
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#f1f5f9',
+                                type: 'dashed'
+                            }
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '修复率(%)',
+                        nameTextStyle: {
+                            fontSize: 12,
+                            color: '#64748b'
+                        },
+                        max: 100,
+                        axisLabel: {
+                            fontSize: 11,
+                            color: '#64748b',
+                            formatter: '{value}%'
+                        },
+                        splitLine: {
+                            show: false
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '故障数量',
+                        type: 'bar',
+                        data: dailyData.map(d => d.faults),
+                        barWidth: '40%',
+                        itemStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [{
+                                    offset: 0,
+                                    color: '#60a5fa'
+                                }, {
+                                    offset: 1,
+                                    color: '#3b82f6'
+                                }]
+                            },
+                            borderRadius: [4, 4, 0, 0]
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0,
+                                    y: 0,
+                                    x2: 0,
+                                    y2: 1,
+                                    colorStops: [{
+                                        offset: 0,
+                                        color: '#3b82f6'
+                                    }, {
+                                        offset: 1,
+                                        color: '#1e40af'
+                                    }]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: '修复率',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: repairRates,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#10b981',
+                            width: 2
+                        },
+                        itemStyle: {
+                            color: '#10b981'
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                color: '#059669',
+                                borderColor: '#fff',
+                                borderWidth: 2,
+                                shadowBlur: 10,
+                                shadowColor: 'rgba(16, 185, 129, 0.5)'
+                            }
+                        }
+                    }
+                ],
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#1e293b',
+                        fontSize: 12
+                    },
+                    formatter: function(params) {
+                        let result = `${params[0].axisValue}<br/>`;
+                        params.forEach(param => {
+                            if (param.seriesName === '故障数量') {
+                                result += `${param.marker}故障数量: <strong>${param.value}</strong><br/>`;
+                            } else if (param.seriesName === '修复率') {
+                                result += `${param.marker}修复率: <strong>${param.value}%</strong>`;
+                            }
+                        });
+                        return result;
+                    }
+                }
+            };
+
+            myChart.setOption(option);
+
+            // 响应式调整
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 更新显示
+        function updateDisplay() {
+            const selectedSite = document.getElementById('siteSelector').value;
+
+            // 根据当前周期获取数据
+            let deviceData = getDeviceDataByPeriod(currentPeriod);
+            let previousData = getPreviousDeviceData(currentPeriod);
+
+            // 根据站点筛选
+            if (selectedSite !== 'all') {
+                deviceData = deviceData.filter(d => d.site === selectedSite);
+                previousData = previousData.filter(d => d.site === selectedSite);
+            }
+
+            updateStatistics(deviceData);
+            renderRanking(deviceData);
+            renderFaultTypeChart(deviceData);
+
+            // 控制每日趋势图表的显示/隐藏
+            const trendContainer = document.getElementById('dailyTrendContainer');
+            if (currentPeriod === 'yesterday' || currentPeriod === 'today') {
+                // 昨日和今日不显示趋势图表
+                if (trendContainer) {
+                    trendContainer.style.display = 'none';
+                }
+            } else {
+                // 上月、本月和合计显示趋势图表
+                if (trendContainer) {
+                    trendContainer.style.display = 'block';
+                }
+                renderDailyTrendChart(currentPeriod);
+            }
+        }
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            allDeviceData = generateDeviceData();
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>

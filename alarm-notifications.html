@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">告警通知 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 通知中心布局 */
+        .notification-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            height: calc(100vh - 140px);
+        }
+
+        /* 侧边栏 */
+        .notification-sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        [data-theme="dark"] .notification-sidebar {
+            background: #1e293b;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-menu-item:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .sidebar-menu-item:hover {
+            background: #0f172a;
+        }
+
+        .sidebar-menu-item.active {
+            background: #eff6ff;
+            color: #3562E3;
+        }
+
+        [data-theme="dark"] .sidebar-menu-item.active {
+            background: #1e3a8a;
+            color: #60a5fa;
+        }
+
+        .sidebar-menu-item-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-menu-item i {
+            width: 20px;
+            font-size: 16px;
+        }
+
+        .sidebar-menu-item-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sidebar-menu-item-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* 通知列表区域 */
+        .notification-main {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .notification-main {
+            background: #1e293b;
+        }
+
+        /* 工具栏 */
+        .notification-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .notification-toolbar {
+            border-bottom-color: #334155;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .toolbar-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .toolbar-btn {
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .toolbar-btn:hover {
+            background: #0f172a;
+        }
+
+        .toolbar-btn i {
+            font-size: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #f9fafb;
+            width: 280px;
+        }
+
+        [data-theme="dark"] .search-box {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* 通知列表 */
+        .notification-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        [data-theme="dark"] .notification-item {
+            border-bottom-color: #334155;
+        }
+
+        .notification-item:hover {
+            background: #f9fafb;
+        }
+
+        [data-theme="dark"] .notification-item:hover {
+            background: #0f172a;
+        }
+
+        .notification-item.unread {
+            background: #eff6ff;
+        }
+
+        [data-theme="dark"] .notification-item.unread {
+            background: #1e3a8a;
+        }
+
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #3562E3;
+        }
+
+        .notification-checkbox {
+            margin-top: 4px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.critical {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .notification-icon.major {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .notification-icon.minor {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        [data-theme="dark"] .notification-icon.critical {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        [data-theme="dark"] .notification-icon.major {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        [data-theme="dark"] .notification-icon.minor {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .notification-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .notification-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .notification-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .notification-badge.email {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .notification-badge.sms {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .notification-badge.system {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        [data-theme="dark"] .notification-badge.email {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        [data-theme="dark"] .notification-badge.sms {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        [data-theme="dark"] .notification-badge.system {
+            background: #374151;
+            color: #d1d5db;
+        }
+
+        /* 星标按钮 */
+        .star-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 16px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            margin-top: 2px;
+        }
+
+        .star-btn:hover {
+            color: #f59e0b;
+            transform: scale(1.1);
+        }
+
+        .star-btn.starred {
+            color: #f59e0b;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        [data-theme="dark"] .empty-state-icon {
+            background: #334155;
+        }
+
+        .empty-state-icon i {
+            font-size: 48px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3562E3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2c51c9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(53, 98, 227, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #334155;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        [data-theme="dark"] .modal-content {
+            background: #1e293b;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: #334155;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .modal-close:hover {
+            background: #334155;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            border-top-color: #334155;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 16px;
+        }
+
+        .detail-label {
+            width: 120px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        /* 通知设置表单 */
+        .settings-group {
+            margin-bottom: 24px;
+        }
+
+        .settings-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .settings-item {
+            border-bottom-color: #334155;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-item-label {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .settings-item-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3562E3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* 图标按钮样式 */
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background: #f3f4f6;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .btn-icon:hover {
+            background: #334155;
+        }
+
+        .btn-icon i {
+            font-size: 14px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .notification-container {
+                grid-template-columns: 1fr;
+            }
+
+            .notification-sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-box {
+                width: 200px;
+            }
+
+            .toolbar-left,
+            .toolbar-right {
+                flex-wrap: wrap;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body data-page="alarm-notifications">
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1 class="page-title" id="notificationTitle">告警通知</h1>
+            <div class="page-actions">
+                <button class="btn btn-secondary" onclick="refreshNotifications()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span id="btnRefresh">刷新</span>
+                </button>
+                <button class="btn btn-primary" onclick="openNotificationSettings()">
+                    <i class="fas fa-cog"></i>
+                    <span id="btnSettings">通知设置</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 通知中心容器 -->
+        <div class="notification-container">
+            <!-- 侧边栏 -->
+            <div class="notification-sidebar">
+                <!-- 收件箱分类 -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title" id="sidebarInbox">收件箱</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item active" onclick="filterNotifications('all', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-inbox"></i>
+                                <span class="sidebar-menu-item-text" id="menuAllNotifications">全部通知</span>
+                            </div>
+                            <span class="sidebar-menu-item-badge" id="badgeAllCount">28</span>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('unread', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-envelope"></i>
+                                <span class="sidebar-menu-item-text" id="menuUnread">未读</span>
+                            </div>
+                            <span class="sidebar-menu-item-badge" id="badgeUnreadCount">12</span>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('read', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-envelope-open"></i>
+                                <span class="sidebar-menu-item-text" id="menuRead">已读</span>
+                            </div>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('starred', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-star"></i>
+                                <span class="sidebar-menu-item-text" id="menuStarred">星标</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 通知类型 -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title" id="sidebarType">通知类型</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item" onclick="filterNotifications('critical', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-exclamation-circle" style="color: #dc2626;"></i>
+                                <span class="sidebar-menu-item-text" id="menuCritical">严重告警</span>
+                            </div>
+                            <span class="sidebar-menu-item-badge" id="badgeCriticalCount">8</span>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('major', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                                <span class="sidebar-menu-item-text" id="menuMajor">重要告警</span>
+                            </div>
+                            <span class="sidebar-menu-item-badge" id="badgeMajorCount">14</span>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('minor', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-info-circle" style="color: #3b82f6;"></i>
+                                <span class="sidebar-menu-item-text" id="menuMinor">一般告警</span>
+                            </div>
+                            <span class="sidebar-menu-item-badge" id="badgeMinorCount">6</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 通知渠道 -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title" id="sidebarChannel">通知渠道</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item" onclick="filterNotifications('system', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-bell"></i>
+                                <span class="sidebar-menu-item-text" id="menuSystem">站内信</span>
+                            </div>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('email', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-at"></i>
+                                <span class="sidebar-menu-item-text" id="menuEmail">邮件</span>
+                            </div>
+                        </li>
+                        <li class="sidebar-menu-item" onclick="filterNotifications('sms', this)">
+                            <div class="sidebar-menu-item-content">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span class="sidebar-menu-item-text" id="menuSMS">短信</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 通知列表主区域 -->
+            <div class="notification-main">
+                <!-- 工具栏 -->
+                <div class="notification-toolbar">
+                    <div class="toolbar-left">
+                        <input type="checkbox" class="toolbar-checkbox" id="selectAllNotifications" onchange="toggleAllNotifications(this.checked)">
+                        <button class="toolbar-btn" onclick="markAsRead()" id="btnMarkRead">
+                            <i class="fas fa-check"></i>
+                            <span>标为已读</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="deleteSelected()" id="btnDelete">
+                            <i class="fas fa-trash"></i>
+                            <span>删除</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-right">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="搜索通知..." id="searchInput" onkeyup="searchNotifications(this.value)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 通知列表 -->
+                <div class="notification-list" id="notificationList">
+                    <!-- 动态生成通知项 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 通知详情模态框 -->
+    <div class="modal" id="notificationDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">通知详情</h3>
+                <button class="modal-close" onclick="closeNotificationDetail()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="notificationDetailBody">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNotificationDetail()">关闭</button>
+                <button class="btn btn-secondary" onclick="goToAlarmDetail()">
+                    <i class="fas fa-external-link-alt"></i>
+                    查看告警详情
+                </button>
+                <button class="btn btn-primary" onclick="handleNotification()">
+                    <i class="fas fa-check-circle"></i>
+                    立即处理
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知设置模态框 -->
+    <div class="modal" id="notificationSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">通知设置</h3>
+                <button class="modal-close" onclick="closeNotificationSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <div class="settings-group-title">通知渠道</div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">站内信通知</div>
+                            <div class="settings-item-desc">在系统内接收告警通知</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleSetting('system', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">邮件通知</div>
+                            <div class="settings-item-desc">通过邮件接收告警通知</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleSetting('email', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">短信通知</div>
+                            <div class="settings-item-desc">通过短信接收紧急告警</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" onchange="toggleSetting('sms', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-title">通知级别</div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">严重告警</div>
+                            <div class="settings-item-desc">立即通知所有渠道</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleSetting('critical-level', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">重要告警</div>
+                            <div class="settings-item-desc">通过站内信和邮件通知</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleSetting('major-level', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">一般告警</div>
+                            <div class="settings-item-desc">仅站内信通知</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleSetting('minor-level', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 通知对象管理 -->
+                <div class="settings-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div class="settings-group-title" style="margin: 0;">通知对象管理</div>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 13px;" onclick="openAddRecipientModal()">
+                            <i class="fas fa-plus"></i>
+                            添加接收人
+                        </button>
+                    </div>
+
+                    <!-- 接收人列表 -->
+                    <div style="background: #f9fafb; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+                            <i class="fas fa-info-circle"></i>
+                            配置谁应该接收告警通知,以及不同级别的告警通知哪些人
+                        </div>
+                        <div id="recipientsList" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- 接收人项 -->
+                            <div style="background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                        <span style="font-weight: 600; color: var(--text-primary);">张三 (运维主管)</span>
+                                        <span style="padding: 2px 8px; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 11px;">管理员</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 16px;">
+                                        <span><i class="fas fa-envelope"></i> zhangsan@company.com</span>
+                                        <span><i class="fas fa-mobile-alt"></i> 138****8888</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                                        接收: <span style="color: #dc2626;">严重</span>, <span style="color: #f59e0b;">重要</span>, <span style="color: #3b82f6;">一般</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon" onclick="editRecipient(1)" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-icon" onclick="deleteRecipient(1)" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                        <span style="font-weight: 600; color: var(--text-primary);">李四 (技术工程师)</span>
+                                        <span style="padding: 2px 8px; background: #e5e7eb; color: #374151; border-radius: 4px; font-size: 11px;">普通用户</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 16px;">
+                                        <span><i class="fas fa-envelope"></i> lisi@company.com</span>
+                                        <span><i class="fas fa-mobile-alt"></i> 139****9999</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                                        接收: <span style="color: #dc2626;">严重</span>, <span style="color: #f59e0b;">重要</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon" onclick="editRecipient(2)" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-icon" onclick="deleteRecipient(2)" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                        <span style="font-weight: 600; color: var(--text-primary);">王五 (值班人员)</span>
+                                        <span style="padding: 2px 8px; background: #d1fae5; color: #065f46; border-radius: 4px; font-size: 11px;">值班组</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 16px;">
+                                        <span><i class="fas fa-envelope"></i> wangwu@company.com</span>
+                                        <span><i class="fas fa-mobile-alt"></i> 137****7777</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                                        接收: <span style="color: #dc2626;">严重</span> (仅工作时间 09:00-18:00)
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon" onclick="editRecipient(3)" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-icon" onclick="deleteRecipient(3)" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-title">其他设置</div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">免打扰模式</div>
+                            <div class="settings-item-desc">22:00 - 08:00 期间静音通知</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" onchange="toggleSetting('quiet', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-item-label">桌面通知</div>
+                            <div class="settings-item-desc">显示浏览器桌面通知</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" onchange="toggleSetting('desktop', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNotificationSettings()">取消</button>
+                <button class="btn btn-primary" onclick="saveNotificationSettings()">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑接收人模态框 -->
+    <div class="modal" id="recipientModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="recipientModalTitle">添加接收人</h3>
+                <button class="modal-close" onclick="closeRecipientModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #475569; font-weight: 500;">姓名 <span style="color: #ef4444;">*</span></label>
+                        <input type="text" class="form-input" id="recipientName" placeholder="请输入姓名" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #475569; font-weight: 500;">职位</label>
+                        <input type="text" class="form-input" id="recipientTitle" placeholder="请输入职位" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #475569; font-weight: 500;">邮箱 <span style="color: #ef4444;">*</span></label>
+                        <input type="email" class="form-input" id="recipientEmail" placeholder="example@company.com" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #475569; font-weight: 500;">手机号 <span style="color: #ef4444;">*</span></label>
+                        <input type="tel" class="form-input" id="recipientPhone" placeholder="138****8888" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #475569; font-weight: 500;">分组</label>
+                    <select class="form-select" id="recipientGroup" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                        <option value="admin">管理员</option>
+                        <option value="operator">运维组</option>
+                        <option value="engineer">工程师</option>
+                        <option value="oncall">值班组</option>
+                        <option value="normal">普通用户</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 12px; font-size: 14px; color: #475569; font-weight: 500;">接收告警级别 <span style="color: #ef4444;">*</span></label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="levelCritical" checked style="width: 16px; height: 16px;">
+                            <span style="font-size: 14px; color: var(--text-primary);">
+                                <i class="fas fa-exclamation-circle" style="color: #dc2626;"></i>
+                                严重告警
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="levelMajor" checked style="width: 16px; height: 16px;">
+                            <span style="font-size: 14px; color: var(--text-primary);">
+                                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                                重要告警
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="levelMinor" style="width: 16px; height: 16px;">
+                            <span style="font-size: 14px; color: var(--text-primary);">
+                                <i class="fas fa-info-circle" style="color: #3b82f6;"></i>
+                                一般告警
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 12px; font-size: 14px; color: #475569; font-weight: 500;">通知渠道</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="channelEmail" checked style="width: 16px; height: 16px;">
+                            <span style="font-size: 14px; color: var(--text-primary);">
+                                <i class="fas fa-envelope"></i>
+                                邮件通知
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="channelSMS" style="width: 16px; height: 16px;">
+                            <span style="font-size: 14px; color: var(--text-primary);">
+                                <i class="fas fa-mobile-alt"></i>
+                                短信通知
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="channelSystem" checked style="width: 16px; height: 16px;">
+                            <span style="font-size: 14px; color: var(--text-primary);">
+                                <i class="fas fa-bell"></i>
+                                站内信
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #475569; font-weight: 500;">
+                        <input type="checkbox" id="workingHoursOnly" style="margin-right: 8px;">
+                        仅在工作时间接收 (09:00 - 18:00)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRecipientModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveRecipient()">保存接收人</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        // 检查登录状态
+        checkAuth();
+
+        // 设置当前页面菜单项
+        setActiveMenuItem('alarm-notifications');
+
+        // 模拟通知数据
+        const notifications = [
+            {
+                id: 1,
+                alarmId: 'ALM20251127001',
+                type: 'critical',
+                channel: 'system',
+                title: '电池过温告警',
+                message: '科技园区站 - 储能柜#1 电池温度超过安全阈值(当前值: 58°C，阈值: 55°C)，请立即处理。',
+                device: '储能柜#1',
+                site: '科技园区站',
+                time: '2分钟前',
+                timestamp: Date.now() - 2 * 60 * 1000,
+                currentValue: '58°C',
+                threshold: '55°C',
+                read: false,
+                starred: false
+            },
+            {
+                id: 2,
+                alarmId: 'ALM20251127002',
+                type: 'critical',
+                channel: 'email',
+                title: '电流过大告警',
+                message: '工业园区站 - 储能柜#3 充放电电流超过限定值(当前值: 285A，阈值: 250A)。',
+                device: '储能柜#3',
+                site: '工业园区站',
+                time: '15分钟前',
+                timestamp: Date.now() - 15 * 60 * 1000,
+                currentValue: '285A',
+                threshold: '250A',
+                read: false,
+                starred: true
+            },
+            {
+                id: 3,
+                alarmId: 'ALM20251127003',
+                type: 'major',
+                channel: 'sms',
+                title: '通信中断告警',
+                message: '商业中心站 - 储能柜#5 BMS与EMS通信中断超过5分钟。',
+                device: '储能柜#5',
+                site: '商业中心站',
+                time: '1小时前',
+                timestamp: Date.now() - 60 * 60 * 1000,
+                currentValue: '已断开',
+                threshold: '5分钟',
+                read: false,
+                starred: false
+            },
+            {
+                id: 4,
+                alarmId: 'ALM20251127004',
+                type: 'major',
+                channel: 'system',
+                title: '电压异常告警',
+                message: '物流园区站 - 储能柜#2 电池电压超出正常范围(当前值: 782V，范围: 700-800V)。',
+                device: '储能柜#2',
+                site: '物流园区站',
+                time: '2小时前',
+                timestamp: Date.now() - 2 * 60 * 60 * 1000,
+                currentValue: '782V',
+                threshold: '700-800V',
+                read: true,
+                starred: false
+            },
+            {
+                id: 5,
+                alarmId: 'ALM20251127005',
+                type: 'minor',
+                channel: 'email',
+                title: 'SOC过低提醒',
+                message: '研发中心站 - 储能柜#7 SOC低于安全阈值(当前值: 8%，阈值: 10%)。',
+                device: '储能柜#7',
+                site: '研发中心站',
+                time: '3小时前',
+                timestamp: Date.now() - 3 * 60 * 60 * 1000,
+                currentValue: '8%',
+                threshold: '10%',
+                read: true,
+                starred: false
+            },
+            {
+                id: 6,
+                alarmId: 'ALM20251127006',
+                type: 'minor',
+                channel: 'system',
+                title: '温度异常提醒',
+                message: '数据中心站 - 储能柜#4 环境温度异常(当前值: 38°C，阈值: 35°C)。',
+                device: '储能柜#4',
+                site: '数据中心站',
+                time: '5小时前',
+                timestamp: Date.now() - 5 * 60 * 60 * 1000,
+                currentValue: '38°C',
+                threshold: '35°C',
+                read: true,
+                starred: false
+            },
+            {
+                id: 7,
+                alarmId: 'ALM20251126007',
+                type: 'critical',
+                channel: 'sms',
+                title: '系统故障告警',
+                message: '科技园区站 - 储能柜#6 PCS系统故障，系统已自动停机保护。',
+                device: '储能柜#6',
+                site: '科技园区站',
+                time: '昨天 18:30',
+                timestamp: Date.now() - 24 * 60 * 60 * 1000,
+                currentValue: '已停机',
+                threshold: '-',
+                read: true,
+                starred: true
+            },
+            {
+                id: 8,
+                alarmId: 'ALM20251126008',
+                type: 'major',
+                channel: 'email',
+                title: 'SOH低告警',
+                message: '工业园区站 - 储能柜#8 电池健康度低于80%(当前值: 76%)，建议安排维护。',
+                device: '储能柜#8',
+                site: '工业园区站',
+                time: '昨天 14:20',
+                timestamp: Date.now() - 28 * 60 * 60 * 1000,
+                currentValue: '76%',
+                threshold: '80%',
+                read: true,
+                starred: false
+            }
+        ];
+
+        // 当前筛选条件
+        let currentFilter = 'all';
+        let filteredNotifications = [...notifications];
+        let currentNotification = null;
+
+        // 渲染通知列表
+        function renderNotifications() {
+            const container = document.getElementById('notificationList');
+
+            if (filteredNotifications.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <div class="empty-state-title">暂无通知</div>
+                        <div class="empty-state-text">当前筛选条件下没有找到通知</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredNotifications.map(notif => {
+                const iconClass = notif.type === 'critical' ? 'fa-exclamation-circle' :
+                                 notif.type === 'major' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+                const channelText = notif.channel === 'email' ? '邮件' :
+                                   notif.channel === 'sms' ? '短信' : '站内信';
+
+                const channelIcon = notif.channel === 'email' ? 'fa-at' :
+                                   notif.channel === 'sms' ? 'fa-mobile-alt' : 'fa-bell';
+
+                return `
+                    <div class="notification-item ${notif.read ? '' : 'unread'}">
+                        <input type="checkbox" class="notification-checkbox" value="${notif.id}" onclick="event.stopPropagation()">
+                        <div class="notification-icon ${notif.type}">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="notification-content" onclick="openNotification(${notif.id})">
+                            <div class="notification-header">
+                                <div class="notification-title">${notif.title}</div>
+                                <div class="notification-time">${notif.time}</div>
+                            </div>
+                            <div class="notification-message">${notif.message}</div>
+                            <div class="notification-meta">
+                                <span class="notification-badge ${notif.channel}">
+                                    <i class="fas ${channelIcon}"></i>
+                                    ${channelText}
+                                </span>
+                                <span style="font-size: 12px; color: var(--text-secondary);">
+                                    <i class="fas fa-hashtag"></i> ${notif.alarmId}
+                                </span>
+                                <span style="font-size: 12px; color: var(--text-secondary);">
+                                    <i class="fas fa-map-marker-alt"></i> ${notif.site}
+                                </span>
+                                <span style="font-size: 12px; color: var(--text-secondary);">
+                                    <i class="fas fa-server"></i> ${notif.device}
+                                </span>
+                            </div>
+                        </div>
+                        <button class="star-btn ${notif.starred ? 'starred' : ''}" onclick="toggleStar(${notif.id}, event)">
+                            <i class="fa${notif.starred ? 's' : 'r'} fa-star"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            updateBadges();
+        }
+
+        // 更新徽章数量
+        function updateBadges() {
+            const unreadCount = notifications.filter(n => !n.read).length;
+            const criticalCount = notifications.filter(n => n.type === 'critical').length;
+            const majorCount = notifications.filter(n => n.type === 'major').length;
+            const minorCount = notifications.filter(n => n.type === 'minor').length;
+
+            document.getElementById('badgeAllCount').textContent = notifications.length;
+            document.getElementById('badgeUnreadCount').textContent = unreadCount;
+            document.getElementById('badgeCriticalCount').textContent = criticalCount;
+            document.getElementById('badgeMajorCount').textContent = majorCount;
+            document.getElementById('badgeMinorCount').textContent = minorCount;
+        }
+
+        // 切换星标
+        function toggleStar(id, event) {
+            event.stopPropagation();
+            const notif = notifications.find(n => n.id === id);
+            if (notif) {
+                notif.starred = !notif.starred;
+                renderNotifications();
+                showToast(notif.starred ? '已添加星标' : '已取消星标', 'success');
+            }
+        }
+
+        // 筛选通知
+        function filterNotifications(filter, menuItem) {
+            // 更新菜单选中状态
+            document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (menuItem) {
+                menuItem.classList.add('active');
+            }
+
+            currentFilter = filter;
+
+            switch(filter) {
+                case 'all':
+                    filteredNotifications = [...notifications];
+                    break;
+                case 'unread':
+                    filteredNotifications = notifications.filter(n => !n.read);
+                    break;
+                case 'read':
+                    filteredNotifications = notifications.filter(n => n.read);
+                    break;
+                case 'starred':
+                    filteredNotifications = notifications.filter(n => n.starred);
+                    break;
+                case 'critical':
+                case 'major':
+                case 'minor':
+                    filteredNotifications = notifications.filter(n => n.type === filter);
+                    break;
+                case 'system':
+                case 'email':
+                case 'sms':
+                    filteredNotifications = notifications.filter(n => n.channel === filter);
+                    break;
+            }
+
+            renderNotifications();
+        }
+
+        // 搜索通知
+        function searchNotifications(keyword) {
+            if (!keyword.trim()) {
+                filterNotifications(currentFilter);
+                return;
+            }
+
+            filteredNotifications = notifications.filter(n =>
+                n.title.includes(keyword) ||
+                n.message.includes(keyword) ||
+                n.site.includes(keyword) ||
+                n.device.includes(keyword) ||
+                n.alarmId.includes(keyword)
+            );
+
+            renderNotifications();
+        }
+
+        // 打开通知详情
+        function openNotification(id) {
+            const notification = notifications.find(n => n.id === id);
+            if (!notification) return;
+
+            currentNotification = notification;
+
+            // 标记为已读
+            if (!notification.read) {
+                notification.read = true;
+                renderNotifications();
+            }
+
+            // 渲染详情
+            const levelText = notification.type === 'critical' ? '严重' :
+                            notification.type === 'major' ? '重要' : '一般';
+            const levelClass = notification.type;
+
+            document.getElementById('notificationDetailBody').innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">告警ID：</div>
+                    <div class="detail-value">${notification.alarmId}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">通知时间：</div>
+                    <div class="detail-value">${notification.time}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">告警级别：</div>
+                    <div class="detail-value">
+                        <span class="alarm-level-badge ${levelClass}" style="display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600;">
+                            <i class="fas ${notification.type === 'critical' ? 'fa-exclamation-circle' : notification.type === 'major' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                            ${levelText}
+                        </span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">站点名称：</div>
+                    <div class="detail-value">${notification.site}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">设备名称：</div>
+                    <div class="detail-value">${notification.device}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">告警类型：</div>
+                    <div class="detail-value">${notification.title}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">详细描述：</div>
+                    <div class="detail-value">${notification.message}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">当前值：</div>
+                    <div class="detail-value" style="color: #ef4444; font-weight: 600;">${notification.currentValue}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">阈值：</div>
+                    <div class="detail-value">${notification.threshold}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">通知渠道：</div>
+                    <div class="detail-value">
+                        <span class="notification-badge ${notification.channel}">
+                            ${notification.channel === 'email' ? '邮件' : notification.channel === 'sms' ? '短信' : '站内信'}
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('notificationDetailModal').classList.add('show');
+        }
+
+        // 关闭通知详情
+        function closeNotificationDetail() {
+            document.getElementById('notificationDetailModal').classList.remove('show');
+            currentNotification = null;
+        }
+
+        // 跳转到告警详情
+        function goToAlarmDetail() {
+            if (currentNotification) {
+                // 跳转到告警管理页面，并高亮对应告警
+                window.location.href = `alarm-management.html?alarmId=${currentNotification.alarmId}`;
+            }
+        }
+
+        // 立即处理告警
+        function handleNotification() {
+            if (currentNotification) {
+                closeNotificationDetail();
+                // 跳转到告警管理页面的处理界面
+                window.location.href = `alarm-management.html?alarmId=${currentNotification.alarmId}&action=handle`;
+            }
+        }
+
+        // 全选/取消全选
+        function toggleAllNotifications(checked) {
+            document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        }
+
+        // 标记为已读
+        function markAsRead() {
+            const checkedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
+                                    .map(cb => parseInt(cb.value));
+
+            if (checkedIds.length === 0) {
+                showToast('请先选择要标记的通知', 'warning');
+                return;
+            }
+
+            // 显示确认提示
+            if (confirm(`确定要将选中的 ${checkedIds.length} 条通知标记为已读吗？`)) {
+                checkedIds.forEach(id => {
+                    const notif = notifications.find(n => n.id === id);
+                    if (notif) {
+                        notif.read = true;
+                    }
+                });
+
+                renderNotifications();
+                showToast(`已标记 ${checkedIds.length} 条通知为已读`, 'success');
+            }
+        }
+
+        // 删除选中的通知
+        function deleteSelected() {
+            const checkedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
+                                    .map(cb => parseInt(cb.value));
+
+            if (checkedIds.length === 0) {
+                showToast('请先选择要删除的通知', 'warning');
+                return;
+            }
+
+            if (confirm(`确定要删除选中的 ${checkedIds.length} 条通知吗？此操作无法撤销。`)) {
+                checkedIds.forEach(id => {
+                    const index = notifications.findIndex(n => n.id === id);
+                    if (index !== -1) {
+                        notifications.splice(index, 1);
+                    }
+                });
+
+                filterNotifications(currentFilter);
+                showToast(`已删除 ${checkedIds.length} 条通知`, 'success');
+            }
+        }
+
+        // 刷新通知
+        function refreshNotifications() {
+            showToast('正在刷新通知...', 'info');
+
+            // 模拟实时更新（实际项目中应该从服务器获取最新通知）
+            setTimeout(() => {
+                renderNotifications();
+                showToast('刷新成功', 'success');
+
+                // 检查是否有新通知
+                checkNewNotifications();
+            }, 500);
+        }
+
+        // 检查新通知（实时通知机制框架）
+        function checkNewNotifications() {
+            // TODO: 在实际项目中，这里应该:
+            // 1. 使用 WebSocket 连接接收实时通知
+            // 2. 或使用定时轮询 API
+            // 3. 当有新通知时，更新 notifications 数组并重新渲染
+
+            // 示例：模拟接收到新通知
+            // const newNotification = {
+            //     id: Date.now(),
+            //     alarmId: 'ALM' + Date.now(),
+            //     type: 'critical',
+            //     ...
+            // };
+            // notifications.unshift(newNotification);
+            // renderNotifications();
+            // showToast('收到新的告警通知', 'warning');
+        }
+
+        // 打开通知设置
+        function openNotificationSettings() {
+            document.getElementById('notificationSettingsModal').classList.add('show');
+        }
+
+        // 关闭通知设置
+        function closeNotificationSettings() {
+            document.getElementById('notificationSettingsModal').classList.remove('show');
+        }
+
+        // 切换设置项
+        function toggleSetting(setting, enabled) {
+            console.log(`设置 ${setting}: ${enabled ? '启用' : '禁用'}`);
+            // TODO: 保存到后端
+        }
+
+        // 保存通知设置
+        function saveNotificationSettings() {
+            // TODO: 收集所有设置并保存到后端
+            showToast('设置已保存', 'success');
+            closeNotificationSettings();
+        }
+
+        // 打开添加接收人模态框
+        function openAddRecipientModal() {
+            document.getElementById('recipientModalTitle').textContent = '添加接收人';
+            // 重置表单
+            document.getElementById('recipientName').value = '';
+            document.getElementById('recipientTitle').value = '';
+            document.getElementById('recipientEmail').value = '';
+            document.getElementById('recipientPhone').value = '';
+            document.getElementById('recipientGroup').value = 'normal';
+            document.getElementById('levelCritical').checked = true;
+            document.getElementById('levelMajor').checked = true;
+            document.getElementById('levelMinor').checked = false;
+            document.getElementById('channelEmail').checked = true;
+            document.getElementById('channelSMS').checked = false;
+            document.getElementById('channelSystem').checked = true;
+            document.getElementById('workingHoursOnly').checked = false;
+
+            document.getElementById('recipientModal').classList.add('show');
+        }
+
+        // 编辑接收人
+        function editRecipient(id) {
+            document.getElementById('recipientModalTitle').textContent = '编辑接收人';
+
+            // TODO: 从后端加载接收人数据并填充表单
+            showToast('加载接收人信息...', 'info');
+
+            // 模拟数据填充
+            setTimeout(() => {
+                if (id === 1) {
+                    document.getElementById('recipientName').value = '张三';
+                    document.getElementById('recipientTitle').value = '运维主管';
+                    document.getElementById('recipientEmail').value = 'zhangsan@company.com';
+                    document.getElementById('recipientPhone').value = '13800138888';
+                    document.getElementById('recipientGroup').value = 'admin';
+                    document.getElementById('levelCritical').checked = true;
+                    document.getElementById('levelMajor').checked = true;
+                    document.getElementById('levelMinor').checked = true;
+                    document.getElementById('channelEmail').checked = true;
+                    document.getElementById('channelSMS').checked = true;
+                    document.getElementById('channelSystem').checked = true;
+                }
+
+                document.getElementById('recipientModal').classList.add('show');
+            }, 300);
+        }
+
+        // 删除接收人
+        function deleteRecipient(id) {
+            if (confirm('确定要删除此接收人吗？删除后将不再接收告警通知。')) {
+                // TODO: 调用后端API删除
+                showToast('接收人已删除', 'success');
+            }
+        }
+
+        // 关闭接收人模态框
+        function closeRecipientModal() {
+            document.getElementById('recipientModal').classList.remove('show');
+        }
+
+        // 保存接收人
+        function saveRecipient() {
+            // 验证必填项
+            const name = document.getElementById('recipientName').value.trim();
+            const email = document.getElementById('recipientEmail').value.trim();
+            const phone = document.getElementById('recipientPhone').value.trim();
+
+            if (!name) {
+                showToast('请输入姓名', 'warning');
+                return;
+            }
+
+            if (!email) {
+                showToast('请输入邮箱', 'warning');
+                return;
+            }
+
+            if (!phone) {
+                showToast('请输入手机号', 'warning');
+                return;
+            }
+
+            // 验证至少选择一个告警级别
+            const levels = {
+                critical: document.getElementById('levelCritical').checked,
+                major: document.getElementById('levelMajor').checked,
+                minor: document.getElementById('levelMinor').checked
+            };
+
+            if (!levels.critical && !levels.major && !levels.minor) {
+                showToast('请至少选择一个告警级别', 'warning');
+                return;
+            }
+
+            // 收集数据
+            const recipientData = {
+                name,
+                title: document.getElementById('recipientTitle').value.trim(),
+                email,
+                phone,
+                group: document.getElementById('recipientGroup').value,
+                levels,
+                channels: {
+                    email: document.getElementById('channelEmail').checked,
+                    sms: document.getElementById('channelSMS').checked,
+                    system: document.getElementById('channelSystem').checked
+                },
+                workingHoursOnly: document.getElementById('workingHoursOnly').checked
+            };
+
+            // TODO: 调用后端API保存
+            console.log('保存接收人数据:', recipientData);
+
+            showToast('接收人保存成功', 'success');
+            closeRecipientModal();
+
+            // TODO: 重新加载接收人列表
+        }
+
+        // 显示提示消息
+        function showToast(message, type = 'info') {
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                info: '#3b82f6',
+                warning: '#f59e0b'
+            };
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: white;
+                color: var(--text-primary);
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border-left: 4px solid ${colors[type]};
+            `;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]}" style="color: ${colors[type]}; font-size: 18px;"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderNotifications();
+
+            // 启动定时刷新（每30秒检查一次新通知）
+            setInterval(checkNewNotifications, 30000);
+        });
+
+        // 添加动画样式
+        const animationStyle = document.createElement('style');
+        animationStyle.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+
+            .alarm-level-badge.critical {
+                color: #dc2626;
+            }
+
+            .alarm-level-badge.major {
+                color: #f59e0b;
+            }
+
+            .alarm-level-badge.minor {
+                color: #3b82f6;
+            }
+        `;
+        document.head.appendChild(animationStyle);
+    </script>
+</body>
+</html>

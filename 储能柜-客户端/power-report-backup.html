@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">电量报表 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <style>
+        .main-content {
+            height: calc(100vh - 64px);
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* 左侧查询区域 */
+        .left-panel {
+            width: 280px;
+            flex-shrink: 0;
+            height: 100%;
+        }
+
+        /* 筛选器区域 */
+        .filter-section {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 20px 0;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding-right: 4px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .filter-select,
+        .filter-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:hover,
+        .filter-input:hover {
+            border-color: var(--primary-color);
+        }
+
+        .filter-select:focus,
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .export-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .btn-export {
+            width: 100%;
+            height: 40px;
+            padding: 0 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-export:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-export.secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-export.secondary:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 右侧内容区域 */
+        .right-panel {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-right: 4px;
+        }
+
+        /* 内容区域顶部操作栏 */
+        .content-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-export-top {
+            height: 40px;
+            padding: 0 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-export-top:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-export-top i {
+            font-size: 14px;
+        }
+
+        /* 滚动条样式 */
+        .filter-row::-webkit-scrollbar,
+        .right-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .filter-row::-webkit-scrollbar-track,
+        .right-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .filter-row::-webkit-scrollbar-thumb,
+        .right-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .filter-row::-webkit-scrollbar-thumb:hover,
+        .right-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 数据表格容器 */
+        .table-container {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-container:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 表格包装器 */
+        .table-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-height: 550px;
+            overflow: hidden;
+        }
+
+        .table-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .table-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-scroll::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .table-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .table-footer {
+            flex-shrink: 0;
+            border-top: 2px solid var(--border-color);
+            margin-top: 0;
+        }
+
+        .table-footer table {
+            margin-bottom: 0;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-table-action {
+            height: 32px;
+            padding: 0 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-table-action:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        /* 固定列宽确保对齐 - 5列 */
+        .data-table th:nth-child(1),
+        .data-table td:nth-child(1) {
+            width: 12%;  /* 设备 */
+        }
+
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            width: 24%;  /* 日期时段 */
+        }
+
+        .data-table th:nth-child(3),
+        .data-table td:nth-child(3) {
+            width: 20%;  /* 充电量(kWh) */
+        }
+
+        .data-table th:nth-child(4),
+        .data-table td:nth-child(4) {
+            width: 20%;  /* 放电量(kWh) */
+        }
+
+        .data-table th:nth-child(5),
+        .data-table td:nth-child(5) {
+            width: 24%;  /* SOC(%) */
+        }
+
+        .data-table thead {
+            background: var(--bg-secondary);
+        }
+
+        .data-table th {
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        /* SOC列增加左侧间距 */
+        .data-table th:nth-child(5) {
+            padding-left: 32px;
+        }
+
+        .data-table th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        .data-table th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .data-table td {
+            padding: 12px 20px;
+            font-size: 14px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        /* 设备名称列(带rowspan)垂直居中对齐 */
+        .data-table td[rowspan] {
+            vertical-align: middle;
+            font-weight: 600;
+            background: #f8f9fa;
+            border-right: 2px solid var(--border-color);
+        }
+
+        /* SOC列数据增加左侧间距 */
+        .data-table td:nth-child(5) {
+            padding-left: 32px;
+        }
+
+        .data-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 汇总行样式 */
+        .table-footer .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-footer tfoot {
+            background: #d1ecf1;
+        }
+
+        .table-footer tfoot .summary-row {
+            background: #d1ecf1;
+        }
+
+        .table-footer tfoot .summary-row:hover {
+            background: #d1ecf1;
+        }
+
+        .table-footer tfoot td {
+            padding: 14px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: none;
+            color: #0c5460;
+            border-top: none;
+        }
+
+        /* 汇总行SOC占位列增加左侧间距 */
+        .table-footer tfoot td:nth-child(4) {
+            padding-left: 32px;
+        }
+
+        .table-footer tfoot .summary-label {
+            text-align: left;
+            font-weight: 700;
+            font-size: 15px;
+            width: 36%; /* 设备12% + 日期时段24% = 36% */
+        }
+
+        .table-footer tfoot .summary-value {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        /* 汇总行第2列(充电量) */
+        .table-footer tfoot td:nth-child(2) {
+            width: 20%; /* 充电量列 */
+        }
+
+        /* 汇总行第3列(放电量) */
+        .table-footer tfoot td:nth-child(3) {
+            width: 20%; /* 放电量列 */
+        }
+
+        /* 汇总行第4列(SOC占位) */
+        .table-footer tfoot td:nth-child(4) {
+            width: 24%; /* SOC列 */
+        }
+
+        /* 使用class确保列对齐 - 充电量和放电量必须右对齐 */
+        .data-table .col-charge,
+        .data-table .col-discharge {
+            text-align: right !important;
+            padding-right: 20px !important;
+        }
+
+        /* 表头的充电量、放电量列右对齐 */
+        .data-table th:nth-child(3),
+        .data-table th:nth-child(4) {
+            text-align: right;
+        }
+
+        .data-table .col-datetime {
+            text-align: left;
+        }
+
+        .data-table .col-soc {
+            text-align: left;
+            padding-left: 32px;
+        }
+
+        .value-positive {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        .value-negative {
+            color: var(--error-color);
+            font-weight: 500;
+        }
+
+        .value-neutral {
+            color: var(--text-secondary);
+        }
+
+        /* Flatpickr 自定义样式 */
+        .flatpickr-calendar {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+            border-radius: 12px !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.selected:hover {
+            background: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .flatpickr-day.inRange {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border-color: transparent !important;
+        }
+
+        /* 树形视图样式 */
+        .tree-view {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .tree-view::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tree-view::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tree-view::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .tree-view::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .tree-node {
+            padding: 0;
+        }
+
+        .tree-node-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+
+        .tree-node-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tree-node-item.selected {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .tree-node-item.child {
+            padding-left: 36px;
+        }
+
+        .tree-expand-icon {
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            padding: 4px;
+            margin: -4px;
+            border-radius: 4px;
+        }
+
+        .tree-expand-icon:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--primary-color);
+        }
+
+        .tree-node-item.expanded .tree-expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .tree-children {
+            display: none;
+        }
+
+        .tree-children.expanded {
+            display: block;
+        }
+
+        .tree-node-label {
+            flex: 1;
+        }
+
+        /* 分页控件样式 */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+            margin-top: -4px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-size-select {
+            height: 32px;
+            padding: 0 8px;
+            margin: 0 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .page-size-select:hover {
+            border-color: var(--primary-color);
+        }
+
+        .page-size-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagination-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-page-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .page-input {
+            width: 50px;
+            height: 32px;
+            padding: 0 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .page-input:hover {
+            border-color: var(--primary-color);
+        }
+
+        .page-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                width: 100%;
+                height: auto;
+                max-height: 300px;
+            }
+
+            .filter-section {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body data-page="power-report">
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 左侧查询区域 -->
+        <div class="left-panel">
+            <!-- 筛选器区域 -->
+            <div class="filter-section">
+                <h3 class="filter-title">查询条件</h3>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label class="filter-label">时间范围</label>
+                        <input type="text" class="filter-input" id="dateRange" placeholder="选择日期范围" readonly>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">数据粒度</label>
+                        <select class="filter-select" id="granularity">
+                            <option value="15min">15分钟</option>
+                            <option value="hour" selected>小时</option>
+                            <option value="day">天</option>
+                            <option value="month">月</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">站点/设备</label>
+                        <div class="tree-view">
+                            <div class="tree-node">
+                                <div class="tree-node-item selected" data-value="all" onclick="selectTreeNode(event, 'all', '全部站点')">
+                                    <span class="tree-node-label">全部站点</span>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <div class="tree-node-item expandable expanded" data-value="site1" onclick="handleSiteClick(event, 'site1', '北京朝阳站')">
+                                    <i class="fas fa-caret-right tree-expand-icon" onclick="toggleTreeNode(event)"></i>
+                                    <span class="tree-node-label">北京朝阳站</span>
+                                </div>
+                                <div class="tree-children expanded">
+                                    <div class="tree-node-item child" data-value="site1-device1" onclick="selectTreeNode(event, 'site1-device1', '北京朝阳站 - 储能柜 #1')">
+                                        <span class="tree-node-label">储能柜 #1</span>
+                                    </div>
+                                    <div class="tree-node-item child" data-value="site1-device2" onclick="selectTreeNode(event, 'site1-device2', '北京朝阳站 - 储能柜 #2')">
+                                        <span class="tree-node-label">储能柜 #2</span>
+                                    </div>
+                                    <div class="tree-node-item child" data-value="site1-device3" onclick="selectTreeNode(event, 'site1-device3', '北京朝阳站 - 储能柜 #3')">
+                                        <span class="tree-node-label">储能柜 #3</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <div class="tree-node-item expandable" data-value="site2" onclick="handleSiteClick(event, 'site2', '上海浦东站')">
+                                    <i class="fas fa-caret-right tree-expand-icon" onclick="toggleTreeNode(event)"></i>
+                                    <span class="tree-node-label">上海浦东站</span>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-node-item child" data-value="site2-device1" onclick="selectTreeNode(event, 'site2-device1', '上海浦东站 - 储能柜 #1')">
+                                        <span class="tree-node-label">储能柜 #1</span>
+                                    </div>
+                                    <div class="tree-node-item child" data-value="site2-device2" onclick="selectTreeNode(event, 'site2-device2', '上海浦东站 - 储能柜 #2')">
+                                        <span class="tree-node-label">储能柜 #2</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <div class="tree-node-item expandable" data-value="site3" onclick="handleSiteClick(event, 'site3', '深圳南山站')">
+                                    <i class="fas fa-caret-right tree-expand-icon" onclick="toggleTreeNode(event)"></i>
+                                    <span class="tree-node-label">深圳南山站</span>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-node-item child" data-value="site3-device1" onclick="selectTreeNode(event, 'site3-device1', '深圳南山站 - 储能柜 #1')">
+                                        <span class="tree-node-label">储能柜 #1</span>
+                                    </div>
+                                    <div class="tree-node-item child" data-value="site3-device2" onclick="selectTreeNode(event, 'site3-device2', '深圳南山站 - 储能柜 #2')">
+                                        <span class="tree-node-label">储能柜 #2</span>
+                                    </div>
+                                    <div class="tree-node-item child" data-value="site3-device3" onclick="selectTreeNode(event, 'site3-device3', '深圳南山站 - 储能柜 #3')">
+                                        <span class="tree-node-label">储能柜 #3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-buttons">
+                    <button class="btn-export" onclick="queryData()">
+                        <i class="fas fa-search"></i>
+                        查询数据
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容区域 -->
+        <div class="right-panel">
+            <!-- 电量明细表 -->
+        <div class="table-container">
+            <div class="table-header">
+                <button class="btn-export-top" onclick="exportData()">
+                    <i class="fas fa-download"></i>
+                    导出数据
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <div class="table-scroll">
+                    <table class="data-table" id="hourlyTable">
+                        <thead>
+                            <tr>
+                                <th>设备</th>
+                                <th>日期时段</th>
+                                <th>充电量(kWh)</th>
+                                <th>放电量(kWh)</th>
+                                <th>SOC(%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hourlyTableBody">
+                            <!-- 数据由JavaScript生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <table class="data-table">
+                        <tfoot>
+                            <tr class="summary-row">
+                                <td colspan="2" class="summary-label">合计</td>
+                                <td id="summaryTotalCharge" class="summary-value">0</td>
+                                <td id="summaryTotalDischarge" class="summary-value">0</td>
+                                <td class="summary-value" style="padding: 0; border: none;"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页控件 -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <span>共 <span id="totalRecords">0</span> 条记录</span>
+                <span style="margin-left: 16px;">每页显示</span>
+                <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize()">
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+                <span>条</span>
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn" onclick="goToFirstPage()" title="首页">
+                    <i class="fas fa-angle-double-left"></i>
+                </button>
+                <button class="pagination-btn" onclick="goToPrevPage()" title="上一页">
+                    <i class="fas fa-angle-left"></i>
+                </button>
+                <span class="pagination-page-info">
+                    第 <input type="number" id="currentPageInput" class="page-input" value="1" min="1" onchange="goToPage()"> / <span id="totalPages">1</span> 页
+                </span>
+                <button class="pagination-btn" onclick="goToNextPage()" title="下一页">
+                    <i class="fas fa-angle-right"></i>
+                </button>
+                <button class="pagination-btn" onclick="goToLastPage()" title="末页">
+                    <i class="fas fa-angle-double-right"></i>
+                </button>
+            </div>
+        </div>
+
+        </div>
+    </main>
+
+    <script src="common.js"></script>
+    <script>
+        // 全局查询参数
+        let queryParams = {
+            selectedSite: 'all',
+            selectedLabel: '全部站点'
+        };
+
+        // 分页参数
+        let paginationParams = {
+            currentPage: 1,
+            pageSize: 50,
+            totalRecords: 0,
+            totalPages: 1,
+            allData: [] // 存储所有数据
+        };
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化日期范围选择器
+            flatpickr("#dateRange", {
+                mode: "range",
+                locale: "zh",
+                dateFormat: "Y-m-d",
+                defaultDate: ["2024-01-01", "2024-01-31"],
+                showMonths: 2
+            });
+
+            loadHourlyData();
+        });
+
+        // 切换树节点展开/折叠 (点击箭头图标)
+        function toggleTreeNode(event) {
+            event.stopPropagation();
+            const icon = event.currentTarget;
+            const item = icon.parentElement;
+            const children = item.nextElementSibling;
+
+            if (children && children.classList.contains('tree-children')) {
+                item.classList.toggle('expanded');
+                children.classList.toggle('expanded');
+            }
+        }
+
+        // 处理站点节点点击 (点击站点名称区域)
+        function handleSiteClick(event, value, label) {
+            // 如果点击的是箭头图标,不处理选择逻辑
+            if (event.target.classList.contains('tree-expand-icon')) {
+                return;
+            }
+
+            event.stopPropagation();
+
+            // 移除所有选中状态
+            document.querySelectorAll('.tree-node-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // 添加选中状态
+            event.currentTarget.classList.add('selected');
+
+            // 记录选择的值
+            queryParams.selectedSite = value;
+            queryParams.selectedLabel = label;
+        }
+
+        // 选择树节点 (点击子设备)
+        function selectTreeNode(event, value, label) {
+            event.stopPropagation();
+
+            // 移除所有选中状态
+            document.querySelectorAll('.tree-node-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // 添加选中状态
+            event.currentTarget.classList.add('selected');
+
+            // 记录选择的值
+            queryParams.selectedSite = value;
+            queryParams.selectedLabel = label;
+        }
+
+        // 加载分时电量数据
+        function loadHourlyData() {
+            const tbody = document.getElementById('hourlyTableBody');
+            const granularity = document.getElementById('granularity').value;
+
+            // 根据选择确定设备列表
+            let deviceList = [];
+            if (queryParams.selectedSite === 'all') {
+                // 全部站点 - 显示所有设备
+                deviceList = [
+                    '储能柜 #1', '储能柜 #2', '储能柜 #3',
+                    '储能柜 #4', '储能柜 #5', '储能柜 #6',
+                    '储能柜 #7', '储能柜 #8'
+                ];
+            } else if (queryParams.selectedSite.includes('device')) {
+                // 选择了具体设备 - 只显示该设备
+                const deviceNum = queryParams.selectedLabel.match(/#(\d+)/);
+                deviceList = [deviceNum ? `储能柜 #${deviceNum[1]}` : '储能柜 #1'];
+            } else {
+                // 选择了站点 - 显示该站点下的设备
+                if (queryParams.selectedSite === 'site1') {
+                    deviceList = ['储能柜 #1', '储能柜 #2', '储能柜 #3'];
+                } else if (queryParams.selectedSite === 'site2') {
+                    deviceList = ['储能柜 #4', '储能柜 #5'];
+                } else if (queryParams.selectedSite === 'site3') {
+                    deviceList = ['储能柜 #6', '储能柜 #7', '储能柜 #8'];
+                }
+            }
+
+            let html = '';
+            let totalCharge = 0;
+            let totalDischarge = 0;
+            let socSum = 0;
+            let socCount = 0;
+
+            // 根据粒度生成不同的数据
+            if (granularity === '15min') {
+                // 15分钟粒度 - 每个设备生成1天的数据
+                const date = '2024-01-01';
+                const rowsPerDevice = 96; // 24小时 * 4 = 96条记录
+
+                deviceList.forEach(deviceName => {
+                    let rowIndex = 0;
+                    for (let hour = 0; hour < 24; hour++) {
+                        for (let min = 0; min < 60; min += 15) {
+                            const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+                            const charging = (hour >= 22 || hour < 7) ? Math.floor(Math.random() * 10 + 30) : 0;
+                            const discharging = (hour >= 8 && hour < 20) ? Math.floor(Math.random() * 15 + 40) : 0;
+                            const soc = Math.floor(Math.random() * 30 + 50);
+
+                            totalCharge += charging;
+                            totalDischarge += discharging;
+                            socSum += soc;
+                            socCount++;
+
+                            if (rowIndex === 0) {
+                                // 第一行：显示设备名称并设置rowspan
+                                html += `
+                                    <tr>
+                                        <td rowspan="${rowsPerDevice}" class="col-device">${deviceName}</td>
+                                        <td class="col-datetime">${date} ${timeStr}</td>
+                                        <td class="col-charge">${charging || '-'}</td>
+                                        <td class="col-discharge">${discharging || '-'}</td>
+                                        <td class="col-soc">${soc}</td>
+                                    </tr>
+                                `;
+                            } else {
+                                // 后续行：不显示设备名称
+                                html += `
+                                    <tr>
+                                        <td class="col-datetime">${date} ${timeStr}</td>
+                                        <td class="col-charge">${charging || '-'}</td>
+                                        <td class="col-discharge">${discharging || '-'}</td>
+                                        <td class="col-soc">${soc}</td>
+                                    </tr>
+                                `;
+                            }
+                            rowIndex++;
+                        }
+                    }
+                });
+            } else if (granularity === 'hour') {
+                // 小时粒度 - 每个设备生成3天的数据
+                const rowsPerDevice = 72; // 3天 * 24小时 = 72条记录
+
+                deviceList.forEach(deviceName => {
+                    let rowIndex = 0;
+                    for (let day = 1; day <= 3; day++) {
+                        const date = `2024-01-${day.toString().padStart(2, '0')}`;
+
+                        for (let hour = 0; hour < 24; hour++) {
+                            const timeStr = hour.toString().padStart(2, '0') + ':00';
+                            const charging = (hour >= 22 || hour < 7) ? Math.floor(Math.random() * 30 + 120) : 0;
+                            const discharging = (hour >= 8 && hour < 20) ? Math.floor(Math.random() * 50 + 150) : 0;
+                            const soc = Math.floor(Math.random() * 30 + 50);
+
+                            totalCharge += charging;
+                            totalDischarge += discharging;
+                            socSum += soc;
+                            socCount++;
+
+                            if (rowIndex === 0) {
+                                // 第一行：显示设备名称并设置rowspan
+                                html += `
+                                    <tr>
+                                        <td rowspan="${rowsPerDevice}" class="col-device">${deviceName}</td>
+                                        <td class="col-datetime">${date} ${timeStr}</td>
+                                        <td class="col-charge">${charging || '-'}</td>
+                                        <td class="col-discharge">${discharging || '-'}</td>
+                                        <td class="col-soc">${soc}</td>
+                                    </tr>
+                                `;
+                            } else {
+                                // 后续行：不显示设备名称
+                                html += `
+                                    <tr>
+                                        <td class="col-datetime">${date} ${timeStr}</td>
+                                        <td class="col-charge">${charging || '-'}</td>
+                                        <td class="col-discharge">${discharging || '-'}</td>
+                                        <td class="col-soc">${soc}</td>
+                                    </tr>
+                                `;
+                            }
+                            rowIndex++;
+                        }
+                    }
+                });
+            } else if (granularity === 'day') {
+                // 天粒度 - 每个设备生成30天的数据
+                const rowsPerDevice = 30; // 30天
+
+                deviceList.forEach(deviceName => {
+                    let rowIndex = 0;
+                    for (let day = 1; day <= 30; day++) {
+                        const date = `2024-01-${day.toString().padStart(2, '0')}`;
+                        const charging = Math.floor(Math.random() * 500 + 2000);
+                        const discharging = Math.floor(Math.random() * 800 + 3000);
+                        const soc = Math.floor(Math.random() * 30 + 50);
+
+                        totalCharge += charging;
+                        totalDischarge += discharging;
+                        socSum += soc;
+                        socCount++;
+
+                        if (rowIndex === 0) {
+                            // 第一行：显示设备名称并设置rowspan
+                            html += `
+                                <tr>
+                                    <td rowspan="${rowsPerDevice}" class="col-device">${deviceName}</td>
+                                    <td class="col-datetime">${date}</td>
+                                    <td class="col-charge">${charging.toLocaleString()}</td>
+                                    <td class="col-discharge">${discharging.toLocaleString()}</td>
+                                    <td class="col-soc">${soc}</td>
+                                </tr>
+                            `;
+                        } else {
+                            // 后续行：不显示设备名称
+                            html += `
+                                <tr>
+                                    <td class="col-datetime">${date}</td>
+                                    <td class="col-charge">${charging.toLocaleString()}</td>
+                                    <td class="col-discharge">${discharging.toLocaleString()}</td>
+                                    <td class="col-soc">${soc}</td>
+                                </tr>
+                            `;
+                        }
+                        rowIndex++;
+                    }
+                });
+            } else if (granularity === 'month') {
+                // 月粒度 - 每个设备生成12个月的数据
+                const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+                const rowsPerDevice = 12; // 12个月
+
+                deviceList.forEach(deviceName => {
+                    let rowIndex = 0;
+                    months.forEach(month => {
+                        const date = `2024-${month}`;
+                        const charging = Math.floor(Math.random() * 15000 + 60000);
+                        const discharging = Math.floor(Math.random() * 20000 + 90000);
+                        const soc = Math.floor(Math.random() * 30 + 50);
+
+                        totalCharge += charging;
+                        totalDischarge += discharging;
+                        socSum += soc;
+                        socCount++;
+
+                        if (rowIndex === 0) {
+                            // 第一行：显示设备名称并设置rowspan
+                            html += `
+                                <tr>
+                                    <td rowspan="${rowsPerDevice}" class="col-device">${deviceName}</td>
+                                    <td class="col-datetime">${date}</td>
+                                    <td class="col-charge">${charging.toLocaleString()}</td>
+                                    <td class="col-discharge">${discharging.toLocaleString()}</td>
+                                    <td class="col-soc">${soc}</td>
+                                </tr>
+                            `;
+                        } else {
+                            // 后续行：不显示设备名称
+                            html += `
+                                <tr>
+                                    <td class="col-datetime">${date}</td>
+                                    <td class="col-charge">${charging.toLocaleString()}</td>
+                                    <td class="col-discharge">${discharging.toLocaleString()}</td>
+                                    <td class="col-soc">${soc}</td>
+                                </tr>
+                            `;
+                        }
+                        rowIndex++;
+                    });
+                });
+            }
+
+            tbody.innerHTML = html;
+
+            // 更新汇总行
+            document.getElementById('summaryTotalCharge').textContent = totalCharge.toLocaleString();
+            document.getElementById('summaryTotalDischarge').textContent = totalDischarge.toLocaleString();
+        }
+
+        // 查询数据
+        function queryData() {
+            const dateRange = document.getElementById('dateRange').value || '2024-01-01 至 2024-01-31';
+            const granularity = document.getElementById('granularity').options[document.getElementById('granularity').selectedIndex].text;
+
+            // 构建查询提示信息
+            const queryInfo = `查询条件: ${queryParams.selectedLabel} | ${dateRange} | ${granularity}`;
+
+            showNotification('正在查询数据...', 'info');
+            setTimeout(() => {
+                loadHourlyData();
+                showNotification(`数据查询成功 - ${queryParams.selectedLabel}`, 'success');
+            }, 800);
+        }
+
+        // 刷新数据
+        function refreshData() {
+            showNotification('正在刷新数据...', 'info');
+            setTimeout(() => {
+                loadHourlyData();
+                showNotification('数据已刷新', 'success');
+            }, 500);
+        }
+
+        // 导出数据
+        function exportData() {
+            const dateRange = document.getElementById('dateRange').value || '2024-01-01 至 2024-01-31';
+            showNotification(`正在导出 ${queryParams.selectedLabel} 的数据...`, 'info');
+            setTimeout(() => {
+                showNotification('数据导出成功！', 'success');
+            }, 1500);
+        }
+
+        // 导出单个表格
+        function exportTableExcel(tableType) {
+            showNotification(`正在导出电量明细表...`, 'info');
+            setTimeout(() => {
+                showNotification(`电量明细表导出成功！`, 'success');
+            }, 1000);
+        }
+
+        // 通知提示
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 24px;
+                background: ${colors[type]};
+                color: white;
+                padding: 14px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                font-size: 14px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // 分页相关功能
+        // 更新分页信息显示
+        function updatePaginationInfo() {
+            document.getElementById('totalRecords').textContent = paginationParams.totalRecords;
+            document.getElementById('totalPages').textContent = paginationParams.totalPages;
+            document.getElementById('currentPageInput').value = paginationParams.currentPage;
+        }
+
+        // 修改每页显示数量
+        function changePageSize() {
+            const newPageSize = parseInt(document.getElementById('pageSizeSelect').value);
+            paginationParams.pageSize = newPageSize;
+            paginationParams.currentPage = 1; // 重置到第一页
+            loadHourlyData();
+        }
+
+        // 跳转到首页
+        function goToFirstPage() {
+            if (paginationParams.currentPage !== 1) {
+                paginationParams.currentPage = 1;
+                loadHourlyData();
+            }
+        }
+
+        // 上一页
+        function goToPrevPage() {
+            if (paginationParams.currentPage > 1) {
+                paginationParams.currentPage--;
+                loadHourlyData();
+            }
+        }
+
+        // 下一页
+        function goToNextPage() {
+            if (paginationParams.currentPage < paginationParams.totalPages) {
+                paginationParams.currentPage++;
+                loadHourlyData();
+            }
+        }
+
+        // 跳转到末页
+        function goToLastPage() {
+            if (paginationParams.currentPage !== paginationParams.totalPages) {
+                paginationParams.currentPage = paginationParams.totalPages;
+                loadHourlyData();
+            }
+        }
+
+        // 跳转到指定页
+        function goToPage() {
+            const inputPage = parseInt(document.getElementById('currentPageInput').value);
+            if (inputPage >= 1 && inputPage <= paginationParams.totalPages) {
+                paginationParams.currentPage = inputPage;
+                loadHourlyData();
+            } else {
+                // 恢复原值
+                document.getElementById('currentPageInput').value = paginationParams.currentPage;
+                showNotification('页码超出范围', 'warning');
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
+</body>
+</html>

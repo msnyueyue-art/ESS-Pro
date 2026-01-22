@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连线编辑功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #00d9ff;
+            margin-top: 0;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #00d9ff;
+            border-radius: 4px;
+        }
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #00d9ff;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 217, 255, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .highlight {
+            color: #00d9ff;
+            font-weight: bold;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 连线编辑功能快速测试</h1>
+
+        <div class="warning">
+            <strong>⚠️ 注意：</strong>请先打开 <code>devices.html</code> 页面，然后按照下面的步骤操作。
+        </div>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>打开页面</strong><br>
+            在浏览器中打开 <span class="highlight">devices.html</span> 页面
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>切换到能量流视图</strong><br>
+            点击页面右上角的 <span class="highlight">⚡ 能量流</span> 按钮
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>打开浏览器控制台</strong><br>
+            按 <span class="highlight">F12</span> 或 <span class="highlight">Ctrl+Shift+I</span> (Mac: <span class="highlight">Cmd+Option+I</span>)
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>粘贴测试代码</strong><br>
+            复制下面的代码，粘贴到控制台，按回车执行：
+        </div>
+
+        <div class="code" id="testCode">// 自动创建测试设备和连线
+(function() {
+    // 清空现有设备和连线
+    window.placedDevices = [];
+    window.deviceConnections = [];
+
+    // 添加三个测试设备
+    window.placedDevices.push({
+        id: 'test-device-1',
+        label: '市电',
+        icon: 'device-icons/utility.svg',
+        desc: '380V 3相',
+        category: 'power',
+        x: 200,
+        y: 200
+    });
+
+    window.placedDevices.push({
+        id: 'test-device-2',
+        label: 'PCS1',
+        icon: 'device-icons/pcs.svg',
+        desc: '250KW/500KWh',
+        category: 'storage',
+        x: 500,
+        y: 200
+    });
+
+    window.placedDevices.push({
+        id: 'test-device-3',
+        label: '负载1',
+        icon: 'device-icons/load.svg',
+        desc: '工业负载',
+        category: 'load',
+        x: 800,
+        y: 200
+    });
+
+    // 创建两条测试连线
+    window.deviceConnections.push({
+        from: 'test-device-1',
+        fromDirection: 'right',
+        to: 'test-device-2',
+        toDirection: 'left',
+        controlPoints: []  // 初始没有控制点
+    });
+
+    window.deviceConnections.push({
+        from: 'test-device-2',
+        fromDirection: 'right',
+        to: 'test-device-3',
+        toDirection: 'left',
+        controlPoints: []  // 初始没有控制点
+    });
+
+    // 渲染设备和连线
+    window.renderPlacedDevices();
+    window.drawAllConnections();
+
+    console.log('%c✅ 测试设备和连线创建成功！', 'color: #00d9ff; font-size: 16px; font-weight: bold;');
+    console.log('%c现在你可以：', 'color: #00d9ff; font-size: 14px;');
+    console.log('1. 鼠标悬停在连线上 → 连线会高亮变亮');
+    console.log('2. 点击连线 → 连线变橙色，显示控制点🟠');
+    console.log('3. 拖拽橙色圆点 → 实时调整路径');
+    console.log('4. 点击绿色+按钮 → 添加更多控制点');
+    console.log('5. 右键连线 → 重置/删除连线');
+})();
+</div>
+
+        <button class="btn" onclick="copyCode()">
+            📋 复制测试代码
+        </button>
+        <button class="btn btn-secondary" onclick="window.open('devices.html', '_blank')">
+            🚀 打开 devices.html
+        </button>
+
+        <div class="step">
+            <span class="step-number">5</span>
+            <strong>开始测试</strong><br>
+            现在你应该看到三个设备和两条连线。尝试以下操作：
+            <ul>
+                <li>🖱️ <strong>鼠标悬停</strong>在连线上 → 连线会高亮变亮</li>
+                <li>👆 <strong>点击连线</strong> → 连线变橙色，显示控制点</li>
+                <li>🎯 <strong>拖拽橙色圆点</strong> → 路径实时更新</li>
+                <li>➕ <strong>点击绿色+按钮</strong> → 添加更多控制点</li>
+                <li>🖱️ <strong>右键连线</strong> → 重置路径或删除连线</li>
+            </ul>
+        </div>
+
+        <div class="success">
+            <strong>✅ 完成！</strong>现在您可以自由调整连线路径了。<br>
+            如果遇到问题，点击工具栏的 <strong>蓝色问号按钮 ？</strong> 查看帮助。
+        </div>
+
+        <h2>🔍 调试命令</h2>
+
+        <div class="step">
+            如果功能不正常，可以在控制台执行以下命令检查：
+        </div>
+
+        <div class="code">// 查看所有连线
+console.log('连线数据:', window.deviceConnections);
+
+// 查看所有设备
+console.log('设备数据:', window.placedDevices);
+
+// 手动选中第一条连线
+window.selectConnection(0);
+
+// 手动重绘所有连线
+window.drawAllConnections();
+
+// 检查全局变量是否存在
+console.log({
+    hasPlacedDevices: typeof window.placedDevices !== 'undefined',
+    hasDeviceConnections: typeof window.deviceConnections !== 'undefined',
+    hasSelectConnection: typeof window.selectConnection === 'function'
+});</div>
+
+        <h2>📚 更多帮助</h2>
+
+        <div class="step">
+            查看详细使用说明：
+            <a href="连线编辑功能使用说明.md" target="_blank" style="color: #00d9ff; text-decoration: none; font-weight: bold;">
+                📖 连线编辑功能使用说明.md
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            const code = document.getElementById('testCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ 代码已复制到剪贴板！\n\n现在：\n1. 打开 devices.html\n2. 切换到能量流视图\n3. 按 F12 打开控制台\n4. 粘贴代码并按回车');
+            }).catch(err => {
+                alert('复制失败，请手动复制代码');
+            });
+        }
+    </script>
+</body>
+</html>

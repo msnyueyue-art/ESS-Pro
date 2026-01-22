@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个性化设置 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <style>
+        /* 主内容区 */
+        .main-content {
+            background: #f8fafc;
+            min-height: calc(100vh - 60px);
+            padding: 24px;
+        }
+
+        /* Tab导航 */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: #3b82f6;
+        }
+
+        .tab-btn.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 设置表格容器 */
+        .settings-table-wrapper {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .settings-table-wrapper {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        /* 设置表格 */
+        .settings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .settings-table thead {
+            background: #f8fafc;
+        }
+
+        [data-theme="dark"] .settings-table thead {
+            background: var(--bg-primary);
+        }
+
+        .settings-table th {
+            padding: 14px 24px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .settings-table th:nth-child(3) {
+            text-align: right;
+            padding-right: 24px;
+        }
+
+        [data-theme="dark"] .settings-table th {
+            border-bottom-color: var(--border-color);
+        }
+
+        .settings-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+        }
+
+        [data-theme="dark"] .settings-table tbody tr {
+            border-bottom-color: var(--border-color);
+        }
+
+        .settings-table tbody tr:hover {
+            background: #fafbfc;
+        }
+
+        [data-theme="dark"] .settings-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .settings-table td {
+            padding: 16px 24px;
+            font-size: 14px;
+            color: #1e293b;
+            vertical-align: middle;
+        }
+
+        /* 名称列 */
+        .setting-name-cell {
+            min-width: 250px;
+        }
+
+        .setting-name {
+            font-weight: 500;
+            color: #1e293b;
+            margin: 0 0 4px 0;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        /* 预览列 */
+        .preview-cell {
+            width: 180px;
+        }
+
+        .preview-thumbnail {
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: #fafbfc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preview-thumbnail:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        [data-theme="dark"] .preview-thumbnail {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+        }
+
+        .preview-thumbnail.logo {
+            width: 80px;
+            height: 28px;
+            padding: 3px;
+            position: relative;
+        }
+
+        .preview-thumbnail.poster {
+            width: 60px;
+            height: 34px;
+            position: relative;
+        }
+
+        .preview-thumbnail.energy {
+            width: 40px;
+            height: 40px;
+            padding: 3px;
+            position: relative;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 10px;
+        }
+
+        .preview-placeholder i {
+            font-size: 20px;
+            margin-bottom: 2px;
+            display: block;
+            opacity: 0.5;
+        }
+
+        /* 鼠标悬停预览效果 */
+        .preview-thumbnail::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 100;
+        }
+
+        .preview-thumbnail:hover::after {
+            opacity: 1;
+        }
+
+        .preview-hover-zoom {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 400px;
+            max-height: 400px;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 9998;
+        }
+
+        .preview-thumbnail:hover .preview-hover-zoom {
+            opacity: 1;
+        }
+
+        .preview-hover-zoom img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        [data-theme="dark"] .preview-hover-zoom {
+            background: var(--bg-secondary);
+            border-color: #3b82f6;
+        }
+
+        /* 操作列 */
+        .action-cell {
+            width: 120px;
+            text-align: right;
+        }
+
+        /* 覆盖全局按钮样式 */
+        body[data-page="personalization"] .btn,
+        body[data-page="personalization"] .btn-primary,
+        body[data-page="personalization"] .btn-secondary {
+            height: 36px !important;
+            min-height: 36px !important;
+            max-height: 36px !important;
+            width: auto !important;
+            padding: 0 16px !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            border: none;
+            white-space: nowrap;
+            line-height: 1 !important;
+            box-sizing: border-box !important;
+        }
+
+        body[data-page="personalization"] .btn i {
+            font-size: 14px !important;
+        }
+
+        body[data-page="personalization"] .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none !important;
+        }
+
+        body[data-page="personalization"] .btn-primary:hover {
+            background: #2563eb;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        body[data-page="personalization"] .btn-secondary {
+            background: transparent;
+            color: #64748b;
+            border: 1px solid #e2e8f0 !important;
+        }
+
+        body[data-page="personalization"] .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1 !important;
+            color: #475569;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+        }
+
+        [data-theme="dark"] .toast {
+            background: var(--bg-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 3px solid #10b981;
+        }
+
+        .toast.error {
+            border-left: 3px solid #ef4444;
+        }
+
+        .toast i {
+            font-size: 18px;
+        }
+
+        .toast.success i {
+            color: #10b981;
+        }
+
+        .toast.error i {
+            color: #ef4444;
+        }
+
+        /* 图片预览模态框 */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 15000;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .image-modal.show {
+            display: flex;
+        }
+
+        .image-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #1e293b;
+            transition: all 0.2s ease;
+        }
+
+        .image-modal-close:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .image-modal-title {
+            position: absolute;
+            bottom: -40px;
+            left: 0;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 右侧编辑抽屉 */
+        .edit-drawer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+        }
+
+        .edit-drawer.show {
+            display: block;
+        }
+
+        .edit-drawer-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 480px;
+            max-width: 90vw;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .edit-drawer.show .edit-drawer-panel {
+            transform: translateX(0);
+        }
+
+        [data-theme="dark"] .edit-drawer-panel {
+            background: var(--bg-secondary);
+        }
+
+        .edit-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .edit-modal-header {
+            border-bottom-color: var(--border-color);
+        }
+
+        .edit-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .edit-modal-close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .edit-modal-close-btn:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .edit-modal-body {
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 图片预览区域 */
+        .image-preview-area {
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            margin-bottom: 16px;
+            min-height: 200px;
+        }
+
+        [data-theme="dark"] .image-preview-area {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+        }
+
+        .image-preview-area img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .image-preview-area img:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .empty-image-placeholder {
+            text-align: center;
+            color: #94a3b8;
+            padding: 30px 20px;
+        }
+
+        .empty-image-placeholder i {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .empty-image-placeholder p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* 图片操作按钮 */
+        .image-actions {
+            display: flex;
+            gap: 8px;
+            flex-direction: row;
+        }
+
+        .image-actions .btn {
+            flex: 0 0 auto;
+            align-self: flex-start;
+        }
+
+        .edit-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .edit-modal-footer {
+            border-top-color: var(--border-color);
+        }
+
+        /* 强制覆盖编辑抽屉内的按钮 */
+        #editDrawer .btn,
+        #editDrawer button.btn,
+        #editDrawer .btn-primary,
+        #editDrawer .btn-secondary,
+        .edit-drawer-panel .btn,
+        .edit-drawer-panel button.btn,
+        .image-actions button,
+        .image-actions .btn,
+        .image-actions button.btn-secondary,
+        .edit-modal-footer button,
+        .edit-modal-footer .btn {
+            height: 36px !important;
+            min-height: 36px !important;
+            max-height: 36px !important;
+            width: auto !important;
+            padding: 0 16px !important;
+            font-size: 14px !important;
+            line-height: 1 !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 0 auto !important;
+        }
+    </style>
+</head>
+<body data-page="personalization">
+    <!-- 导航栏容器 -->
+    <div id="navbar-container"></div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- Tab导航 -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('system')">
+                <i class="fas fa-cog"></i> 系统设置
+            </button>
+            <button class="tab-btn" onclick="switchTab('energy')">
+                <i class="fas fa-bolt"></i> 能量流图标
+            </button>
+        </div>
+
+        <!-- Tab内容 - 系统设置 -->
+        <div id="tab-system" class="tab-content active">
+            <div class="settings-table-wrapper">
+                <table class="settings-table">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>预览</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Logo设置 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">系统 Logo</div>
+                                <div class="setting-desc">建议尺寸：800x200px，支持 PNG 格式（透明背景）</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail logo" id="logoPreview" onclick="openImageModal('logo', '系统 Logo')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-tag"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('logo', '系统 Logo', 'image/png')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- 登录页海报设置 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">登录页海报</div>
+                                <div class="setting-desc">建议尺寸：1920x1080px，支持 JPG、PNG 格式</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail poster" id="posterPreview" onclick="openImageModal('poster', '登录页海报')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('poster', '登录页海报', 'image/*')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab内容 - 能量流图标 -->
+        <div id="tab-energy" class="tab-content">
+            <div class="settings-table-wrapper">
+                <table class="settings-table">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>预览</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 光伏图标 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">☀️ 光伏</div>
+                                <div class="setting-desc">建议尺寸：512x512px，支持 PNG、SVG 格式</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail energy" id="solarPreview" onclick="openImageModal('solar', '光伏图标')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-solar-panel"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('solar', '光伏图标', 'image/*')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- 储能柜图标 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">🔋 储能柜</div>
+                                <div class="setting-desc">建议尺寸：512x512px，支持 PNG、SVG 格式</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail energy" id="storagePreview" onclick="openImageModal('storage', '储能柜图标')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-battery-full"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('storage', '储能柜图标', 'image/*')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- 负载图标 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">🏢 负载</div>
+                                <div class="setting-desc">建议尺寸：512x512px，支持 PNG、SVG 格式</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail energy" id="loadPreview" onclick="openImageModal('load', '负载图标')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-building"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('load', '负载图标', 'image/*')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- 柴发图标 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">⚙️ 柴发</div>
+                                <div class="setting-desc">建议尺寸：512x512px，支持 PNG、SVG 格式</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail energy" id="generatorPreview" onclick="openImageModal('generator', '柴发图标')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-cog"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('generator', '柴发图标', 'image/*')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- 市电图标 -->
+                        <tr>
+                            <td class="setting-name-cell">
+                                <div class="setting-name">⚡ 市电</div>
+                                <div class="setting-desc">建议尺寸：512x512px，支持 PNG、SVG 格式</div>
+                            </td>
+                            <td class="preview-cell">
+                                <div class="preview-thumbnail energy" id="gridPreview" onclick="openImageModal('grid', '市电图标')">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-plug"></i>
+                                        <div>暂无</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <button class="btn btn-primary" onclick="openEditModal('grid', '市电图标', 'image/*')">
+                                    <i class="fas fa-edit"></i>
+                                    编辑
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">操作成功</span>
+    </div>
+
+    <!-- 图片预览模态框 -->
+    <div class="image-modal" id="imageModal" onclick="closeImageModal(event)">
+        <div class="image-modal-content">
+            <button class="image-modal-close" onclick="closeImageModal(event)">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="预览">
+            <div class="image-modal-title" id="modalTitle"></div>
+        </div>
+    </div>
+
+    <!-- 右侧编辑抽屉 -->
+    <div class="edit-drawer" id="editDrawer" onclick="closeEditDrawer(event)">
+        <div class="edit-drawer-panel" onclick="event.stopPropagation()">
+            <div class="edit-modal-header">
+                <h3 class="edit-modal-title" id="editModalTitle">编辑图片</h3>
+                <button class="edit-modal-close-btn" onclick="closeEditDrawer()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="edit-modal-body">
+                <!-- 图片预览区域 -->
+                <div class="image-preview-area" id="imagePreviewArea">
+                    <div class="empty-image-placeholder">
+                        <i class="fas fa-image"></i>
+                        <p>暂无图片</p>
+                    </div>
+                </div>
+
+                <!-- 图片操作按钮 -->
+                <div class="image-actions">
+                    <button class="btn btn-primary" onclick="triggerEditFileInput()" style="height: 36px !important; min-height: 36px !important; max-height: 36px !important; width: auto !important; padding: 0 16px !important; font-size: 14px !important; line-height: 1 !important; border-radius: 6px !important; box-sizing: border-box !important;">
+                        <i class="fas fa-sync-alt"></i>
+                        替换
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetCurrentImage()" style="height: 36px !important; min-height: 36px !important; max-height: 36px !important; width: auto !important; padding: 0 16px !important; font-size: 14px !important; line-height: 1 !important; border-radius: 6px !important; box-sizing: border-box !important;">
+                        <i class="fas fa-undo"></i>
+                        恢复默认
+                    </button>
+                </div>
+
+                <input type="file" id="editFileInput" class="file-input" accept="image/*" onchange="handleEditImageUpload(event)">
+            </div>
+            <div class="edit-modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditDrawer()" style="height: 36px !important; min-height: 36px !important; max-height: 36px !important; width: auto !important; padding: 0 16px !important; font-size: 14px !important; line-height: 1 !important; border-radius: 6px !important; box-sizing: border-box !important;">取消</button>
+                <button class="btn btn-primary" onclick="saveEditImage()" style="height: 36px !important; min-height: 36px !important; max-height: 36px !important; width: auto !important; padding: 0 16px !important; font-size: 14px !important; line-height: 1 !important; border-radius: 6px !important; box-sizing: border-box !important;">
+                    <i class="fas fa-save"></i>
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEditType = null;
+        let currentEditImage = null;
+
+        // Tab切换功能
+        function switchTab(tabName) {
+            // 移除所有tab按钮的active类
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // 隐藏所有tab内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 激活点击的tab按钮
+            event.target.closest('.tab-btn').classList.add('active');
+
+            // 显示对应的tab内容
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentImages();
+        });
+
+        // 加载当前图片
+        function loadCurrentImages() {
+            // 加载登录页海报
+            const savedPoster = localStorage.getItem('customPoster');
+            if (savedPoster) {
+                displayImage('poster', savedPoster);
+            } else {
+                displayDefaultImage('poster');
+            }
+
+            // 加载Logo
+            const savedLogo = localStorage.getItem('customLogo');
+            if (savedLogo) {
+                displayImage('logo', savedLogo);
+            } else {
+                displayDefaultImage('logo');
+            }
+
+            // 加载能量流图标 - 光伏
+            const savedSolar = localStorage.getItem('customSolarIcon');
+            if (savedSolar) {
+                displayImage('solar', savedSolar);
+            } else {
+                displayDefaultImage('solar');
+            }
+
+            // 加载能量流图标 - 储能柜
+            const savedStorage = localStorage.getItem('customStorageIcon');
+            if (savedStorage) {
+                displayImage('storage', savedStorage);
+            } else {
+                displayDefaultImage('storage');
+            }
+
+            // 加载能量流图标 - 负载
+            const savedLoad = localStorage.getItem('customLoadIcon');
+            if (savedLoad) {
+                displayImage('load', savedLoad);
+            } else {
+                displayDefaultImage('load');
+            }
+
+            // 加载能量流图标 - 柴发
+            const savedGenerator = localStorage.getItem('customGeneratorIcon');
+            if (savedGenerator) {
+                displayImage('generator', savedGenerator);
+            } else {
+                displayDefaultImage('generator');
+            }
+
+            // 加载能量流图标 - 市电
+            const savedGrid = localStorage.getItem('customGridIcon');
+            if (savedGrid) {
+                displayImage('grid', savedGrid);
+            } else {
+                displayDefaultImage('grid');
+            }
+        }
+
+        // 显示默认图片
+        function displayDefaultImage(type) {
+            const previewMap = {
+                poster: 'posterPreview',
+                logo: 'logoPreview',
+                solar: 'solarPreview',
+                storage: 'storagePreview',
+                load: 'loadPreview',
+                generator: 'generatorPreview',
+                grid: 'gridPreview'
+            };
+
+            const defaultImages = {
+                poster: '摄图网_601826889_风力发电机和储能柜(非企业商用).jpg',
+                logo: 'logo.png',
+                solar: 'icon/光伏1.png',
+                storage: '储能柜.png',
+                load: 'icon/负载1.png',
+                generator: 'icon/发电机1.png',
+                grid: 'icon/电网1.png'
+            };
+
+            const container = document.getElementById(previewMap[type]);
+            const defaultImg = defaultImages[type];
+
+            if (!container) return;
+
+            // 尝试加载默认图片
+            const img = new Image();
+            img.onload = function() {
+                // 图片加载成功，显示图片
+                const tooltipMap = {
+                    poster: '点击查看大图',
+                    logo: '点击查看大图',
+                    solar: '点击查看大图',
+                    storage: '点击查看大图',
+                    load: '点击查看大图',
+                    generator: '点击查看大图',
+                    grid: '点击查看大图'
+                };
+                container.setAttribute('data-tooltip', tooltipMap[type]);
+                container.innerHTML = `
+                    <img src="${defaultImg}" class="preview-image" alt="${type}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    <div class="preview-hover-zoom">
+                        <img src="${defaultImg}" alt="预览">
+                    </div>
+                `;
+            };
+            img.onerror = function() {
+                // 图片加载失败，显示占位符
+                container.innerHTML = getPlaceholder(type);
+            };
+            img.src = defaultImg;
+        }
+
+        // 获取占位符HTML
+        function getPlaceholder(type) {
+            const placeholders = {
+                poster: '<div class="preview-placeholder"><i class="fas fa-image"></i><div>暂无</div></div>',
+                logo: '<div class="preview-placeholder"><i class="fas fa-tag"></i><div>暂无</div></div>',
+                solar: '<div class="preview-placeholder"><i class="fas fa-solar-panel"></i><div>暂无</div></div>',
+                storage: '<div class="preview-placeholder"><i class="fas fa-battery-full"></i><div>暂无</div></div>',
+                load: '<div class="preview-placeholder"><i class="fas fa-building"></i><div>暂无</div></div>',
+                generator: '<div class="preview-placeholder"><i class="fas fa-cog"></i><div>暂无</div></div>',
+                grid: '<div class="preview-placeholder"><i class="fas fa-plug"></i><div>暂无</div></div>'
+            };
+            return placeholders[type];
+        }
+
+        // 显示图片
+        function displayImage(type, dataUrl) {
+            const previewMap = {
+                poster: 'posterPreview',
+                logo: 'logoPreview',
+                solar: 'solarPreview',
+                storage: 'storagePreview',
+                load: 'loadPreview',
+                generator: 'generatorPreview',
+                grid: 'gridPreview'
+            };
+
+            const tooltipMap = {
+                poster: '点击查看大图',
+                logo: '点击查看大图',
+                solar: '点击查看大图',
+                storage: '点击查看大图',
+                load: '点击查看大图',
+                generator: '点击查看大图',
+                grid: '点击查看大图'
+            };
+
+            const container = document.getElementById(previewMap[type]);
+            if (!container) return;
+
+            container.setAttribute('data-tooltip', tooltipMap[type]);
+            container.innerHTML = `
+                <img src="${dataUrl}" class="preview-image" alt="${type}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                <div class="preview-hover-zoom">
+                    <img src="${dataUrl}" alt="预览">
+                </div>
+            `;
+        }
+
+        // 打开编辑抽屉
+        function openEditModal(type, title, accept) {
+            currentEditType = type;
+            currentEditImage = null;
+
+            // 更新标题
+            document.getElementById('editModalTitle').textContent = title;
+            document.getElementById('editFileInput').accept = accept;
+
+            // 检查是否有现有图片
+            const previewMap = {
+                poster: 'posterPreview',
+                logo: 'logoPreview',
+                solar: 'solarPreview',
+                storage: 'storagePreview',
+                load: 'loadPreview',
+                generator: 'generatorPreview',
+                grid: 'gridPreview'
+            };
+
+            const container = document.getElementById(previewMap[type]);
+            const existingImg = container ? container.querySelector('img.preview-image') : null;
+
+            const imagePreviewArea = document.getElementById('imagePreviewArea');
+
+            if (existingImg) {
+                // 显示现有图片
+                currentEditImage = existingImg.src;
+                imagePreviewArea.innerHTML = `<img src="${existingImg.src}" alt="当前图片" onclick="openImageModalFromDrawer('${title}')">`;
+            } else {
+                // 显示空状态
+                imagePreviewArea.innerHTML = `
+                    <div class="empty-image-placeholder">
+                        <i class="fas fa-image"></i>
+                        <p>暂无图片</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('editDrawer').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭编辑抽屉
+        function closeEditDrawer(event) {
+            if (!event || event.target.id === 'editDrawer') {
+                document.getElementById('editDrawer').classList.remove('show');
+                document.body.style.overflow = '';
+                currentEditType = null;
+                currentEditImage = null;
+                document.getElementById('editFileInput').value = '';
+            }
+        }
+
+        // 恢复默认
+        function resetCurrentImage() {
+            currentEditImage = null;
+            const imagePreviewArea = document.getElementById('imagePreviewArea');
+            imagePreviewArea.innerHTML = `
+                <div class="empty-image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <p>暂无图片</p>
+                </div>
+            `;
+            showToast('已恢复默认，点击保存应用', 'success');
+        }
+
+        // 触发文件选择
+        function triggerEditFileInput() {
+            document.getElementById('editFileInput').click();
+        }
+
+        // 处理文件上传
+        function handleEditImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 验证文件大小（最大5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('文件大小不能超过 5MB', 'error');
+                return;
+            }
+
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                showToast('请选择有效的图片文件', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                currentEditImage = dataUrl;
+
+                // 获取当前标题
+                const currentTitle = document.getElementById('editModalTitle').textContent;
+
+                // 显示图片
+                const imagePreviewArea = document.getElementById('imagePreviewArea');
+                imagePreviewArea.innerHTML = `<img src="${dataUrl}" alt="预览" onclick="openImageModalFromDrawer('${currentTitle}')">`;
+
+                showToast('图片已加载', 'success');
+            };
+            reader.readAsDataURL(file);
+
+            // 重置input，允许再次选择相同文件
+            event.target.value = '';
+        }
+
+        // 保存编辑的图片
+        function saveEditImage() {
+            if (!currentEditType) return;
+
+            const storageKeys = {
+                poster: 'customPoster',
+                logo: 'customLogo',
+                solar: 'customSolarIcon',
+                storage: 'customStorageIcon',
+                load: 'customLoadIcon',
+                generator: 'customGeneratorIcon',
+                grid: 'customGridIcon'
+            };
+
+            if (currentEditImage) {
+                // 保存自定义图片
+                displayImage(currentEditType, currentEditImage);
+                localStorage.setItem(storageKeys[currentEditType], currentEditImage);
+                showToast('保存成功！', 'success');
+            } else {
+                // 恢复默认图片
+                localStorage.removeItem(storageKeys[currentEditType]);
+                displayDefaultImage(currentEditType);
+                showToast('已恢复默认图片', 'success');
+            }
+
+            closeEditDrawer();
+        }
+
+        // 重置图片
+        function resetImage(type) {
+            if (confirm('确定要恢复默认图片吗？')) {
+                const storageKeys = {
+                    poster: 'customPoster',
+                    logo: 'customLogo',
+                    solar: 'customSolarIcon',
+                    storage: 'customStorageIcon',
+                    load: 'customLoadIcon',
+                    generator: 'customGeneratorIcon',
+                    grid: 'customGridIcon'
+                };
+
+                localStorage.removeItem(storageKeys[type]);
+                displayDefaultImage(type);
+                showToast('已恢复默认图片', 'success');
+            }
+        }
+
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            toast.className = 'toast ' + type;
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 打开图片预览模态框
+        function openImageModal(type, title) {
+            const previewMap = {
+                poster: 'posterPreview',
+                logo: 'logoPreview',
+                solar: 'solarPreview',
+                storage: 'storagePreview',
+                load: 'loadPreview',
+                generator: 'generatorPreview',
+                grid: 'gridPreview'
+            };
+
+            const container = document.getElementById(previewMap[type]);
+            const img = container ? container.querySelector('img.preview-image') : null;
+
+            if (!img) {
+                showToast('暂无图片可预览', 'error');
+                return;
+            }
+
+            document.getElementById('modalImage').src = img.src;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('imageModal').classList.add('show');
+
+            // 阻止body滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭图片预览模态框
+        function closeImageModal(event) {
+            // 点击模态框外部或关闭按钮时关闭
+            if (event.target.id === 'imageModal' || event.target.closest('.image-modal-close')) {
+                document.getElementById('imageModal').classList.remove('show');
+
+                // 只在编辑抽屉未打开时恢复 body 滚动
+                const editDrawer = document.getElementById('editDrawer');
+                if (!editDrawer.classList.contains('show')) {
+                    document.body.style.overflow = '';
+                }
+
+                event.stopPropagation();
+            }
+        }
+
+        // 从编辑抽屉打开图片预览
+        function openImageModalFromDrawer(title) {
+            if (!currentEditImage) {
+                showToast('暂无图片可预览', 'error');
+                return;
+            }
+
+            document.getElementById('modalImage').src = currentEditImage;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('imageModal').classList.add('show');
+
+            // 注意：不需要设置 body overflow，因为编辑抽屉已经设置了
+        }
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // 关闭图片预览模态框
+                const imageModal = document.getElementById('imageModal');
+                if (imageModal.classList.contains('show')) {
+                    imageModal.classList.remove('show');
+
+                    // 只在编辑抽屉未打开时恢复 body 滚动
+                    const editDrawer = document.getElementById('editDrawer');
+                    if (!editDrawer.classList.contains('show')) {
+                        document.body.style.overflow = '';
+                    }
+                    return; // 如果关闭了图片预览，不继续处理编辑抽屉
+                }
+
+                // 关闭编辑抽屉
+                const editDrawer = document.getElementById('editDrawer');
+                if (editDrawer.classList.contains('show')) {
+                    closeEditDrawer({ target: { id: 'editDrawer' } });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

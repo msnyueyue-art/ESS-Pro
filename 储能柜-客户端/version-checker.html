@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件版本检查器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 32px;
+        }
+
+        .status-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .status-section.success {
+            background: #dcfce7;
+            border-color: #10b981;
+        }
+
+        .status-section.error {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        .status-section.warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .status-section.info {
+            background: #dbeafe;
+            border-color: #3b82f6;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .status-icon {
+            font-size: 24px;
+        }
+
+        .status-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .status-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
+        }
+
+        .status-content ul {
+            margin-top: 12px;
+            margin-left: 20px;
+        }
+
+        .status-content li {
+            margin-bottom: 8px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .check-icon {
+            font-size: 20px;
+            min-width: 20px;
+        }
+
+        .check-text {
+            flex: 1;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-check"></i> 文件版本检查器</h1>
+            <p>自动检测 cabinet-detail.html 是否加载了最新修复</p>
+        </div>
+
+        <div class="content">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 16px; color: #64748b;">正在检查文件版本...</p>
+            </div>
+
+            <div id="results" style="display: none;">
+                <!-- 结果将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检查项配置
+        const checks = [
+            {
+                name: 'safeUpdateElement 函数',
+                check: () => {
+                    return fetch('cabinet-detail.html')
+                        .then(response => response.text())
+                        .then(html => html.includes('function safeUpdateElement'));
+                },
+                description: 'DOM 元素安全更新辅助函数'
+            },
+            {
+                name: 'powerElement null 检查',
+                check: () => {
+                    return fetch('cabinet-detail.html')
+                        .then(response => response.text())
+                        .then(html => html.includes('if (powerElement)'));
+                },
+                description: '防止访问不存在的 DOM 元素'
+            },
+            {
+                name: '语言变体处理',
+                check: () => {
+                    return fetch('cabinet-detail.html')
+                        .then(response => response.text())
+                        .then(html => html.includes('lang.split'));
+                },
+                description: '处理 en-US → en 等语言代码变体'
+            },
+            {
+                name: '空白字段防护',
+                check: () => {
+                    return fetch('cabinet-detail.html')
+                        .then(response => response.text())
+                        .then(html => html.includes('组件的所有字段都已隐藏'));
+                },
+                description: '所有字段隐藏时显示友好提示'
+            },
+            {
+                name: 'translations 等待机制',
+                check: () => {
+                    return fetch('cabinet-detail.html')
+                        .then(response => response.text())
+                        .then(html => html.includes('翻译对象未加载，等待'));
+                },
+                description: '确保翻译对象加载后再初始化页面'
+            }
+        ];
+
+        // 执行检查
+        async function runChecks() {
+            const results = [];
+            let passedCount = 0;
+
+            for (let i = 0; i < checks.length; i++) {
+                const check = checks[i];
+                try {
+                    const passed = await check.check();
+                    results.push({
+                        name: check.name,
+                        description: check.description,
+                        passed: passed
+                    });
+                    if (passed) passedCount++;
+                } catch (error) {
+                    results.push({
+                        name: check.name,
+                        description: check.description,
+                        passed: false,
+                        error: error.message
+                    });
+                }
+            }
+
+            displayResults(results, passedCount);
+        }
+
+        // 显示结果
+        function displayResults(results, passedCount) {
+            const loadingEl = document.getElementById('loading');
+            const resultsEl = document.getElementById('results');
+
+            loadingEl.style.display = 'none';
+            resultsEl.style.display = 'block';
+
+            const totalChecks = checks.length;
+            const allPassed = passedCount === totalChecks;
+
+            let html = '';
+
+            // 总体状态
+            if (allPassed) {
+                html += `
+                    <div class="status-section success">
+                        <div class="status-header">
+                            <span class="status-icon">✅</span>
+                            <span class="status-title">所有修复已正确加载！</span>
+                        </div>
+                        <div class="status-content">
+                            <p>文件版本检查通过，所有 ${totalChecks} 项修复都已应用。</p>
+                            <p style="margin-top: 8px;">您现在可以：</p>
+                            <ul>
+                                <li>打开 <code>cabinet-detail.html?cabinetId=1</code> 进行测试</li>
+                                <li>检查浏览器控制台，应该没有错误</li>
+                                <li>测试各个组件 tab 的数据显示</li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-success" onclick="openCabinetDetail()">
+                                <i class="fas fa-external-link-alt"></i>
+                                打开 cabinet-detail.html
+                            </button>
+                            <button class="btn btn-secondary" onclick="location.reload()">
+                                <i class="fas fa-redo"></i>
+                                重新检查
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="status-section error">
+                        <div class="status-header">
+                            <span class="status-icon">❌</span>
+                            <span class="status-title">检测到浏览器缓存问题！</span>
+                        </div>
+                        <div class="status-content">
+                            <p>通过检查：${passedCount}/${totalChecks} 项</p>
+                            <p style="margin-top: 12px; font-weight: 600;">您的浏览器正在使用缓存的旧版本文件。</p>
+                            <p style="margin-top: 8px;">请立即清除缓存：</p>
+                            <ul>
+                                <li><strong>macOS:</strong> 按 <code>Command + Shift + R</code></li>
+                                <li><strong>Windows:</strong> 按 <code>Ctrl + Shift + R</code></li>
+                                <li>或打开开发者工具，右键刷新按钮 → "清空缓存并硬性重新加载"</li>
+                            </ul>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${(passedCount/totalChecks)*100}%"></div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="location.reload()">
+                                <i class="fas fa-sync-alt"></i>
+                                我已清除缓存，重新检查
+                            </button>
+                            <button class="btn btn-secondary" onclick="showClearCacheGuide()">
+                                <i class="fas fa-question-circle"></i>
+                                查看详细指南
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 详细检查结果
+            html += `
+                <div class="status-section info" style="margin-top: 24px;">
+                    <div class="status-header">
+                        <span class="status-icon">📋</span>
+                        <span class="status-title">详细检查结果</span>
+                    </div>
+                    <div class="status-content">
+            `;
+
+            results.forEach(result => {
+                const icon = result.passed ? '✅' : '❌';
+                const color = result.passed ? '#10b981' : '#ef4444';
+                html += `
+                    <div class="check-item">
+                        <span class="check-icon" style="color: ${color}">${icon}</span>
+                        <div class="check-text">
+                            <div style="font-weight: 600; margin-bottom: 4px;">${result.name}</div>
+                            <div style="font-size: 12px; color: #64748b;">${result.description}</div>
+                            ${result.error ? `<div style="font-size: 12px; color: #ef4444; margin-top: 4px;">错误: ${result.error}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            resultsEl.innerHTML = html;
+        }
+
+        // 打开 cabinet-detail.html
+        function openCabinetDetail() {
+            window.open('cabinet-detail.html?cabinetId=1', '_blank');
+        }
+
+        // 显示缓存清除指南
+        function showClearCacheGuide() {
+            window.open('browser-cache-clear-guide.md', '_blank');
+        }
+
+        // 页面加载时自动运行检查
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runChecks, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试i18n</title>
+    <script src="../ueh/components/i18n.js"></script>
+</head>
+<body>
+    <h1 data-i18n="accountSettings.pageTitle">Loading...</h1>
+    <p data-i18n="accountSettings.tabs.basicInfo">Loading...</p>
+    
+    <button onclick="testTranslation()">测试翻译</button>
+    <button onclick="window.i18n.setLanguage('zh')">切换到中文</button>
+    <button onclick="window.i18n.setLanguage('en')">切换到英文</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function testTranslation() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<h3>翻译测试结果：</h3>';
+            
+            // 测试中文
+            window.i18n.currentLanguage = 'zh';
+            const zhTitle = window.i18n.getText('accountSettings.pageTitle');
+            const zhBasic = window.i18n.getText('accountSettings.tabs.basicInfo');
+            result.innerHTML += `<p>中文 pageTitle: ${zhTitle}</p>`;
+            result.innerHTML += `<p>中文 basicInfo: ${zhBasic}</p>`;
+            
+            // 测试英文
+            window.i18n.currentLanguage = 'en';
+            const enTitle = window.i18n.getText('accountSettings.pageTitle');
+            const enBasic = window.i18n.getText('accountSettings.tabs.basicInfo');
+            result.innerHTML += `<p>英文 pageTitle: ${enTitle}</p>`;
+            result.innerHTML += `<p>英文 basicInfo: ${enBasic}</p>`;
+            
+            console.log('Current language:', window.i18n.currentLanguage);
+            console.log('Available keys in zh:', Object.keys(window.i18n.translations.zh));
+        }
+        
+        setTimeout(testTranslation, 1000);
+    </script>
+</body>
+</html>

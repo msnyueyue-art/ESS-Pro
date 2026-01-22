@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 科技风背景网格 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 150, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 150, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 动态光效背景 */
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-effects::after {
+            content: '';
+            position: absolute;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, rgba(0, 150, 255, 0.2) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+            top: -100%;
+            left: -100%;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Logo */
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 150, 255, 0.3);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* 标题 */
+        .title {
+            margin-bottom: 20px;
+        }
+
+        .title-zh {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0096ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 5px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .title-en {
+            font-size: 20px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* 介绍文字 */
+        .intro {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        /* 选项容器 */
+        .options-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 50px;
+        }
+
+        /* 选项卡片 */
+        .option-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: 280px;
+            padding: 40px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(0, 212, 255, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .option-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 212, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 150, 255, 0.3);
+        }
+
+        .option-card:hover::before {
+            opacity: 1;
+        }
+
+        /* 图标 */
+        .option-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(0, 150, 255, 0.1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .option-icon svg {
+            color: #00d4ff;
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover .option-icon svg {
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .web-icon {
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.2), rgba(0, 96, 255, 0.2));
+        }
+
+        .hmi-icon {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 150, 255, 0.2));
+        }
+
+        /* 选项标题 */
+        .option-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 选项描述 */
+        .option-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 箭头图标 */
+        .arrow-icon {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover .arrow-icon {
+            opacity: 0.7;
+            transform: translateX(0);
+        }
+
+        /* 粒子效果 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #00d4ff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 10s infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* 语言切换图标 */
+        .lang-switcher {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 10000;
+        }
+
+        .lang-icon {
+            font-size: 24px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+            opacity: 0.9;
+        }
+
+        .lang-icon:hover {
+            color: #00d4ff;
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .lang-icon:active {
+            transform: scale(0.95);
+        }
+
+        /* 语言下拉菜单 */
+        .lang-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 140px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 25px rgba(0, 150, 255, 0.3);
+        }
+
+        .lang-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .lang-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .lang-option:hover {
+            background: #f3f4f6;
+        }
+
+        .lang-option.active {
+            background: #e5f3ff;
+            color: #2563eb;
+        }
+
+        .lang-option .flag {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .title-zh {
+                font-size: 32px;
+            }
+
+            .title-en {
+                font-size: 16px;
+            }
+
+            .options-container {
+                gap: 20px;
+            }
+
+            .option-card {
+                width: 240px;
+                padding: 30px 20px;
+            }
+
+            .lang-switcher {
+                top: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 语言切换器 -->
+    <div class="lang-switcher">
+        <i class="fas fa-globe lang-icon" onclick="toggleLangDropdown()" title="切换语言"></i>
+        <div class="lang-dropdown" id="langDropdown">
+            <div class="lang-option active" onclick="selectLang('zh')">
+                <span class="flag">🇨🇳</span>
+                <span>中文</span>
+            </div>
+            <div class="lang-option" onclick="selectLang('en')">
+                <span class="flag">🇺🇸</span>
+                <span>English</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-effects"></div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- Logo -->
+        <div class="logo">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+        </div>
+
+        <!-- 标题 -->
+        <div class="title">
+            <h1 class="title-zh" id="mainTitle">储能柜管理系统</h1>
+            <p class="title-en" id="mainSubtitle">Energy Storage Management System</p>
+        </div>
+
+        <!-- 介绍文字 -->
+        <p class="intro" id="introText">
+            智能化储能管理解决方案，提供全方位的能源监控、管理和优化服务。
+            支持Web云平台远程管理和HMI触摸屏本地控制两种操作方式。
+        </p>
+
+        <!-- 选项容器 -->
+        <div class="options-container">
+            <!-- Web云平台 -->
+            <a href="login.html" target="_blank" class="option-card">
+                <div class="option-icon web-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                </div>
+                <h3 class="option-title" id="webTitle">Web云平台</h3>
+                <p class="option-desc" id="webDesc">
+                    通过浏览器远程访问<br>
+                    随时随地监控管理<br>
+                    支持多设备同时访问
+                </p>
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+
+            <!-- HMI触摸屏 -->
+            <a href="javascript:void(0)" onclick="goToHMI()" class="option-card">
+                <div class="option-icon hmi-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+                        <line x1="9" y1="18" x2="15" y2="18"/>
+                    </svg>
+                </div>
+                <h3 class="option-title" id="hmiTitle">HMI触摸屏</h3>
+                <p class="option-desc" id="hmiDesc">
+                    本地触摸屏操作<br>
+                    直观便捷的控制界面<br>
+                    实时响应快速操作
+                </p>
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- 粒子效果 -->
+    <div class="particles" id="particles"></div>
+
+    <script>
+        // 语言切换相关变量和翻译文本
+        let currentLang = localStorage.getItem('language') || 'zh';
+
+        const translations = {
+            zh: {
+                pageTitle: '储能柜管理系统',
+                mainTitle: '储能柜管理系统',
+                mainSubtitle: 'Energy Storage Management System',
+                introText: '智能化储能管理解决方案，提供全方位的能源监控、管理和优化服务。支持Web云平台远程管理和HMI触摸屏本地控制两种操作方式。',
+                webTitle: 'Web云平台',
+                webDesc: '通过浏览器远程访问<br>随时随地监控管理<br>支持多设备同时访问',
+                hmiTitle: 'HMI触摸屏',
+                hmiDesc: '本地触摸屏操作<br>直观便捷的控制界面<br>实时响应快速操作'
+            },
+            en: {
+                pageTitle: 'Energy Storage Management System',
+                mainTitle: 'Energy Storage Management System',
+                mainSubtitle: 'COMMERCIAL ENERGY STORAGE MANAGEMENT SYSTEM',
+                introText: 'Intelligent energy storage management solution, providing comprehensive energy monitoring, management and optimization services. Supports both Web cloud platform remote management and HMI touch screen local control.',
+                webTitle: 'Web Cloud Platform',
+                webDesc: 'Remote access via browser<br>Monitor and manage anytime, anywhere<br>Support multiple devices simultaneously',
+                hmiTitle: 'HMI Touch Screen',
+                hmiDesc: 'Local touch screen operation<br>Intuitive and convenient control interface<br>Real-time response and fast operation'
+            }
+        };
+
+        // 初始化语言
+        function initLanguage() {
+            setLanguage(currentLang);
+            updateLangDropdown();
+        }
+
+        // 切换语言下拉菜单
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 选择语言
+        function selectLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            setLanguage(lang);
+            updateLangDropdown();
+
+            // 关闭下拉菜单
+            setTimeout(() => {
+                document.getElementById('langDropdown').classList.remove('show');
+            }, 200);
+        }
+
+        // 更新下拉菜单激活状态
+        function updateLangDropdown() {
+            document.querySelectorAll('.lang-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.onclick.toString().includes(currentLang)) {
+                    option.classList.add('active');
+                }
+            });
+        }
+
+        // 设置语言
+        function setLanguage(lang) {
+            const t = translations[lang];
+            if (!t) return;
+
+            // 更新所有文本元素
+            const elements = {
+                'mainTitle': t.mainTitle,
+                'mainSubtitle': t.mainSubtitle,
+                'introText': t.introText,
+                'webTitle': t.webTitle,
+                'hmiTitle': t.hmiTitle
+            };
+
+            Object.keys(elements).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = elements[id];
+                }
+            });
+
+            // 更新HTML元素(包含<br>)
+            const htmlElements = {
+                'webDesc': t.webDesc,
+                'hmiDesc': t.hmiDesc
+            };
+
+            Object.keys(htmlElements).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerHTML = htmlElements[id];
+                }
+            });
+
+            // 更新HTML语言属性
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en-US';
+
+            // 更新页面标题
+            document.title = t.pageTitle;
+        }
+
+        // 点击外部关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.lang-switcher')) {
+                document.getElementById('langDropdown').classList.remove('show');
+            }
+        });
+
+        // 创建粒子效果
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 5) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            initLanguage();
+            createParticles();
+        });
+
+        // HMI跳转函数
+        function goToHMI() {
+            // 在新窗口中打开触摸屏框架
+            window.open('touchscreen/touchscreen-display.html', '_blank');
+        }
+    </script>
+</body>
+</html>

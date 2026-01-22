@@ -1,0 +1,3446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息策略管理 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 页面布局 */
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* 开关组件样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .switch input:checked + .switch-slider {
+            background-color: #3562E3;
+        }
+
+        .switch input:checked + .switch-slider:before {
+            transform: translateX(20px);
+        }
+
+        [data-theme="dark"] .switch-slider {
+            background-color: #4b5563;
+        }
+
+        [data-theme="dark"] .switch input:checked + .switch-slider {
+            background-color: #3562E3;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: #3562E3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2c51c9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(53, 98, 227, 0.25);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+            color: var(--text-primary);
+            border-color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+            border-color: #475569;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #475569;
+            border-color: var(--primary-color);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-search,
+        .btn-reset {
+            background: #EFEFEF;
+            color: #333;
+            border: none;
+        }
+
+        .btn-search:hover,
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+
+        [data-theme="dark"] .btn-search,
+        [data-theme="dark"] .btn-reset {
+            background: #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .btn-search:hover,
+        [data-theme="dark"] .btn-reset:hover {
+            background: #64748b;
+        }
+
+        /* 通知方式样式 */
+        .notification-item {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: var(--text-primary);
+            background: #f3f4f6;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            white-space: nowrap;
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+
+        [data-theme="dark"] .notification-item {
+            background: #334155;
+            border-color: #475569;
+        }
+
+        /* 输入框样式 */
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] .form-textarea {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+
+        /* ========== 搜索筛选卡片样式 ========== */
+        .search-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        [data-theme="dark"] .search-section {
+            background: #1e293b;
+        }
+
+        .search-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 列表头部样式 */
+        .list-header {
+            margin-bottom: 20px;
+        }
+
+        /* 筛选和搜索样式 */
+        .filter-select {
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: var(--text-primary);
+            min-width: 180px;
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] .filter-select {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+
+        .rule-search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .rule-search-input {
+            width: 100%;
+            height: 40px;
+            padding: 0 40px 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        [data-theme="dark"] .rule-search-input {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        .rule-search-input:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+
+        .rule-search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .rule-search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        /* ========== 规则表格样式 ========== */
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 24px;
+        }
+
+        [data-theme="dark"] .content-card {
+            background: #1e293b;
+        }
+
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .rules-table thead {
+            background: transparent;
+        }
+
+        .rules-table th {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        /* 表格列宽优化 */
+        .rules-table th:nth-child(1) { width: 25%; min-width: 200px; } /* 策略名称 */
+        .rules-table th:nth-child(2) { width: 25%; min-width: 180px; } /* 触发条件 */
+        .rules-table th:nth-child(3) { width: 12%; min-width: 90px; }  /* 通知类型 */
+        .rules-table th:nth-child(4) { width: 10%; min-width: 80px; text-align: center; }  /* 状态 */
+        .rules-table th:nth-child(5) { width: 15%; min-width: 140px; } /* 创建时间 */
+        .rules-table th:nth-child(6) { width: 13%; min-width: 150px; text-align: center; } /* 操作 */
+
+        [data-theme="dark"] .rules-table th {
+            background: #0f172a;
+            border-bottom-color: #334155;
+        }
+
+        .rules-table td {
+            padding: 14px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        /* 防止内容溢出和换行 */
+        .rules-table td:nth-child(2) { /* 触发条件列 */
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 状态列居中 */
+        .rules-table td:nth-child(4) {
+            text-align: center;
+        }
+
+        [data-theme="dark"] .rules-table td {
+            border-bottom-color: #334155;
+        }
+
+        .rules-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .rules-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        [data-theme="dark"] .rules-table tbody tr:hover {
+            background: #0f172a;
+        }
+
+        .rules-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 策略名称列样式 */
+        .rule-name-cell {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .rule-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .rule-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 规则类型徽章 */
+        .rule-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .rule-type-badge.system {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .rule-type-badge.custom {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+
+        [data-theme="dark"] .rule-type-badge.system {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        [data-theme="dark"] .rule-type-badge.custom {
+            background: rgba(168, 85, 247, 0.2);
+            color: #d8b4fe;
+        }
+
+        /* 通知类型badge */
+        .alarm-level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .alarm-level-badge.fault {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .alarm-level-badge.warning {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .alarm-level-badge.notice {
+            background: #dbeafe;
+            color: #3b82f6;
+        }
+
+        [data-theme="dark"] .alarm-level-badge.fault {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        [data-theme="dark"] .alarm-level-badge.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        [data-theme="dark"] .alarm-level-badge.notice {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        /* 状态badge */
+        .rule-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .rule-status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .rule-status-badge.inactive {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        [data-theme="dark"] .rule-status-badge.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        [data-theme="dark"] .rule-status-badge.inactive {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+
+        .rule-status-badge i {
+            font-size: 8px;
+        }
+
+        .badge-dot {
+            font-size: 6px;
+        }
+
+
+        /* 时间列样式 */
+        .rule-time-cell {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* 空状态 */
+        .no-data-cell {
+            text-align: center;
+            padding: 60px 40px !important;
+            color: var(--text-secondary);
+        }
+
+        .no-data-icon {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.3;
+            color: var(--text-secondary);
+        }
+
+        .no-data-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .no-data-subtext {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* ========== 模态框样式 ========== */
+        .rule-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .rule-modal-overlay[style*="display: flex"] {
+            display: flex !important;
+        }
+
+        .rule-modal-container {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+        }
+
+        [data-theme="dark"] .rule-modal-container {
+            background: #1e293b;
+        }
+
+        .rule-modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #3562E3 0%, #4f7aeb 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .rule-modal-title {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .rule-modal-subtitle {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .rule-modal-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .rule-modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .rule-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .rule-form-group {
+            margin-bottom: 20px;
+        }
+
+        .rule-form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .rule-form-label {
+            color: #cbd5e1;
+        }
+
+        .rule-form-required {
+            color: #ef4444;
+        }
+
+        .rule-modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: #f8fafc;
+        }
+
+        [data-theme="dark"] .rule-modal-footer {
+            background: #0f172a;
+            border-top-color: #334155;
+        }
+
+        /* 降噪配置暗黑模式样式 */
+        [data-theme="dark"] .rule-form-group > div[style*="background: #f8fafc"] {
+            background: #1e293b !important;
+        }
+
+        [data-theme="dark"] .rule-form-group input[type="time"],
+        [data-theme="dark"] .rule-form-group input[type="date"] {
+            background: #0f172a;
+            border-color: #334155;
+            color: #cbd5e1;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        [data-theme="dark"] .dropdown-menu {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-item:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background: #334155;
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* 模板分类标签页样式 */
+        .template-tabs-wrapper {
+            background: #f8fafc;
+        }
+
+        [data-theme="dark"] .template-tabs-wrapper {
+            background: #0f172a;
+        }
+
+        .template-tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .template-tab:hover {
+            color: var(--text-primary);
+            background: rgba(53, 98, 227, 0.05);
+        }
+
+        .template-tab.active {
+            color: #3562E3;
+            border-bottom-color: #3562E3;
+        }
+
+        [data-theme="dark"] .template-tab {
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .template-tab:hover {
+            color: #e2e8f0;
+            background: rgba(53, 98, 227, 0.1);
+        }
+
+        [data-theme="dark"] .template-tab.active {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+        }
+
+        .template-category {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* 暗黑主题支持 */
+        [data-theme="dark"] .btn {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .btn:hover {
+            background: #475569;
+        }
+
+        /* 抽屉暗黑主题 */
+        [data-theme="dark"] #deviceDrawer > div:last-child {
+            background: #1e293b;
+        }
+
+        [data-theme="dark"] #deviceDrawer thead tr {
+            border-bottom-color: #334155;
+        }
+
+        [data-theme="dark"] #deviceDrawer tbody tr {
+            border-bottom-color: #334155;
+        }
+
+        [data-theme="dark"] #deviceSearchInput,
+        [data-theme="dark"] #deviceSiteFilter {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] #snFilter,
+        [data-theme="dark"] #siteFilter {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .rule-search-wrapper {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .rules-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .rules-toolbar-right {
+                justify-content: space-between;
+            }
+
+            .rule-search-wrapper {
+                width: 100%;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+        }
+
+        /* ========== 通知设置面板样式 ========== */
+        .notification-panel-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+        }
+
+        .notification-panel-overlay.show {
+            display: block;
+        }
+
+        .notification-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            bottom: 0;
+            width: 600px;
+            background: white;
+            box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+            z-index: 10001;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        [data-theme="dark"] .notification-panel {
+            background: #1e293b;
+        }
+
+        .notification-panel.show {
+            right: 0;
+        }
+
+        .notification-panel-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .notification-panel-close {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .notification-panel-close:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .notification-panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .notification-section {
+            margin-bottom: 28px;
+        }
+
+        .notification-section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .notification-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        [data-theme="dark"] .notification-checkbox-item {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .notification-checkbox-item:hover {
+            border-color: #3562E3;
+            box-shadow: 0 1px 3px rgba(53, 98, 227, 0.1);
+        }
+
+        [data-theme="dark"] .notification-checkbox-item:hover {
+            background: #1e293b;
+            border-color: #3562E3;
+        }
+
+        .notification-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #3562E3;
+            flex-shrink: 0;
+        }
+
+        .notification-checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        .notification-checkbox-item i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .noise-reduction-config {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .noise-reduction-config {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .noise-reduction-item {
+            margin-bottom: 16px;
+        }
+
+        .noise-reduction-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .noise-reduction-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .notification-panel-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            background: white;
+        }
+
+        .notification-panel-footer .btn {
+            height: 32px;
+            padding: 0 20px;
+            font-size: 13px;
+            min-width: auto;
+            width: auto;
+            flex: 0 0 auto;
+        }
+
+        [data-theme="dark"] .notification-panel-header {
+            background: #1e293b;
+            border-bottom-color: #334155;
+        }
+
+        [data-theme="dark"] .notification-panel-title {
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .notification-panel-close {
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .notification-panel-close:hover {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .notification-panel-footer {
+            background: #1e293b;
+            border-top-color: #334155;
+        }
+
+        /* 通知类型卡片暗色主题 */
+        [data-theme="dark"] .notification-section-title {
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] input[type="time"] {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        /* 策略类型卡片网格 */
+        .policy-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .policy-type-card {
+            position: relative;
+            padding: 20px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .policy-type-card:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .policy-type-card.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #3b82f6;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .policy-type-card.selected .policy-type-icon {
+            font-size: 36px;
+            transform: scale(1.1);
+        }
+
+        .policy-type-card.selected .policy-type-name {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .policy-type-card.selected .policy-type-desc {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .policy-type-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .policy-type-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .policy-type-desc {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.4;
+            transition: all 0.3s ease;
+        }
+
+        /* 暗色主题 */
+        [data-theme="dark"] .policy-type-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .policy-type-card:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+
+        [data-theme="dark"] .policy-type-name {
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .policy-type-desc {
+            color: #94a3b8;
+        }
+
+        /* 通知方式复选框样式 */
+        .notification-checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .notification-checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .notification-checkbox-label input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .notification-checkbox-text {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .notification-checkbox-text {
+            color: #e2e8f0;
+        }
+
+        /* 统计卡片样式 */
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        }
+
+        /* 统计卡片暗色主题 */
+        [data-theme="dark"] .stats-card {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+        }
+
+        [data-theme="dark"] .stats-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+        }
+    </style>
+</head>
+<body data-page="rule-engine">
+    <!-- 导航栏容器由 navbar.js 自动填充 -->
+
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <div class="page-header">
+            <h1 class="page-title" data-translate="alarmRuleManagement">消息策略管理</h1>
+        </div>
+
+        <!-- 消息通知统计 -->
+        <div class="stats-section" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+            <!-- 故障消息统计 -->
+            <div class="stats-card" style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 3px solid #dc2626; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="flex: 1;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">故障消息策略</div>
+                        <div style="display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px;">
+                            <span id="faultCount" style="font-size: 32px; font-weight: 700; color: #1f2937; line-height: 1;">0</span>
+                            <span style="font-size: 13px; color: #9ca3af;">条</span>
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af; line-height: 1.4;">
+                            启用 3 个通知渠道
+                        </div>
+                    </div>
+                    <div style="width: 48px; height: 48px; background: #fef2f2; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 24px; color: #dc2626;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 告警消息统计 -->
+            <div class="stats-card" style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 3px solid #f59e0b; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="flex: 1;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">告警消息策略</div>
+                        <div style="display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px;">
+                            <span id="warningCount" style="font-size: 32px; font-weight: 700; color: #1f2937; line-height: 1;">0</span>
+                            <span style="font-size: 13px; color: #9ca3af;">条</span>
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af; line-height: 1.4;">
+                            启用 2 个通知渠道
+                        </div>
+                    </div>
+                    <div style="width: 48px; height: 48px; background: #fffbeb; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #f59e0b;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知消息统计 -->
+            <div class="stats-card" style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 3px solid #3b82f6; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="flex: 1;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">普通消息策略</div>
+                        <div style="display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px;">
+                            <span id="noticeCount" style="font-size: 32px; font-weight: 700; color: #1f2937; line-height: 1;">0</span>
+                            <span style="font-size: 13px; color: #9ca3af;">条</span>
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af; line-height: 1.4;">
+                            启用 1 个通知渠道
+                        </div>
+                    </div>
+                    <div style="width: 48px; height: 48px; background: #eff6ff; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-info-circle" style="font-size: 24px; color: #3b82f6;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索筛选卡片 -->
+        <div class="search-section">
+            <div class="search-row">
+                <div class="rule-search-wrapper">
+                    <input
+                        type="text"
+                        class="rule-search-input"
+                        id="ruleSearchInput"
+                        placeholder="搜索策略名称..."
+                        data-translate-placeholder="ruleSearchPlaceholder"
+                    />
+                    <i class="fas fa-search rule-search-icon"></i>
+                </div>
+                <select class="filter-select" id="ruleAlarmLevelFilter" onchange="filterRules()">
+                    <option value="all">全部通知类型</option>
+                    <option value="fault">故障</option>
+                    <option value="warning">告警</option>
+                    <option value="notice">通知</option>
+                </select>
+                <select class="filter-select" id="ruleStatusFilter" onchange="filterRules()">
+                    <option value="all">全部状态</option>
+                    <option value="active">已启用</option>
+                    <option value="inactive">已禁用</option>
+                </select>
+                <div style="margin-left: auto; display: flex; gap: 12px;">
+                    <button class="btn btn-search" onclick="searchRules(document.getElementById('ruleSearchInput').value)">
+                        <i class="fas fa-search"></i>
+                        <span data-translate="btnSearch">查询</span>
+                    </button>
+                    <button class="btn btn-reset" onclick="refreshRuleList()">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-translate="ruleRefresh">重置</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 规则列表卡片 -->
+        <div class="content-card">
+            <div class="list-header">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div style="position: relative; width: fit-content;">
+                        <button class="btn btn-primary" onclick="toggleCreateMenu()" style="width: auto;">
+                            <i class="fas fa-plus"></i>
+                            <span data-translate="ruleNewRule">新建策略</span>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; margin-left: 4px;"></i>
+                        </button>
+                        <!-- 下拉菜单 -->
+                        <div id="createMenu" class="dropdown-menu">
+                            <div class="dropdown-item" onclick="createFromTemplate()">
+                                <i class="fas fa-cube"></i>
+                                <span data-translate="ruleFromTemplate">从模版创建</span>
+                            </div>
+                            <div class="dropdown-item" onclick="createCustomRule()">
+                                <i class="fas fa-magic"></i>
+                                <span data-translate="ruleCustom">自定义策略</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 通知设置按钮 -->
+                    <button class="btn btn-secondary" onclick="openNotificationPanel()" style="width: auto; display: none;">
+                        <i class="fas fa-bell"></i>
+                        <span>通知设置</span>
+                    </button>
+                </div>
+            </div>
+            <table class="rules-table">
+                <thead>
+                    <tr>
+                        <th data-translate="ruleColName">策略名称</th>
+                        <th data-translate="ruleColCondition">触发条件</th>
+                        <th data-translate="ruleColAlarmLevel">通知类型</th>
+                        <th data-translate="ruleColStatus">状态</th>
+                        <th data-translate="ruleColDeployedDevices">下发设备</th>
+                        <th data-translate="ruleColCreateTime">创建时间</th>
+                        <th style="text-align: center;" data-translate="ruleColActions">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="rulesTableBody">
+                    <!-- 动态内容将在这里生成 -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- 移动端遮罩 -->
+    <div id="mobileOverlay" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 998;" onclick="closeMobileSidebar()"></div>
+
+    <!-- 规则编辑模态框 -->
+    <div id="ruleModal" class="rule-modal-overlay">
+        <div class="rule-modal-container">
+            <!-- 模态框头部 -->
+            <div class="rule-modal-header">
+                <div>
+                    <h2 class="rule-modal-title" id="modalTitle" data-translate="ruleNewRule">新建策略</h2>
+                    <p class="rule-modal-subtitle" id="modalSubtitle"></p>
+                </div>
+                <button class="rule-modal-close-btn" onclick="closeRuleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- 模态框内容 -->
+            <div class="rule-modal-body">
+                <form id="ruleForm">
+                    <!-- 策略类型 - 优先选择 -->
+                    <div class="rule-form-group">
+                        <label class="rule-form-label">
+                            <span data-translate="ruleTypeLabel">策略类型</span>
+                            <span class="rule-form-required">*</span>
+                        </label>
+                        <div class="policy-type-grid">
+                            <div class="policy-type-card" onclick="selectPolicyType('fault')" data-type="fault">
+                                <div class="policy-type-icon" style="color: #dc2626;">⚠️</div>
+                                <div class="policy-type-name">故障</div>
+                                <div class="policy-type-desc">需要立即修复</div>
+                            </div>
+                            <div class="policy-type-card" onclick="selectPolicyType('warning')" data-type="warning">
+                                <div class="policy-type-icon" style="color: #f59e0b;">⚡</div>
+                                <div class="policy-type-name">告警</div>
+                                <div class="policy-type-desc">需要查看关注</div>
+                            </div>
+                            <div class="policy-type-card" onclick="selectPolicyType('notice')" data-type="notice">
+                                <div class="policy-type-icon" style="color: #3b82f6;">ℹ️</div>
+                                <div class="policy-type-name">通知</div>
+                                <div class="policy-type-desc">知道就行</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="ruleType" name="ruleType" value="">
+                    </div>
+
+                    <!-- 基本信息 - 一排显示 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                        <div class="rule-form-group" style="margin-bottom: 0;">
+                            <label class="rule-form-label">
+                                <span data-translate="ruleNameLabel">策略名称</span>
+                                <span class="rule-form-required">*</span>
+                            </label>
+                            <input type="text" class="form-input" id="ruleName" placeholder="请输入策略名称" required>
+                        </div>
+
+                        <div class="rule-form-group" style="margin-bottom: 0;">
+                            <label class="rule-form-label" data-translate="ruleDescriptionLabel">策略描述</label>
+                            <input type="text" class="form-input" id="ruleDescription" placeholder="请输入策略描述">
+                        </div>
+                    </div>
+
+                    <!-- 触发条件 -->
+                    <div class="rule-form-group">
+                        <label class="rule-form-label">
+                            <span data-translate="ruleTriggerCondition">触发条件</span>
+                            <span class="rule-form-required">*</span>
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <select class="form-select" id="ruleParameter">
+                                    <option value="">选择监测参数</option>
+                                    <option value="temperature">温度</option>
+                                    <option value="soc">SOC</option>
+                                    <option value="voltage">电压</option>
+                                    <option value="current">电流</option>
+                                    <option value="power">功率</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select class="form-select" id="ruleOperator">
+                                    <option value="">选择条件</option>
+                                    <option value="gt">大于 (&gt;)</option>
+                                    <option value="lt">小于 (&lt;)</option>
+                                    <option value="gte">大于等于 (&gt;=)</option>
+                                    <option value="lte">小于等于 (&lt;=)</option>
+                                    <option value="eq">等于 (=)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <input type="number" class="form-input" id="ruleThreshold" placeholder="阈值">
+                            </div>
+                            <div>
+                                <input type="number" class="form-input" id="ruleDuration" placeholder="持续时间(分钟)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 通知方式 -->
+                    <div class="rule-form-group">
+                        <label class="rule-form-label">
+                            <span data-translate="ruleNotificationMethod">通知方式</span>
+                            <span class="rule-form-required">*</span>
+                        </label>
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px;">
+                            <label class="notification-checkbox-label">
+                                <input type="checkbox" id="notifyInApp" value="inapp" checked disabled>
+                                <span class="notification-checkbox-text">
+                                    <i class="fas fa-bell" style="margin-right: 6px; color: #3b82f6;"></i>
+                                    站内信
+                                </span>
+                            </label>
+                            <label class="notification-checkbox-label">
+                                <input type="checkbox" id="notifyEmail" value="email">
+                                <span class="notification-checkbox-text">
+                                    <i class="fas fa-envelope" style="margin-right: 6px; color: #10b981;"></i>
+                                    邮件
+                                </span>
+                            </label>
+                            <label class="notification-checkbox-label">
+                                <input type="checkbox" id="notifySms" value="sms">
+                                <span class="notification-checkbox-text">
+                                    <i class="fas fa-mobile-alt" style="margin-right: 6px; color: #f59e0b;"></i>
+                                    短信
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 消息配置 -->
+                    <div class="rule-form-group" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+                        <label class="rule-form-label" style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">
+                            <i class="fas fa-cog" style="margin-right: 8px; color: var(--primary-color);"></i>
+                            <span data-translate="ruleAlarmConfig">消息配置</span>
+                        </label>
+
+                        <!-- 消息去重 -->
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-copy" style="color: #3b82f6;"></i>
+                                    <span style="font-weight: 500; font-size: 14px;" data-translate="ruleDeduplication">消息去重</span>
+                                    <span style="color: var(--text-secondary); font-size: 12px;" data-translate="ruleDeduplicationHint">（避免重复通知）</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="smartNoiseReductionEnabled">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            <div id="smartNoiseReductionConfig" style="display: none; padding-left: 28px;">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;" data-translate="ruleTimeWindow">时间窗口</label>
+                                    <select class="form-select" id="noiseReductionWindow" style="max-width: 300px;">
+                                        <option value="5">5分钟</option>
+                                        <option value="10" selected>10分钟</option>
+                                        <option value="30">30分钟</option>
+                                        <option value="60">1小时</option>
+                                        <option value="120">2小时</option>
+                                    </select>
+                                </div>
+                                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px; font-size: 13px; line-height: 1.6;">
+                                    <div style="font-weight: 500; color: #1e40af; margin-bottom: 6px;">
+                                        <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                                        说明
+                                    </div>
+                                    <div style="color: #1e3a8a;">
+                                        同一设备的相同消息在时间窗口内只保留一条，避免重复通知
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 自动消除 -->
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                                    <span style="font-weight: 500; font-size: 14px;" data-translate="ruleAutoResolution">自动消除</span>
+                                    <span style="color: var(--text-secondary); font-size: 12px;" data-translate="ruleAutoResolutionHint">（参数恢复正常后自动解除消息）</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="autoResolutionEnabled" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            <div id="autoResolutionConfig" style="padding-left: 28px;">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;" data-translate="ruleResolutionCondition">消除条件</label>
+                                    <select class="form-select" id="autoResolutionCondition" style="max-width: 400px;">
+                                        <option value="normal" selected>参数恢复正常范围</option>
+                                    </select>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;" data-translate="ruleResolutionConditionHint">
+                                        示例：温度>60℃消息 → 温度≤60℃自动消除
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;" data-translate="ruleResolutionDelay">消除延迟（防抖）</label>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="number" class="form-input" id="autoResolutionDelay" placeholder="5" value="5" min="0" max="60" style="max-width: 100px;">
+                                        <span style="font-size: 13px; color: var(--text-secondary);">分钟</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;" data-translate="ruleResolutionDelayHint">
+                                        参数恢复正常并持续N分钟后才消除，避免频繁抖动
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 启用状态 -->
+                    <div class="rule-form-group">
+                        <label class="rule-form-label" data-translate="ruleEnableStatus">启用状态</label>
+                        <label class="switch">
+                            <input type="checkbox" id="ruleStatus" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="rule-modal-footer">
+                <button class="btn" onclick="closeRuleModal()" style="height: 40px; padding: 0 16px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+                    <span data-translate="btnCancel">取消</span>
+                </button>
+                <button class="btn btn-primary" onclick="saveRule()" style="height: 40px; padding: 0 16px; width: auto; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    <i class="fas fa-save"></i>
+                    <span data-translate="btnSave">保存</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加设备模态框 -->
+    <div id="addDeviceModal" class="rule-modal-overlay">
+        <div class="rule-modal-container" style="max-width: 800px;">
+            <!-- 头部 -->
+            <div class="rule-modal-header">
+                <div>
+                    <h2 class="rule-modal-title">添加设备</h2>
+                    <p class="rule-modal-subtitle">选择要下发规则的设备</p>
+                </div>
+                <button class="rule-modal-close-btn" onclick="closeAddDeviceModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- 主体内容 -->
+            <div class="rule-modal-body">
+                <!-- 顶部搜索栏 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <input
+                        type="text"
+                        id="deviceSearchInput"
+                        placeholder="搜索SN..."
+                        style="flex: 1; height: 40px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: white; color: var(--text-primary); transition: all 0.2s;"
+                    />
+                    <select id="deviceSiteFilter" style="flex: 1; height: 40px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: white; color: var(--text-primary); cursor: pointer;">
+                        <option value="">全部站点</option>
+                    </select>
+                    <button class="btn btn-search" onclick="applyDeviceFilter()" style="height: 40px; padding: 0 20px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 20px;">
+                        <i class="fas fa-search"></i>
+                        查询
+                    </button>
+                    <button class="btn btn-reset" onclick="resetDeviceFilter()" style="height: 40px; padding: 0 20px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 20px;">
+                        <i class="fas fa-redo"></i>
+                        重置
+                    </button>
+                </div>
+
+                <!-- 设备表格 -->
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="width: 50px; text-align: center; padding: 12px 16px;">
+                                    <input
+                                        type="checkbox"
+                                        id="selectAllNewDevices"
+                                        onchange="toggleAllNewDevices(this.checked)"
+                                        style="width: 18px; height: 18px; cursor: pointer;"
+                                    />
+                                </th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); font-size: 13px; width: 35%;">设备名称</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); font-size: 13px; width: 25%;">SN</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); font-size: 13px; width: 25%;">站点</th>
+                                <th style="text-align: center; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); font-size: 13px; width: 15%;">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availableDeviceList">
+                            <!-- 设备行将动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 底部操作区 -->
+            <div class="rule-modal-footer" style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button
+                    class="btn"
+                    onclick="closeAddDeviceModal()"
+                    style="width: 100px; height: 40px; padding: 0; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap;"
+                >
+                    取消
+                </button>
+                <button
+                    class="btn btn-primary"
+                    onclick="confirmAddDevices()"
+                    style="width: 120px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;"
+                >
+                    <i class="fas fa-check"></i>
+                    确认添加
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已下发设备抽屉 -->
+    <div id="deviceDrawer" style="display: none;">
+        <!-- 遮罩层 -->
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 999;" onclick="closeDeviceDrawer()"></div>
+        <!-- 抽屉内容 -->
+        <div style="position: fixed; top: 0; right: -450px; bottom: 0; width: 450px; background: white; box-shadow: -2px 0 8px rgba(0,0,0,0.1); z-index: 1000; transition: right 0.3s ease;">
+            <div style="padding: 24px; height: 100%; display: flex; flex-direction: column;">
+                <!-- 抽屉标题 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h3 id="drawerTitle" style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--text-primary);">已下发设备</h3>
+                        <p id="drawerSubtitle" style="margin: 0; font-size: 13px; color: var(--text-secondary);">规则"电池高温告警"已下发到 3 个设备</p>
+                    </div>
+                    <button onclick="closeDeviceDrawer()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                </div>
+
+                <!-- 搜索和操作栏 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                        <input
+                            type="text"
+                            id="snFilter"
+                            placeholder="搜索设备SN..."
+                            style="flex: 1; height: 40px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: white; color: var(--text-primary);"
+                        />
+                        <select id="siteFilter" style="flex: 1; height: 40px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: white; color: var(--text-primary); cursor: pointer;">
+                            <option value="">全部站点</option>
+                        </select>
+                        <button class="btn btn-search" onclick="filterDeployedDevices()" style="height: 40px; padding: 0 20px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 20px;">
+                            <i class="fas fa-search"></i>
+                            查询
+                        </button>
+                    </div>
+                    <button class="btn btn-primary" onclick="openAddDeviceModal()" style="width: 100px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
+                        添加设备
+                    </button>
+                    <button class="btn" onclick="batchRemoveDevices()" style="width: 100px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-left: 8px; background: #ef4444; color: white;">
+                        批量移除
+                    </button>
+                </div>
+
+                <!-- 设备列表 -->
+                <div style="flex: 1; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="text-align: center; padding: 12px 8px; font-weight: 600; color: var(--text-secondary); font-size: 13px; width: 50px;">
+                                    <input type="checkbox" id="selectAllDeployedDevices" onchange="toggleAllDeployedDevices(this.checked)" style="cursor: pointer;">
+                                </th>
+                                <th style="text-align: left; padding: 12px 8px; font-weight: 600; color: var(--text-secondary); font-size: 13px;">设备SN</th>
+                                <th style="text-align: left; padding: 12px 8px; font-weight: 600; color: var(--text-secondary); font-size: 13px;">站点</th>
+                                <th style="text-align: center; padding: 12px 8px; font-weight: 600; color: var(--text-secondary); font-size: 13px; width: 80px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deployedDeviceList">
+                            <!-- 已下发设备将动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 底部确认按钮 -->
+                <div style="padding: 20px 0 0 0; display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="closeDeviceDrawer()" style="width: 100px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                        确认
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模版选择模态框 -->
+    <div id="templateModal" class="rule-modal-overlay">
+        <div class="rule-modal-container">
+            <div class="rule-modal-header">
+                <div>
+                    <h2 class="rule-modal-title" data-translate="ruleSelectTemplate">选择规则模版</h2>
+                    <p class="rule-modal-subtitle">选择一个系统模版作为起点</p>
+                </div>
+                <button class="rule-modal-close-btn" onclick="closeTemplateModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- 分类标签页 -->
+            <div class="template-tabs-wrapper" style="border-bottom: 1px solid var(--border-color); padding: 0 24px;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="template-tab active" onclick="switchTemplateTab('inverter')" data-tab="inverter">
+                        <i class="fas fa-plug"></i>
+                        <span>逆变器</span>
+                    </button>
+                    <button class="template-tab" onclick="switchTemplateTab('battery')" data-tab="battery">
+                        <i class="fas fa-battery-three-quarters"></i>
+                        <span>电池</span>
+                    </button>
+                    <button class="template-tab" onclick="switchTemplateTab('meter')" data-tab="meter">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>电表</span>
+                    </button>
+                    <button class="template-tab" onclick="switchTemplateTab('temperature')" data-tab="temperature">
+                        <i class="fas fa-thermometer-half"></i>
+                        <span>温度</span>
+                    </button>
+                    <button class="template-tab" onclick="switchTemplateTab('fire')" data-tab="fire">
+                        <i class="fas fa-fire-extinguisher"></i>
+                        <span>消防</span>
+                    </button>
+                </div>
+            </div>
+            <div class="rule-modal-body">
+                <!-- 逆变器模版 -->
+                <div class="template-category" id="inverter-templates" style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('inverterOverload')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">逆变器过载告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">功率超过额定功率110%</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('inverterFault')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">逆变器故障告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">逆变器工作异常</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('inverterTemp')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">逆变器温度告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">逆变器温度过高</div>
+                    </div>
+                </div>
+
+                <!-- 电池模版 -->
+                <div class="template-category" id="battery-templates" style="display: none; grid-template-columns: 1fr; gap: 16px;">
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('batteryHighTemp')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">电池高温告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">温度超过55°C时触发告警</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('batteryLowSOC')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">电池SOC低告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">SOC低于20%时触发告警</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('batteryVoltageDiff')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">电池压差告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">单体电压差超过0.3V</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('batteryOverCurrent')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">电池过流告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">充放电流超过额定值</div>
+                    </div>
+                </div>
+
+                <!-- 电表模版 -->
+                <div class="template-category" id="meter-templates" style="display: none; grid-template-columns: 1fr; gap: 16px;">
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('energyAbnormal')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">能源异常告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">能源消耗异常波动</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('powerOverload')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">功率超标告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">总功率超过设定值</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('voltageAbnormal')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">电压异常告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">电网电压超出正常范围</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('currentAbnormal')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">电流异常告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">电流超过额定值</div>
+                    </div>
+                </div>
+
+                <!-- 温度模版 -->
+                <div class="template-category" id="temperature-templates" style="display: none; grid-template-columns: 1fr; gap: 16px;">
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('envTempHigh')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">环境高温告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">环境温度超过35°C</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('envTempLow')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">环境低温告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">环境温度低于0°C</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('humidityHigh')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">高湿度告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">湿度超过85%</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('deviceTempHigh')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">设备温度告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">设备表面温度过高</div>
+                    </div>
+                </div>
+
+                <!-- 消防模版 -->
+                <div class="template-category" id="fire-templates" style="display: none; grid-template-columns: 1fr; gap: 16px;">
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('smokeAlarm')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">烟雾告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">检测到烟雾信号</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('fireAlarm')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">火灾告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">检测到火灾信号</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('waterLeakage')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">漏水告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">检测到漏水信号</div>
+                    </div>
+                    <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectTemplate('gasLeakage')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">气体泄漏告警</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">检测到可燃气体泄漏</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-modal-footer">
+                <button class="btn btn-secondary" onclick="closeTemplateModal()">
+                    <span data-translate="btnCancel">取消</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知设置面板 -->
+    <div id="notificationPanelOverlay" class="notification-panel-overlay" onclick="closeNotificationPanel()"></div>
+    <div id="notificationPanel" class="notification-panel">
+        <!-- 面板头部 -->
+        <div class="notification-panel-header">
+            <h2 class="notification-panel-title">
+                <i class="fas fa-bell" style="margin-right: 8px;"></i>
+                告警通知策略
+            </h2>
+            <button class="notification-panel-close" onclick="closeNotificationPanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- 面板主体 -->
+        <div class="notification-panel-body">
+            <!-- 通知类型配置 -->
+            <div class="notification-section">
+                <div class="notification-section-title">
+                    <i class="fas fa-layer-group" style="color: #64748b;"></i>
+                    <span>通知类型设置</span>
+                </div>
+
+                <!-- 故障 -->
+                <div style="margin-bottom: 20px;">
+                    <!-- 通知类型标题 -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; cursor: pointer;" onclick="toggleAlarmLevel('fault')">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-chevron-down" id="faultChevron" style="color: #64748b; font-size: 12px; transition: transform 0.3s; transform: rotate(-90deg);"></i>
+                            <i class="fas fa-exclamation-circle" style="color: #dc2626; font-size: 16px;"></i>
+                            <span style="font-weight: 600; font-size: 14px; color: #1e293b;">故障</span>
+                            <span style="font-size: 12px; color: #64748b; margin-left: 4px;">需要立即修复</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="faultEnabled" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- 配置卡片 -->
+                    <div id="faultContent" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0; transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, border-width 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; border-width: 0;">
+                        <!-- 通知方式 -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">通知方式</div>
+                            <div class="notification-checkbox-group">
+                                <div class="notification-checkbox-item">
+                                    <input type="checkbox" id="faultSms" checked>
+                                    <i class="fas fa-sms" style="color: #64748b;"></i>
+                                    <label for="faultSms">短信</label>
+                                </div>
+                                <div class="notification-checkbox-item">
+                                    <input type="checkbox" id="faultEmail" checked>
+                                    <i class="fas fa-envelope" style="color: #64748b;"></i>
+                                    <label for="faultEmail">邮件</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 消息降噪 -->
+                        <div style="padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-volume-mute" style="color: #64748b; font-size: 13px;"></i>
+                                    <span style="font-size: 13px; color: #64748b;">消息降噪</span>
+                                </div>
+                                <label class="switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="faultNoiseEnabled" checked onchange="toggleNoiseConfig('fault', this.checked)">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            <div id="faultNoiseConfig" style="display: block; transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden; max-height: 100px; opacity: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: #64748b;">
+                                    <input type="number" class="form-input" id="faultRepeatInterval" value="30" min="1" max="120" style="width: 60px; text-align: center; height: 32px; font-size: 13px;">
+                                    <span>分钟内最多发送</span>
+                                    <input type="number" class="form-input" id="faultMaxRepeats" value="3" min="1" max="20" style="width: 50px; text-align: center; height: 32px; font-size: 13px;">
+                                    <span>次</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 告警 -->
+                <div style="margin-bottom: 20px;">
+                    <!-- 通知类型标题 -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; cursor: pointer;" onclick="toggleAlarmLevel('warning')">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-chevron-down" id="warningChevron" style="color: #64748b; font-size: 12px; transition: transform 0.3s; transform: rotate(-90deg);"></i>
+                            <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 16px;"></i>
+                            <span style="font-weight: 600; font-size: 14px; color: #1e293b;">告警</span>
+                            <span style="font-size: 12px; color: #64748b; margin-left: 4px;">需要查看关注</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="warningEnabled" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- 配置卡片 -->
+                    <div id="warningContent" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0; transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, border-width 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; border-width: 0;">
+                        <!-- 通知方式 -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">通知方式</div>
+                            <div class="notification-checkbox-group">
+                                <div class="notification-checkbox-item">
+                                    <input type="checkbox" id="warningSms">
+                                    <i class="fas fa-sms" style="color: #64748b;"></i>
+                                    <label for="warningSms">短信</label>
+                                </div>
+                                <div class="notification-checkbox-item">
+                                    <input type="checkbox" id="warningEmail" checked>
+                                    <i class="fas fa-envelope" style="color: #64748b;"></i>
+                                    <label for="warningEmail">邮件</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 消息降噪 -->
+                        <div style="padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-volume-mute" style="color: #64748b; font-size: 13px;"></i>
+                                    <span style="font-size: 13px; color: #64748b;">消息降噪</span>
+                                </div>
+                                <label class="switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="warningNoiseEnabled" checked onchange="toggleNoiseConfig('warning', this.checked)">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            <div id="warningNoiseConfig" style="display: block; transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden; max-height: 100px; opacity: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: #64748b;">
+                                    <input type="number" class="form-input" id="warningRepeatInterval" value="30" min="1" max="120" style="width: 60px; text-align: center; height: 32px; font-size: 13px;">
+                                    <span>分钟内最多发送</span>
+                                    <input type="number" class="form-input" id="warningMaxRepeats" value="3" min="1" max="20" style="width: 50px; text-align: center; height: 32px; font-size: 13px;">
+                                    <span>次</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 通知 -->
+                <div style="margin-bottom: 20px;">
+                    <!-- 通知类型标题 -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; cursor: pointer;" onclick="toggleAlarmLevel('notice')">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-chevron-down" id="noticeChevron" style="color: #64748b; font-size: 12px; transition: transform 0.3s; transform: rotate(-90deg);"></i>
+                            <i class="fas fa-info-circle" style="color: #3b82f6; font-size: 16px;"></i>
+                            <span style="font-weight: 600; font-size: 14px; color: #1e293b;">通知</span>
+                            <span style="font-size: 12px; color: #64748b; margin-left: 4px;">知道就行</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="noticeEnabled" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- 配置卡片 -->
+                    <div id="noticeContent" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0; transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, border-width 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; border-width: 0;">
+                        <!-- 通知方式 -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">通知方式</div>
+                            <div class="notification-checkbox-group">
+                                <div class="notification-checkbox-item">
+                                    <input type="checkbox" id="noticeSms">
+                                    <i class="fas fa-sms" style="color: #64748b;"></i>
+                                    <label for="noticeSms">短信</label>
+                                </div>
+                                <div class="notification-checkbox-item">
+                                    <input type="checkbox" id="noticeEmail" checked>
+                                    <i class="fas fa-envelope" style="color: #64748b;"></i>
+                                    <label for="noticeEmail">邮件</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 消息降噪 -->
+                        <div style="padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-volume-mute" style="color: #64748b; font-size: 13px;"></i>
+                                    <span style="font-size: 13px; color: #64748b;">消息降噪</span>
+                                </div>
+                                <label class="switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="noticeNoiseEnabled" checked onchange="toggleNoiseConfig('notice', this.checked)">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            <div id="noticeNoiseConfig" style="display: block; transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden; max-height: 100px; opacity: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: #64748b;">
+                                    <input type="number" class="form-input" id="noticeRepeatInterval" value="30" min="1" max="120" style="width: 60px; text-align: center; height: 32px; font-size: 13px;">
+                                    <span>分钟内最多发送</span>
+                                    <input type="number" class="form-input" id="noticeMaxRepeats" value="3" min="1" max="20" style="width: 50px; text-align: center; height: 32px; font-size: 13px;">
+                                    <span>次</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面板底部 -->
+        <div class="notification-panel-footer">
+            <button class="btn btn-secondary" onclick="closeNotificationPanel()">取消</button>
+            <button class="btn btn-primary" onclick="saveNotificationSettings()">
+                <i class="fas fa-save" style="margin-right: 4px;"></i>保存
+            </button>
+        </div>
+    </div>
+
+    <!-- 引入通用脚本 -->
+    <script src="navbar.js"></script>
+    <script src="i18n.js"></script>
+
+    <script>
+        // 全局规则数据
+        let allRules = [
+            // 系统模版
+            {
+                id: 'rule-001',
+                name: '电池高温告警',
+                description: '温度超过55°C时触发告警',
+                type: 'system',
+                condition: '温度 > 55°C 持续5分钟',
+                notifications: ['短信', '邮箱', 'APP推送'],
+                alarmLevel: 'fault',
+                status: 'active',
+                createTime: '2024-11-28 09:15:30',
+                deployedDevices: ['device-001', 'device-002', 'device-005']
+            },
+            {
+                id: 'rule-002',
+                name: '电池SOC低告警',
+                description: 'SOC低于20%时触发告警',
+                type: 'system',
+                condition: 'SOC < 20% 持续3分钟',
+                notifications: ['短信', '站内信'],
+                alarmLevel: 'warning',
+                status: 'active',
+                createTime: '2024-11-26 14:20:15',
+                deployedDevices: ['device-001', 'device-003']
+            },
+            {
+                id: 'rule-003',
+                name: '逆变器过载告警',
+                description: '功率超过额定功率110%',
+                type: 'system',
+                condition: '功率 > 110% 持续2分钟',
+                notifications: ['短信', '邮箱'],
+                alarmLevel: 'fault',
+                status: 'inactive',
+                createTime: '2024-11-25 16:40:22',
+                deployedDevices: []
+            },
+            {
+                id: 'rule-004',
+                name: '能源异常告警',
+                description: '能源消耗异常波动',
+                type: 'system',
+                condition: '波动 > 30% 持续10分钟',
+                notifications: ['短信', '邮箱', '站内信'],
+                alarmLevel: 'notice',
+                status: 'active',
+                createTime: '2024-11-15 08:50:10',
+                deployedDevices: ['device-001', 'device-002', 'device-003', 'device-005', 'device-006', 'device-007']
+            },
+            // 自定义策略
+            {
+                id: 'rule-101',
+                name: '夜间充电监控',
+                description: '监控夜间时段充电状态',
+                type: 'custom',
+                condition: '时段 22:00-06:00 充电异常',
+                notifications: ['站内信'],
+                alarmLevel: 'notice',
+                status: 'active',
+                createTime: '2024-11-20 11:30:00',
+                deployedDevices: []
+            }
+        ];
+
+        let filteredRules = [...allRules];
+        let currentRuleId = null; // 当前要下发的规则ID
+
+        // 模拟设备数据
+        const availableDevices = [
+            { id: 'device-001', name: '储能柜-A区-01号', sn: 'SN2024001', site: '北京总部站', location: 'A区1楼', status: 'online' },
+            { id: 'device-002', name: '储能柜-A区-02号', sn: 'SN2024002', site: '北京总部站', location: 'A区2楼', status: 'online' },
+            { id: 'device-003', name: '储能柜-B区-01号', sn: 'SN2024003', site: '上海分站', location: 'B区1楼', status: 'online' },
+            { id: 'device-004', name: '储能柜-B区-02号', sn: 'SN2024004', site: '上海分站', location: 'B区2楼', status: 'offline' },
+            { id: 'device-005', name: '储能柜-C区-01号', sn: 'SN2024005', site: '深圳分站', location: 'C区1楼', status: 'online' },
+            { id: 'device-006', name: '储能柜-C区-02号', sn: 'SN2024006', site: '深圳分站', location: 'C区2楼', status: 'online' },
+            { id: 'device-007', name: '储能柜-D区-01号', sn: 'SN2024007', site: '广州分站', location: 'D区1楼', status: 'online' },
+            { id: 'device-008', name: '储能柜-D区-02号', sn: 'SN2024008', site: '广州分站', location: 'D区2楼', status: 'offline' }
+        ];
+
+        // 初始化页面
+        function initializePage() {
+            renderRulesTable();
+            // 点击外部关闭下拉菜单
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn-primary')) {
+                    document.getElementById('createMenu').classList.remove('show');
+                }
+            });
+
+            // 降噪配置：智能降噪开关
+            const smartNoiseReductionEnabled = document.getElementById('smartNoiseReductionEnabled');
+            const smartNoiseReductionConfig = document.getElementById('smartNoiseReductionConfig');
+            if (smartNoiseReductionEnabled && smartNoiseReductionConfig) {
+                smartNoiseReductionEnabled.addEventListener('change', function() {
+                    smartNoiseReductionConfig.style.display = this.checked ? 'block' : 'none';
+                });
+            }
+
+            // 自动消警开关
+            const autoResolutionEnabled = document.getElementById('autoResolutionEnabled');
+            const autoResolutionConfig = document.getElementById('autoResolutionConfig');
+            if (autoResolutionEnabled && autoResolutionConfig) {
+                autoResolutionEnabled.addEventListener('change', function() {
+                    autoResolutionConfig.style.display = this.checked ? 'block' : 'none';
+                });
+            }
+
+        }
+
+        // 渲染规则表格
+        function renderRulesTable() {
+            const tbody = document.getElementById('rulesTableBody');
+
+            if (filteredRules.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="no-data-cell">
+                            <i class="fas fa-folder-open no-data-icon"></i>
+                            <div class="no-data-text">暂无策略</div>
+                            <div class="no-data-subtext">点击上方"新建策略"按钮创建您的第一条策略</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredRules.map(rule => `
+                <tr>
+                    <td class="rule-name-cell">
+                        <div class="rule-name">${rule.name}</div>
+                        <div class="rule-description">${rule.description}</div>
+                    </td>
+                    <td style="color: var(--text-secondary); font-size: 13px;">
+                        ${rule.condition}
+                    </td>
+                    <td>
+                        <span class="alarm-level-badge ${rule.alarmLevel}">
+                            ${rule.alarmLevel === 'fault' ? '故障' : rule.alarmLevel === 'warning' ? '告警' : '通知'}
+                        </span>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" ${rule.status === 'active' ? 'checked' : ''} onchange="toggleRuleStatus('${rule.id}', this.checked)">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </td>
+                    <td style="text-align: center;">
+                        <span onclick="sendToDevice('${rule.id}')" style="color: #3562E3; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                            ${rule.deployedDevices ? rule.deployedDevices.length : 0}
+                        </span>
+                    </td>
+                    <td class="rule-time-cell">${rule.createTime}</td>
+                    <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">
+                        <button class="btn" onclick="editRule('${rule.id}')" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="编辑">
+                            <i class="far fa-edit" style="font-size: 16px; color: var(--text-secondary);"></i>
+                        </button>
+                        <button class="btn" onclick="deleteRule('${rule.id}')" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: ${rule.deployedDevices && rule.deployedDevices.length > 0 ? 'not-allowed' : 'pointer'}; opacity: ${rule.deployedDevices && rule.deployedDevices.length > 0 ? '0.5' : '1'};" title="删除">
+                            <i class="far fa-trash-alt" style="font-size: 16px; color: ${rule.deployedDevices && rule.deployedDevices.length > 0 ? '#cbd5e1' : '#ef4444'};"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // 更新统计数据
+            updateStats();
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            // 统计所有策略(不受过滤影响)
+            const faultCount = allRules.filter(rule => rule.alarmLevel === 'fault').length;
+            const warningCount = allRules.filter(rule => rule.alarmLevel === 'warning').length;
+            const noticeCount = allRules.filter(rule => rule.alarmLevel === 'notice').length;
+
+            // 更新DOM
+            document.getElementById('faultCount').textContent = faultCount;
+            document.getElementById('warningCount').textContent = warningCount;
+            document.getElementById('noticeCount').textContent = noticeCount;
+        }
+
+        // 切换创建菜单
+        function toggleCreateMenu() {
+            const menu = document.getElementById('createMenu');
+            menu.classList.toggle('show');
+        }
+
+        // 从模版创建
+        function createFromTemplate() {
+            document.getElementById('createMenu').classList.remove('show');
+            document.getElementById('templateModal').style.display = 'flex';
+            // 默认显示逆变器分类
+            switchTemplateTab('inverter');
+        }
+
+        // 切换模板分类标签页
+        function switchTemplateTab(category) {
+            // 移除所有 active 状态
+            document.querySelectorAll('.template-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 添加当前 tab 的 active 状态
+            document.querySelector(`.template-tab[data-tab="${category}"]`).classList.add('active');
+
+            // 隐藏所有分类
+            document.querySelectorAll('.template-category').forEach(cat => {
+                cat.style.display = 'none';
+            });
+
+            // 显示当前分类
+            document.getElementById(`${category}-templates`).style.display = 'grid';
+        }
+
+        // 自定义策略
+        function createCustomRule() {
+            document.getElementById('createMenu').classList.remove('show');
+            openRuleModal();
+        }
+
+        // 选择模版
+        function selectTemplate(templateId) {
+            closeTemplateModal();
+            // 先打开模态框
+            openRuleModal();
+
+            // 根据模版ID填充表单（延迟执行，确保模态框已打开）
+            setTimeout(() => {
+                const templates = {
+                    // 逆变器模板
+                    'inverterOverload': {
+                        name: '逆变器过载告警',
+                        description: '功率超过额定功率110%',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 110,
+                        duration: 2,
+                        alarmLevel: 'fault'
+                    },
+                    'inverterFault': {
+                        name: '逆变器故障告警',
+                        description: '逆变器工作异常',
+                        parameter: 'power',
+                        operator: 'lt',
+                        threshold: 10,
+                        duration: 5,
+                        alarmLevel: 'fault'
+                    },
+                    'inverterTemp': {
+                        name: '逆变器温度告警',
+                        description: '逆变器温度过高',
+                        parameter: 'temperature',
+                        operator: 'gt',
+                        threshold: 65,
+                        duration: 3,
+                        alarmLevel: 'warning'
+                    },
+                    // 电池模板
+                    'batteryHighTemp': {
+                        name: '电池高温告警',
+                        description: '温度超过55°C时触发告警',
+                        parameter: 'temperature',
+                        operator: 'gt',
+                        threshold: 55,
+                        duration: 5,
+                        alarmLevel: 'fault'
+                    },
+                    'batteryLowSOC': {
+                        name: '电池SOC低告警',
+                        description: 'SOC低于20%时触发告警',
+                        parameter: 'soc',
+                        operator: 'lt',
+                        threshold: 20,
+                        duration: 3,
+                        alarmLevel: 'warning'
+                    },
+                    'batteryVoltageDiff': {
+                        name: '电池压差告警',
+                        description: '单体电压差超过0.3V',
+                        parameter: 'voltage',
+                        operator: 'gt',
+                        threshold: 0.3,
+                        duration: 2,
+                        alarmLevel: 'fault'
+                    },
+                    'batteryOverCurrent': {
+                        name: '电池过流告警',
+                        description: '充放电流超过额定值',
+                        parameter: 'current',
+                        operator: 'gt',
+                        threshold: 100,
+                        duration: 1,
+                        alarmLevel: 'fault'
+                    },
+                    // 电表模板
+                    'energyAbnormal': {
+                        name: '能源异常告警',
+                        description: '能源消耗异常波动',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 30,
+                        duration: 10,
+                        alarmLevel: 'notice'
+                    },
+                    'powerOverload': {
+                        name: '功率超标告警',
+                        description: '总功率超过设定值',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 100,
+                        duration: 5,
+                        alarmLevel: 'fault'
+                    },
+                    'voltageAbnormal': {
+                        name: '电压异常告警',
+                        description: '电网电压超出正常范围',
+                        parameter: 'voltage',
+                        operator: 'lt',
+                        threshold: 220,
+                        duration: 1,
+                        alarmLevel: 'fault'
+                    },
+                    'currentAbnormal': {
+                        name: '电流异常告警',
+                        description: '电流超过额定值',
+                        parameter: 'current',
+                        operator: 'gt',
+                        threshold: 50,
+                        duration: 2,
+                        alarmLevel: 'warning'
+                    },
+                    // 温度模板
+                    'envTempHigh': {
+                        name: '环境高温告警',
+                        description: '环境温度超过35°C',
+                        parameter: 'temperature',
+                        operator: 'gt',
+                        threshold: 35,
+                        duration: 10,
+                        alarmLevel: 'warning'
+                    },
+                    'envTempLow': {
+                        name: '环境低温告警',
+                        description: '环境温度低于0°C',
+                        parameter: 'temperature',
+                        operator: 'lt',
+                        threshold: 0,
+                        duration: 10,
+                        alarmLevel: 'warning'
+                    },
+                    'humidityHigh': {
+                        name: '高湿度告警',
+                        description: '湿度超过85%',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 85,
+                        duration: 15,
+                        alarmLevel: 'warning'
+                    },
+                    'deviceTempHigh': {
+                        name: '设备温度告警',
+                        description: '设备表面温度过高',
+                        parameter: 'temperature',
+                        operator: 'gt',
+                        threshold: 70,
+                        duration: 5,
+                        alarmLevel: 'fault'
+                    },
+                    // 消防模板
+                    'smokeAlarm': {
+                        name: '烟雾告警',
+                        description: '检测到烟雾信号',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 0,
+                        duration: 0,
+                        alarmLevel: 'fault'
+                    },
+                    'fireAlarm': {
+                        name: '火灾告警',
+                        description: '检测到火灾信号',
+                        parameter: 'temperature',
+                        operator: 'gt',
+                        threshold: 80,
+                        duration: 0,
+                        alarmLevel: 'fault'
+                    },
+                    'waterLeakage': {
+                        name: '漏水告警',
+                        description: '检测到漏水信号',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 0,
+                        duration: 0,
+                        alarmLevel: 'fault'
+                    },
+                    'gasLeakage': {
+                        name: '气体泄漏告警',
+                        description: '检测到可燃气体泄漏',
+                        parameter: 'power',
+                        operator: 'gt',
+                        threshold: 0,
+                        duration: 0,
+                        alarmLevel: 'fault'
+                    }
+                };
+
+                const template = templates[templateId];
+                if (template) {
+                    document.getElementById('ruleName').value = template.name + ' (副本)';
+                    document.getElementById('ruleDescription').value = template.description;
+                    document.getElementById('ruleParameter').value = template.parameter;
+                    document.getElementById('ruleOperator').value = template.operator;
+                    document.getElementById('ruleThreshold').value = template.threshold;
+                    document.getElementById('ruleDuration').value = template.duration;
+                    document.getElementById('ruleAlarmLevel').value = template.alarmLevel;
+                }
+            }, 50);
+        }
+
+        // 打开规则模态框
+        function openRuleModal(ruleId = null) {
+            const modal = document.getElementById('ruleModal');
+            const modalTitle = document.getElementById('modalTitle');
+
+            if (ruleId) {
+                modalTitle.textContent = '编辑规则';
+                // 加载规则数据
+                const rule = allRules.find(r => r.id === ruleId);
+                if (rule) {
+                    document.getElementById('ruleName').value = rule.name;
+                    document.getElementById('ruleDescription').value = rule.description;
+                    // 填充其他字段...
+
+                    // 加载降噪配置
+                    if (rule.noiseReduction) {
+                        // 智能降噪配置
+                        const smartNoiseEnabled = document.getElementById('smartNoiseReductionEnabled');
+                        const noiseWindow = document.getElementById('noiseReductionWindow');
+
+                        // 兼容旧数据：如果是旧格式（deduplication/aggregation），转换为新格式
+                        if (rule.noiseReduction.smartNoiseReduction) {
+                            smartNoiseEnabled.checked = rule.noiseReduction.smartNoiseReduction.enabled;
+                            noiseWindow.value = rule.noiseReduction.smartNoiseReduction.window;
+                        } else if (rule.noiseReduction.deduplication) {
+                            // 兼容旧数据
+                            smartNoiseEnabled.checked = rule.noiseReduction.deduplication.enabled;
+                            noiseWindow.value = rule.noiseReduction.deduplication.window;
+                        }
+                        document.getElementById('smartNoiseReductionConfig').style.display =
+                            smartNoiseEnabled.checked ? 'block' : 'none';
+
+                        // 告警消警配置（兼容新旧数据格式）
+                        const autoResEnabled = document.getElementById('autoResolutionEnabled');
+                        const autoResCondition = document.getElementById('autoResolutionCondition');
+                        const autoResDelay = document.getElementById('autoResolutionDelay');
+
+                        if (rule.noiseReduction.autoResolution) {
+                            // 新格式
+                            autoResEnabled.checked = rule.noiseReduction.autoResolution.enabled;
+                            autoResCondition.value = rule.noiseReduction.autoResolution.condition || 'normal';
+                            autoResDelay.value = rule.noiseReduction.autoResolution.delay || 5;
+                        } else if (rule.noiseReduction.resolution) {
+                            // 兼容旧格式
+                            autoResEnabled.checked = rule.noiseReduction.resolution.autoResolution.enabled;
+                            autoResCondition.value = rule.noiseReduction.resolution.autoResolution.condition || 'normal';
+                            autoResDelay.value = rule.noiseReduction.resolution.autoResolution.delay || 5;
+                        }
+
+                        document.getElementById('autoResolutionConfig').style.display =
+                            autoResEnabled.checked ? 'block' : 'none';
+                    }
+                }
+            } else {
+                modalTitle.textContent = '新建策略';
+                document.getElementById('ruleForm').reset();
+
+                // 重置降噪配置
+                document.getElementById('smartNoiseReductionEnabled').checked = false;
+                document.getElementById('smartNoiseReductionConfig').style.display = 'none';
+
+                // 重置消警配置
+                document.getElementById('autoResolutionEnabled').checked = true;
+                document.getElementById('autoResolutionConfig').style.display = 'block';
+                document.getElementById('autoResolutionCondition').value = 'normal';
+                document.getElementById('autoResolutionDelay').value = '5';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // 关闭规则模态框
+        function closeRuleModal() {
+            document.getElementById('ruleModal').style.display = 'none';
+        }
+
+        // 关闭模版模态框
+        function closeTemplateModal() {
+            document.getElementById('templateModal').style.display = 'none';
+        }
+
+        // 保存规则
+        function saveRule() {
+            const name = document.getElementById('ruleName').value;
+            const description = document.getElementById('ruleDescription').value;
+            const parameter = document.getElementById('ruleParameter').value;
+            const operator = document.getElementById('ruleOperator').value;
+            const threshold = document.getElementById('ruleThreshold').value;
+            const duration = document.getElementById('ruleDuration').value;
+            const alarmLevel = document.getElementById('ruleAlarmLevel').value;
+            const status = document.getElementById('ruleStatus').checked ? 'active' : 'inactive';
+
+            if (!name || !parameter || !operator || !threshold || !alarmLevel) {
+                showNotification('请填写所有必填项', 'warning');
+                return;
+            }
+
+            // 构造条件描述
+            const paramLabels = { temperature: '温度', soc: 'SOC', voltage: '电压', current: '电流', power: '功率' };
+            const operatorLabels = { gt: '>', lt: '<', gte: '>=', lte: '<=', eq: '=' };
+            const condition = `${paramLabels[parameter]} ${operatorLabels[operator]} ${threshold} 持续${duration || 0}分钟`;
+
+            // 收集降噪配置
+            const noiseReduction = {
+                smartNoiseReduction: {
+                    enabled: document.getElementById('smartNoiseReductionEnabled').checked,
+                    window: document.getElementById('noiseReductionWindow').value
+                },
+                autoResolution: {
+                    enabled: document.getElementById('autoResolutionEnabled').checked,
+                    condition: document.getElementById('autoResolutionCondition').value,
+                    delay: parseInt(document.getElementById('autoResolutionDelay').value) || 5
+                }
+            };
+
+            const newRule = {
+                id: 'rule-' + Date.now(),
+                name,
+                description,
+                type: 'custom',
+                condition,
+                alarmLevel,
+                status,
+                noiseReduction,
+                createTime: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
+                deployedDevices: []
+            };
+
+            allRules.unshift(newRule);
+            filteredRules = [...allRules];
+            renderRulesTable();
+            closeRuleModal();
+            showNotification('规则创建成功', 'success');
+        }
+
+        // 查看规则详情
+        function viewRuleDetails(ruleId) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (rule) {
+                showNotification(`查看规则: ${rule.name}`, 'info');
+            }
+        }
+
+        // 编辑规则
+        function editRule(ruleId) {
+            openRuleModal(ruleId);
+        }
+
+        // 复制规则
+        function copyRule(ruleId) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (rule) {
+                const newRule = {
+                    ...rule,
+                    id: 'rule-' + Date.now(),
+                    name: rule.name + ' (副本)',
+                    type: 'custom',
+                    createTime: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
+                    deployedDevices: [] // 复制的规则不继承已下发设备
+                };
+                allRules.unshift(newRule);
+                filteredRules = [...allRules];
+                renderRulesTable();
+                showNotification('规则已复制', 'success');
+            }
+        }
+
+        // 删除规则
+        function deleteRule(ruleId) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (!rule) return;
+
+            // 检查是否有下发设备
+            if (rule.deployedDevices && rule.deployedDevices.length > 0) {
+                showNotification('请先移除设备后再删除规则', 'error');
+                return;
+            }
+
+            if (confirm('确定要删除这条规则吗?')) {
+                allRules = allRules.filter(r => r.id !== ruleId);
+                filteredRules = filteredRules.filter(r => r.id !== ruleId);
+                renderRulesTable();
+                showNotification('规则已删除', 'success');
+            }
+        }
+
+        // 切换规则状态
+        function toggleRuleStatus(ruleId, isActive) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (rule) {
+                rule.status = isActive ? 'active' : 'inactive';
+                // 更新filteredRules中对应的规则
+                const filteredRule = filteredRules.find(r => r.id === ruleId);
+                if (filteredRule) {
+                    filteredRule.status = rule.status;
+                }
+                showNotification(`规则已${isActive ? '启用' : '禁用'}`, 'success');
+            }
+        }
+
+        // 综合过滤规则
+        function filterRules() {
+            const alarmLevel = document.getElementById('ruleAlarmLevelFilter').value;
+            const status = document.getElementById('ruleStatusFilter').value;
+            const keyword = document.getElementById('ruleSearchInput').value.trim();
+
+            filteredRules = allRules.filter(rule => {
+                // 通知类型过滤
+                if (alarmLevel !== 'all' && rule.alarmLevel !== alarmLevel) {
+                    return false;
+                }
+                // 启用状态过滤
+                if (status !== 'all' && rule.status !== status) {
+                    return false;
+                }
+                // 关键词搜索
+                if (keyword) {
+                    return rule.name.includes(keyword) ||
+                           (rule.description && rule.description.includes(keyword)) ||
+                           rule.condition.includes(keyword);
+                }
+                return true;
+            });
+
+            renderRulesTable();
+        }
+
+        // 搜索策略
+        function searchRules(keyword) {
+            filterRules();
+        }
+
+        // 刷新策略列表
+        function refreshRuleList() {
+            document.getElementById('ruleSearchInput').value = '';
+            document.getElementById('ruleAlarmLevelFilter').value = 'all';
+            document.getElementById('ruleStatusFilter').value = 'all';
+            filteredRules = [...allRules];
+            renderRulesTable();
+            showNotification('策略列表已刷新', 'success');
+        }
+
+        // 打开已下发设备抽屉
+        function sendToDevice(ruleId) {
+            currentRuleId = ruleId;
+            const rule = allRules.find(r => r.id === ruleId);
+            if (rule) {
+                const deployedCount = rule.deployedDevices ? rule.deployedDevices.length : 0;
+                document.getElementById('drawerSubtitle').textContent = `规则"${rule.name}"已下发到 ${deployedCount} 个设备`;
+
+                const drawer = document.getElementById('deviceDrawer');
+                const drawerContent = drawer.querySelector('div:last-child');
+                drawer.style.display = 'block';
+                setTimeout(() => {
+                    drawerContent.style.right = '0';
+                }, 10);
+
+                renderDeviceList();
+            }
+        }
+
+        // 关闭已下发设备抽屉
+        function closeDeviceDrawer() {
+            const drawer = document.getElementById('deviceDrawer');
+            const drawerContent = drawer.querySelector('div:last-child');
+            drawerContent.style.right = '-450px';
+            setTimeout(() => {
+                drawer.style.display = 'none';
+            }, 300);
+            currentRuleId = null;
+        }
+
+        // 渲染已下发设备列表
+        function renderDeviceList() {
+            const rule = allRules.find(r => r.id === currentRuleId);
+            if (!rule) return;
+
+            const deployedDevices = rule.deployedDevices || [];
+            const deployedListContainer = document.getElementById('deployedDeviceList');
+
+            // 填充SN和站点下拉列表
+            const snFilter = document.getElementById('snFilter');
+            const siteFilter = document.getElementById('siteFilter');
+
+            // 收集所有唯一的SN和站点
+            const uniqueSNs = new Set();
+            const uniqueSites = new Set();
+
+            deployedDevices.forEach(deviceId => {
+                const device = availableDevices.find(d => d.id === deviceId);
+                if (device) {
+                    uniqueSNs.add(device.sn);
+                    uniqueSites.add(device.site);
+                }
+            });
+
+            // 填充SN下拉列表
+            snFilter.innerHTML = '<option value="">全部SN</option>' +
+                Array.from(uniqueSNs).map(sn => `<option value="${sn}">${sn}</option>`).join('');
+
+            // 填充站点下拉列表
+            siteFilter.innerHTML = '<option value="">全部站点</option>' +
+                Array.from(uniqueSites).map(site => `<option value="${site}">${site}</option>`).join('');
+
+            if (deployedDevices.length === 0) {
+                deployedListContainer.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                            <i class="fas fa-inbox" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px; display: block;"></i>
+                            <div style="font-size: 14px;">暂无已下发设备</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                deployedListContainer.innerHTML = deployedDevices.map(deviceId => {
+                    const device = availableDevices.find(d => d.id === deviceId);
+                    if (!device) return '';
+                    return `
+                        <tr style="border-bottom: 1px solid var(--border-color); transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-secondary)'" onmouseout="this.style.backgroundColor=''">
+                            <td style="padding: 14px 8px; text-align: center;">
+                                <input type="checkbox" class="deployed-device-checkbox" data-device-id="${deviceId}" style="cursor: pointer;">
+                            </td>
+                            <td style="padding: 14px 8px; font-size: 13px; color: var(--text-primary);">${device.sn}</td>
+                            <td style="padding: 14px 8px; font-size: 13px; color: var(--text-primary);">${device.site}</td>
+                            <td style="padding: 14px 8px; text-align: center;">
+                                <button class="btn" onclick="removeDeployedDevice('${deviceId}')" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="移除">
+                                    <i class="far fa-trash-alt" style="font-size: 16px; color: #ef4444;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // 筛选已下发设备
+        function filterDeployedDevices() {
+            const snFilter = document.getElementById('snFilter').value;
+            const siteFilter = document.getElementById('siteFilter').value;
+            const rows = document.querySelectorAll('#deployedDeviceList tr');
+
+            rows.forEach(row => {
+                // 跳过空状态行
+                if (row.cells.length < 3) {
+                    return;
+                }
+
+                const sn = row.cells[0].textContent.trim();
+                const site = row.cells[1].textContent.trim();
+
+                const snMatch = !snFilter || sn.includes(snFilter);
+                const siteMatch = !siteFilter || site === siteFilter;
+
+                if (snMatch && siteMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // 重置已下发设备筛选
+        function resetDeployedDevicesFilter() {
+            document.getElementById('snFilter').value = '';
+            document.getElementById('siteFilter').value = '';
+            const rows = document.querySelectorAll('#deployedDeviceList tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+        }
+
+        // 打开添加设备模态框
+        function openAddDeviceModal() {
+            const rule = allRules.find(r => r.id === currentRuleId);
+            if (!rule) return;
+
+            const deployedDevices = rule.deployedDevices || [];
+
+            // 筛选未下发的在线设备
+            window.availableDevicesFiltered = availableDevices.filter(device =>
+                !deployedDevices.includes(device.id) && device.status === 'online'
+            );
+
+            // 填充站点下拉框
+            const uniqueSites = new Set();
+            window.availableDevicesFiltered.forEach(device => {
+                uniqueSites.add(device.site);
+            });
+            const deviceSiteFilter = document.getElementById('deviceSiteFilter');
+            deviceSiteFilter.innerHTML = '<option value="">全部站点</option>' +
+                Array.from(uniqueSites).map(site => `<option value="${site}">${site}</option>`).join('');
+
+            renderAvailableDeviceTable();
+
+            // 清空搜索框
+            document.getElementById('deviceSearchInput').value = '';
+            document.getElementById('deviceSiteFilter').value = '';
+            document.getElementById('selectAllNewDevices').checked = false;
+
+            document.getElementById('addDeviceModal').style.display = 'flex';
+        }
+
+        // 渲染可添加设备表格
+        function renderAvailableDeviceTable(filteredDevices = null) {
+            const devices = filteredDevices || window.availableDevicesFiltered || [];
+            const availableListContainer = document.getElementById('availableDeviceList');
+
+            if (devices.length === 0) {
+                const hasFilter = document.getElementById('deviceSearchInput').value || document.getElementById('deviceSiteFilter').value;
+                availableListContainer.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                            <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; opacity: 0.3; margin-bottom: 16px; display: block;"></i>
+                            <div style="font-size: 14px;">${hasFilter ? '未找到匹配的设备' : '所有在线设备都已下发'}</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            availableListContainer.innerHTML = devices.map(device => `
+                <tr style="border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; cursor: pointer;"
+                    onmouseover="this.style.backgroundColor='#f9fafb'"
+                    onmouseout="this.style.backgroundColor=''"
+                    onclick="toggleDeviceCheckbox('${device.id}')">
+                    <td style="text-align: center; padding: 12px 16px;">
+                        <input
+                            type="checkbox"
+                            class="new-device-checkbox"
+                            value="${device.id}"
+                            id="checkbox-${device.id}"
+                            style="width: 18px; height: 18px; cursor: pointer;"
+                            onclick="event.stopPropagation()"
+                        />
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 13px; color: var(--text-primary); font-weight: 500;">
+                        ${device.name}
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 13px; color: var(--text-secondary);">
+                        ${device.sn}
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 13px; color: var(--text-secondary);">
+                        ${device.site}
+                    </td>
+                    <td style="text-align: center; padding: 12px 16px;">
+                        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #10b981;">
+                            <i class="fas fa-circle" style="font-size: 6px;"></i>
+                            在线
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 点击行切换复选框
+        function toggleDeviceCheckbox(deviceId) {
+            const checkbox = document.getElementById(`checkbox-${deviceId}`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+        }
+
+        // 应用设备筛选
+        function applyDeviceFilter() {
+            if (!window.availableDevicesFiltered) return;
+
+            const snKeyword = document.getElementById('deviceSearchInput').value.trim();
+            const siteFilter = document.getElementById('deviceSiteFilter').value;
+
+            if (!snKeyword && !siteFilter) {
+                renderAvailableDeviceTable();
+                return;
+            }
+
+            const filtered = window.availableDevicesFiltered.filter(device => {
+                const snMatch = !snKeyword || device.sn.toLowerCase().includes(snKeyword.toLowerCase());
+                const siteMatch = !siteFilter || device.site === siteFilter;
+                return snMatch && siteMatch;
+            });
+
+            renderAvailableDeviceTable(filtered);
+        }
+
+        // 重置设备筛选
+        function resetDeviceFilter() {
+            document.getElementById('deviceSearchInput').value = '';
+            document.getElementById('deviceSiteFilter').value = '';
+            renderAvailableDeviceTable();
+        }
+
+        // 关闭添加设备模态框
+        function closeAddDeviceModal() {
+            document.getElementById('addDeviceModal').style.display = 'none';
+            document.getElementById('selectAllNewDevices').checked = false;
+        }
+
+        // 全选/取消全选新设备
+        function toggleAllNewDevices(checked) {
+            const checkboxes = document.querySelectorAll('.new-device-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        }
+
+        // 确认添加设备
+        function confirmAddDevices() {
+            const selectedDevices = Array.from(document.querySelectorAll('.new-device-checkbox:checked'))
+                .map(cb => cb.value);
+
+            if (selectedDevices.length === 0) {
+                showNotification('请至少选择一个设备', 'warning');
+                return;
+            }
+
+            const rule = allRules.find(r => r.id === currentRuleId);
+            if (rule) {
+                if (!rule.deployedDevices) {
+                    rule.deployedDevices = [];
+                }
+
+                selectedDevices.forEach(deviceId => {
+                    if (!rule.deployedDevices.includes(deviceId)) {
+                        rule.deployedDevices.push(deviceId);
+                    }
+                });
+
+                // 同步更新filteredRules
+                const filteredRule = filteredRules.find(r => r.id === currentRuleId);
+                if (filteredRule) {
+                    filteredRule.deployedDevices = rule.deployedDevices;
+                }
+
+                showNotification(`成功添加 ${selectedDevices.length} 个设备`, 'success');
+                closeAddDeviceModal();
+                renderDeviceList();
+
+                // 更新副标题
+                const deployedCount = rule.deployedDevices.length;
+                document.getElementById('drawerSubtitle').textContent = `规则"${rule.name}"已下发到 ${deployedCount} 个设备`;
+            }
+        }
+
+        // 移除已下发设备
+        function removeDeployedDevice(deviceId) {
+            const rule = allRules.find(r => r.id === currentRuleId);
+            if (rule) {
+                rule.deployedDevices = rule.deployedDevices.filter(id => id !== deviceId);
+
+                // 同步更新filteredRules中的数据
+                const filteredRule = filteredRules.find(r => r.id === currentRuleId);
+                if (filteredRule) {
+                    filteredRule.deployedDevices = rule.deployedDevices;
+                }
+
+                const device = availableDevices.find(d => d.id === deviceId);
+                showNotification(`已从规则中移除设备"${device.name}"`, 'success');
+                renderDeviceList();
+
+                // 更新副标题
+                const deployedCount = rule.deployedDevices.length;
+                document.getElementById('drawerSubtitle').textContent = `规则"${rule.name}"已下发到 ${deployedCount} 个设备`;
+            }
+        }
+
+        // 全选/取消全选已下发设备
+        function toggleAllDeployedDevices(checked) {
+            const checkboxes = document.querySelectorAll('.deployed-device-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        }
+
+        // 批量移除已下发设备
+        function batchRemoveDevices() {
+            const checkboxes = document.querySelectorAll('.deployed-device-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showNotification('请先选择要移除的设备', 'warning');
+                return;
+            }
+
+            if (!confirm(`确定要移除选中的 ${checkboxes.length} 个设备吗?`)) {
+                return;
+            }
+
+            const rule = allRules.find(r => r.id === currentRuleId);
+            if (rule) {
+                const deviceIdsToRemove = Array.from(checkboxes).map(cb => cb.getAttribute('data-device-id'));
+
+                // 批量移除设备
+                rule.deployedDevices = rule.deployedDevices.filter(id => !deviceIdsToRemove.includes(id));
+
+                // 同步更新filteredRules中的数据
+                const filteredRule = filteredRules.find(r => r.id === currentRuleId);
+                if (filteredRule) {
+                    filteredRule.deployedDevices = rule.deployedDevices;
+                }
+
+                showNotification(`成功移除 ${deviceIdsToRemove.length} 个设备`, 'success');
+
+                // 取消全选复选框
+                document.getElementById('selectAllDeployedDevices').checked = false;
+
+                renderDeviceList();
+
+                // 更新副标题
+                const deployedCount = rule.deployedDevices.length;
+                document.getElementById('drawerSubtitle').textContent = `规则"${rule.name}"已下发到 ${deployedCount} 个设备`;
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 99999;
+                animation: slideIn 0.3s ease;
+            `;
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                info: '#3b82f6',
+                warning: '#f59e0b'
+            };
+
+            notification.innerHTML = `
+                <i class="fas ${icons[type]}" style="color: ${colors[type]}; font-size: 20px;"></i>
+                <span style="color: var(--text-primary);">${message}</span>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // ==================== 策略类型选择 ====================
+
+        // 选择策略类型
+        function selectPolicyType(type) {
+            // 移除所有选中状态
+            document.querySelectorAll('.policy-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 添加选中状态
+            const selectedCard = document.querySelector(`.policy-type-card[data-type="${type}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+
+            // 设置隐藏字段值
+            document.getElementById('ruleType').value = type;
+
+            // 根据策略类型设置通知方式默认勾选
+            const inAppCheckbox = document.getElementById('notifyInApp');
+            const emailCheckbox = document.getElementById('notifyEmail');
+            const smsCheckbox = document.getElementById('notifySms');
+
+            // 站内信始终勾选且禁用
+            inAppCheckbox.checked = true;
+            inAppCheckbox.disabled = true;
+
+            // 根据不同策略类型设置默认勾选
+            if (type === 'fault') {
+                // 故障：站内信 + 邮件 + 短信 (全部勾选)
+                emailCheckbox.checked = true;
+                smsCheckbox.checked = true;
+            } else if (type === 'warning') {
+                // 告警：站内信 + 邮件
+                emailCheckbox.checked = true;
+                smsCheckbox.checked = false;
+            } else if (type === 'notice') {
+                // 通知：仅站内信
+                emailCheckbox.checked = false;
+                smsCheckbox.checked = false;
+            }
+        }
+
+        // ==================== 通知设置面板控制函数 ====================
+
+        // 打开通知设置面板
+        function openNotificationPanel() {
+            const overlay = document.getElementById('notificationPanelOverlay');
+            const panel = document.getElementById('notificationPanel');
+
+            overlay.classList.add('show');
+            // 延迟添加show类以触发动画
+            setTimeout(() => {
+                panel.classList.add('show');
+            }, 10);
+        }
+
+        // 关闭通知设置面板
+        function closeNotificationPanel() {
+            const overlay = document.getElementById('notificationPanelOverlay');
+            const panel = document.getElementById('notificationPanel');
+
+            panel.classList.remove('show');
+            // 等待动画完成后移除overlay
+            setTimeout(() => {
+                overlay.classList.remove('show');
+            }, 300);
+        }
+
+        // 保存通知设置
+        function saveNotificationSettings() {
+            // 收集通知类型配置（包含每个类型的独立降噪设置）
+            const levelPolicies = {
+                critical: {
+                    enabled: document.getElementById('criticalEnabled').checked,
+                    channels: {
+                        sms: document.getElementById('criticalSms').checked,
+                        email: document.getElementById('criticalEmail').checked
+                    },
+                    noiseReduction: {
+                        enabled: document.getElementById('criticalNoiseEnabled').checked,
+                        repeatInterval: parseInt(document.getElementById('criticalRepeatInterval').value),
+                        maxRepeats: parseInt(document.getElementById('criticalMaxRepeats').value)
+                    }
+                },
+                important: {
+                    enabled: document.getElementById('importantEnabled').checked,
+                    channels: {
+                        sms: document.getElementById('importantSms').checked,
+                        email: document.getElementById('importantEmail').checked
+                    },
+                    noiseReduction: {
+                        enabled: document.getElementById('importantNoiseEnabled').checked,
+                        repeatInterval: parseInt(document.getElementById('importantRepeatInterval').value),
+                        maxRepeats: parseInt(document.getElementById('importantMaxRepeats').value)
+                    }
+                },
+                general: {
+                    enabled: document.getElementById('generalEnabled').checked,
+                    channels: {
+                        sms: document.getElementById('generalSms').checked,
+                        email: document.getElementById('generalEmail').checked
+                    },
+                    noiseReduction: {
+                        enabled: document.getElementById('generalNoiseEnabled').checked,
+                        repeatInterval: parseInt(document.getElementById('generalRepeatInterval').value),
+                        maxRepeats: parseInt(document.getElementById('generalMaxRepeats').value)
+                    }
+                }
+            };
+
+            const settings = {
+                levelPolicies: levelPolicies
+            };
+
+            console.log('保存通知策略设置:', settings);
+
+            // 显示成功提示
+            showNotification('通知策略已保存', 'success');
+
+            // 关闭面板
+            closeNotificationPanel();
+        }
+
+        // 展开/收起通知类型配置
+        function toggleAlarmLevel(level) {
+            const content = document.getElementById(level + 'Content');
+            const chevron = document.getElementById(level + 'Chevron');
+
+            if (content.style.maxHeight === '0px') {
+                // 展开
+                content.style.maxHeight = '500px';
+                content.style.opacity = '1';
+                content.style.padding = '16px';
+                content.style.borderWidth = '1px';
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                // 收起
+                content.style.maxHeight = '0px';
+                content.style.opacity = '0';
+                content.style.padding = '0';
+                content.style.borderWidth = '0';
+                chevron.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        // 切换降噪配置显示/隐藏
+        function toggleNoiseConfig(level, enabled) {
+            const config = document.getElementById(level + 'NoiseConfig');
+
+            if (enabled) {
+                // 显示降噪配置
+                config.style.maxHeight = '100px';
+                config.style.opacity = '1';
+                config.style.marginTop = '0';
+            } else {
+                // 隐藏降噪配置
+                config.style.maxHeight = '0';
+                config.style.opacity = '0';
+                config.style.marginTop = '0';
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+
+            // 检测URL参数，如果需要打开通知设置面板
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('openNotificationPanel') === 'true') {
+                // 延迟一小段时间确保页面完全加载
+                setTimeout(() => {
+                    openNotificationPanel();
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>

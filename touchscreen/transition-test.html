@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面过渡测试</title>
+    <link rel="stylesheet" href="page-transition.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .test-container {
+            text-align: center;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+        }
+
+        h1 {
+            color: #0096ff;
+            margin-bottom: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .test-button {
+            padding: 12px 24px;
+            background: rgba(0, 150, 255, 0.2);
+            border: 1px solid #0096ff;
+            color: #0096ff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .test-button:hover {
+            background: rgba(0, 150, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 150, 255, 0.3);
+        }
+
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 150, 255, 0.1);
+            border-radius: 5px;
+            line-height: 1.8;
+        }
+
+        .success {
+            color: #00ff88;
+        }
+
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>页面过渡效果测试</h1>
+        <p>点击下方按钮测试页面切换效果</p>
+
+        <div class="button-group">
+            <button class="test-button" onclick="testTransition('home')">测试首页</button>
+            <button class="test-button" onclick="testTransition('data')">测试数据页</button>
+            <button class="test-button" onclick="testTransition('control')">测试控制页</button>
+            <button class="test-button" onclick="testTransition('alarm')">测试告警页</button>
+        </div>
+
+        <div class="info">
+            <h3 class="success">✓ 优化项目清单</h3>
+            <ul style="text-align: left; list-style: none; padding-left: 0;">
+                <li>✓ 移除全局 <span class="code">body</span> 淡入动画,避免每次加载从透明开始</li>
+                <li>✓ 设置 <span class="code">html</span> 和 <span class="code">body</span> 背景色为 <span class="code">#0a0e1a</span></li>
+                <li>✓ 延长淡出动画时间: 0.2s → 0.35s</li>
+                <li>✓ 延长过渡总时长: 0.2s → 0.4s</li>
+                <li>✓ 优化加载遮罩时序,先淡出再显示遮罩</li>
+                <li>✓ 提升加载遮罩层级: z-index 9999 → 99999</li>
+                <li>✓ 添加发光效果,提升视觉体验</li>
+                <li>✓ 防止内容闪烁: 添加 <span class="code">page-ready</span> 类</li>
+                <li>✓ 处理浏览器前进/后退缓存</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 20px; font-size: 12px; color: #888;">
+            <p>预期效果: 点击按钮后应该看到平滑的淡出 → 加载动画 → 页面跳转</p>
+            <p>不应该出现白屏闪烁</p>
+        </div>
+    </div>
+
+    <script src="page-transition.js"></script>
+    <script>
+        function testTransition(page) {
+            console.log('测试页面切换:', page);
+            
+            // 模拟菜单点击事件
+            window.event = { target: document.querySelector('.test-button') };
+            
+            if (typeof smoothSwitchPage === 'function') {
+                smoothSwitchPage(page);
+            } else {
+                alert('smoothSwitchPage 函数未定义!请检查 page-transition.js 是否正确加载。');
+            }
+        }
+
+        // 页面加载完成后显示成功提示
+        window.addEventListener('load', function() {
+            console.log('%c页面过渡系统已就绪', 'color: #00ff88; font-size: 14px; font-weight: bold;');
+            console.log('可用函数:', {
+                smoothSwitchPage: typeof smoothSwitchPage,
+                smoothPageTransition: typeof smoothPageTransition,
+                createLoadingOverlay: typeof createLoadingOverlay
+            });
+        });
+    </script>
+</body>
+</html>

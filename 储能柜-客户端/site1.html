@@ -1,0 +1,4425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>站点管理 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <!-- 不需要Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* 隐藏日期输入框的placeholder */
+        input[type="date"]::-webkit-datetime-edit-text,
+        input[type="date"]::-webkit-datetime-edit-month-field,
+        input[type="date"]::-webkit-datetime-edit-day-field,
+        input[type="date"]::-webkit-datetime-edit-year-field {
+            color: transparent;
+        }
+
+        input[type="date"]:focus::-webkit-datetime-edit-text,
+        input[type="date"]:focus::-webkit-datetime-edit-month-field,
+        input[type="date"]:focus::-webkit-datetime-edit-day-field,
+        input[type="date"]:focus::-webkit-datetime-edit-year-field {
+            color: var(--text-primary);
+        }
+
+        /* Firefox浏览器 */
+        input[type="date"]:not(:focus):not(:valid) {
+            color: transparent;
+        }
+        
+        th[data-sort]:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+            color: var(--primary-color);
+        }
+        
+        .sort-icon {
+            transition: all 0.2s ease;
+        }
+        
+        /* 深色主题下的抽屉样式 */
+        [data-theme="dark"] #addDeviceDrawer > div:last-child {
+            background: #1e293b;
+        }
+        
+        [data-theme="dark"] #addDeviceDrawer input {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        
+        [data-theme="dark"] #addDeviceDrawer .btn {
+            background: #334155;
+            border-color: #475569;
+        }
+        
+        [data-theme="dark"] #addDeviceDrawer .btn:hover {
+            background: #475569;
+        }
+        
+        /* 深色主题下的删除确认弹窗 */
+        [data-theme="dark"] #deleteConfirmModal > div {
+            background: #1e293b;
+        }
+        
+        [data-theme="dark"] #deleteConfirmModal h3,
+        [data-theme="dark"] #deleteConfirmModal p {
+            color: #e2e8f0;
+        }
+        
+        /* 可拖动弹窗样式 */
+        .floating-modal {
+            position: absolute;
+            top: 50px;
+            right: 30px;
+            width: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 999;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        /* 放大状态 */
+        .floating-modal.expanded {
+            transform: scale(1.5);
+            transform-origin: top right;
+        }
+        
+        [data-theme="dark"] .floating-modal {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .floating-modal:hover {
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 弹窗头部 */
+        .modal-header {
+            padding: 6px 16px 8px 16px;
+            user-select: none;
+            position: relative;
+        }
+        
+        /* 缩放按钮 */
+        .resize-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        
+        .resize-button:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .resize-button:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* 拖动手柄 */
+        .drag-handle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 12px;
+            cursor: move;
+            margin-bottom: 6px;
+        }
+        
+        .drag-handle::before {
+            content: '';
+            width: 24px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
+            transition: background 0.2s;
+        }
+        
+        .drag-handle:hover::before {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        [data-theme="dark"] .drag-handle::before {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        [data-theme="dark"] .drag-handle:hover::before {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        
+        /* Tab 切换按钮 - 查询区域上方 */
+        .tab-switcher {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+        }
+        
+        .tab-button {
+            position: relative;
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .tab-button {
+            background: #1e293b;
+            border-color: #475569;
+        }
+        
+        /* 深色主题下的自定义下拉框样式 */
+        [data-theme="dark"] #siteDropdown {
+            background: #1e293b;
+            border-color: #475569;
+        }
+        
+        [data-theme="dark"] .site-option:hover {
+            background: #334155 !important;
+        }
+        
+        [data-theme="dark"] .site-option {
+            color: #e2e8f0;
+        }
+        
+        .tab-button i {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+        
+        .tab-button span {
+            font-size: 14px;
+        }
+        
+        .tab-button:hover {
+            color: #3562E3;
+            background: rgba(53, 98, 227, 0.05);
+            border-color: #3562E3;
+            transform: translateY(-1px);
+        }
+        
+        .tab-button:hover i {
+            transform: scale(1.1);
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #3562E3 0%, #4f46e5 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(53, 98, 227, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .tab-button.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 8px;
+        }
+        
+        /* 弹窗内容 */
+        .modal-content {
+            padding: 4px 16px 8px 16px;
+            min-height: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        /* 占位内容样式 */
+        .tab-content {
+            display: none;
+            min-height: 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 3D场景容器样式 */
+        #scene-container {
+            width: 100%;
+            height: calc(100vh - 64px); /* 减去顶部导航栏高度 */
+            position: relative;
+            background: transparent;
+            border-radius: 0; /* 移除圆角以实现真正全屏 */
+            overflow: visible;
+            display: none;
+        }
+        
+        #scene-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* 确保主内容区域有相对定位 */
+        .main-content {
+            position: relative;
+        }
+        
+        /* 3D场景中的2D电池样式 */
+        .battery-icon-3d {
+            width: 60px;
+            height: 30px;
+            border: 2px solid #334155;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            background: #0a0a0a;
+        }
+        
+        .battery-icon-3d::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 12px;
+            background: #334155;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .battery-level-3d {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* 视图切换按钮 */
+        .view-switcher {
+            display: flex;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .view-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 表格视图样式 */
+        .table-view {
+            display: block;
+        }
+
+        .station-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .station-table th {
+            background: var(--bg-secondary);
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .station-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .station-table tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.online {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-badge.offline {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-badge.warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        /* 3D视图样式 */
+        .three-d-view {
+            display: none;
+            height: calc(100vh - 160px);
+            position: relative;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            background: #f5f5f5;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 储能柜信息面板 */
+        .cabinet-info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: transparent;
+            border-radius: 0;
+            padding: 20px;
+            box-shadow: none;
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .cabinet-info-panel.active {
+            display: block;
+        }
+
+        [data-theme="dark"] .cabinet-info-panel {
+            background: transparent;
+        }
+
+        .cabinet-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cabinet-info-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .close-panel {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* 零部件列表 */
+        .component-list {
+            margin-top: 20px;
+        }
+
+        .component-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .component-item:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .component-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .component-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 数据图表区域 */
+        .data-charts {
+            margin-top: 20px;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-tab {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .chart-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .chart-content {
+            height: 300px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        /* 3D控制按钮 */
+        .three-d-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        [data-theme="dark"] .three-d-controls {
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* 加载提示 */
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 2D平面视图样式 */
+        .cabinet-grid {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
+            padding: 40px;
+            background: #f0f0f0;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+        
+        /* 适应不同屏幕尺寸 */
+        @media (max-width: 1200px) {
+            .cabinet-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .cabinet-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .cabinet-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                padding: 20px;
+            }
+        }
+        
+        /* 3D场景信息面板样式 */
+        .info-section {
+            margin-bottom: 20px;
+        }
+        
+        .info-section h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* 站点选择tab样式 */
+        .site-tab {
+            position: relative;
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 70px;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+        }
+
+        .site-tab:hover {
+            color: #3562E3;
+            background: rgba(53, 98, 227, 0.05);
+        }
+
+        .site-tab.active {
+            color: #3562E3;
+            border-bottom-color: #3562E3;
+        }
+
+        .site-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: #3562E3;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { width: 0; left: 50%; right: 50%; }
+            to { left: 20%; right: 20%; }
+        }
+
+        .site-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .site-info {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .site-tab.active .site-info {
+            opacity: 1;
+            color: #3562E3;
+        }
+
+        /* 滚动箭头样式 */
+        .scroll-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: white;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scroll-arrow:hover {
+            background: #f8fafc;
+            color: #3562E3;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .scroll-arrow:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        .scroll-arrow-left {
+            left: 8px;
+        }
+
+        .scroll-arrow-right {
+            right: 8px;
+        }
+
+        .scroll-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* 隐藏默认滚动条 */
+        .site-tabs-container {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .site-tabs-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .cabinet-info-panel {
+                width: 100%;
+                right: 0;
+                top: auto;
+                bottom: 0;
+                max-height: 50vh;
+                border-radius: 0;
+            }
+
+            .three-d-controls {
+                bottom: auto;
+                top: 20px;
+            }
+        }
+
+        .metric-box {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .metric-box {
+            background: #0f172a;
+        }
+
+    </style>
+</head>
+<body data-page="site1">
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <!-- 页面标题 -->
+        <div style="margin-bottom: 20px;">
+            <h1 class="page-title" style="font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0;" id="pageTitle">站点管理</h1>
+        </div>
+
+        <!-- 站点选择区域（仅在3D视图显示） -->
+        <div id="siteSelector" style="display: none; margin-bottom: 20px; max-width: 300px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <label style="font-size: 14px; font-weight: 500; color: #333; white-space: nowrap;">选择站点：</label>
+                <select id="siteSelect" onchange="changeSite()" style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: white; cursor: pointer;">
+                    <option value="sz">深圳储能站 (8台 • 2.5MWh)</option>
+                    <option value="gz">广州储能站 (12台 • 3.75MWh)</option>
+                    <option value="sh">上海储能站 (10台 • 3.1MWh)</option>
+                    <option value="bj">北京储能站 (15台 • 4.7MWh)</option>
+                    <option value="cd">成都储能站 (6台 • 1.9MWh)</option>
+                    <option value="hz">杭州储能站 (9台 • 2.8MWh)</option>
+                    <option value="wh">武汉储能站 (11台 • 3.4MWh)</option>
+                    <option value="xa">西安储能站 (8台 • 2.5MWh)</option>
+                    <option value="nj">南京储能站 (7台 • 2.2MWh)</option>
+                    <option value="cq">重庆储能站 (13台 • 4.1MWh)</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- 表格视图内容容器 -->
+        <div id="content-container">
+            <!-- 查询区域 -->
+            <div id="query-area" class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 1;">
+                    <div class="input-wrapper">
+                        <i class="fas fa-search input-icon"></i>
+                        <input type="text" id="searchInput" class="form-input" data-translate-placeholder="searchSitePlaceholder" placeholder="搜索站点名称..." style="width: 300px; height: 40px; padding-left: 40px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn" onclick="searchDevices()" style="height: 40px; padding: 0 16px;">
+                        <i class="fas fa-search"></i> <span id="btnQuery">查询</span>
+                    </button>
+                    <button class="btn" onclick="resetSearch()" style="height: 40px; padding: 0 16px;">
+                        <i class="fas fa-redo"></i> <span id="btnReset">重置</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格视图容器 -->
+        <div id="table-view" class="card">
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="showAddDeviceModal()" style="height: 40px; padding: 0 16px; width: auto; display: inline-block;">
+                    <i class="fas fa-plus"></i>
+                    <span id="addSiteBtn">添加站点</span>
+                </button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="deviceTable" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color);">
+                            <th style="padding: 16px 12px; text-align: left; font-weight: 600; color: var(--text-secondary); vertical-align: middle;"><span id="tableHeaderStationName">电站名称</span></th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; color: var(--text-secondary); cursor: pointer; vertical-align: middle;" onclick="sortTable('cabinetCount')" data-sort="cabinetCount">
+                                <div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                    <span id="tableHeaderCabinet">储能柜</span>
+                                    <span class="sort-arrows" style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <i class="fas fa-caret-up" style="font-size: 8px; cursor: pointer; color: #94a3b8;" onclick="event.stopPropagation(); sortTable('cabinetCount', 'asc')"></i>
+                                        <i class="fas fa-caret-down" style="font-size: 8px; cursor: pointer; color: #94a3b8; margin-top: -1px;" onclick="event.stopPropagation(); sortTable('cabinetCount', 'desc')"></i>
+                                    </span>
+                                </div>
+                            </th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; color: var(--text-secondary); cursor: pointer; vertical-align: middle;" onclick="sortTable('installedPower')" data-sort="installedPower">
+                                <div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                    <span id="tableHeaderInstalledPower">装机容量</span>
+                                    <span class="sort-arrows" style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <i class="fas fa-caret-up" style="font-size: 8px; cursor: pointer; color: #94a3b8;" onclick="event.stopPropagation(); sortTable('installedPower', 'asc')"></i>
+                                        <i class="fas fa-caret-down" style="font-size: 8px; cursor: pointer; color: #94a3b8; margin-top: -1px;" onclick="event.stopPropagation(); sortTable('installedPower', 'desc')"></i>
+                                    </span>
+                                </div>
+                            </th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; color: var(--text-secondary); cursor: pointer; vertical-align: middle;" onclick="sortTable('realTimePower')" data-sort="realTimePower">
+                                <div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                    <span id="tableHeaderRealTimePower">实时功率</span>
+                                    <span class="sort-arrows" style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <i class="fas fa-caret-up" style="font-size: 8px; cursor: pointer; color: #94a3b8;" onclick="event.stopPropagation(); sortTable('realTimePower', 'asc')"></i>
+                                        <i class="fas fa-caret-down" style="font-size: 8px; cursor: pointer; color: #94a3b8; margin-top: -1px;" onclick="event.stopPropagation(); sortTable('realTimePower', 'desc')"></i>
+                                    </span>
+                                </div>
+                            </th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; color: var(--text-secondary); cursor: pointer; vertical-align: middle;" onclick="sortTable('remainingEnergy')" data-sort="remainingEnergy">
+                                <div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                    <span id="tableHeaderRemainingEnergy">剩余电量</span>
+                                    <span class="sort-arrows" style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <i class="fas fa-caret-up" style="font-size: 8px; cursor: pointer; color: #94a3b8;" onclick="event.stopPropagation(); sortTable('remainingEnergy', 'asc')"></i>
+                                        <i class="fas fa-caret-down" style="font-size: 8px; cursor: pointer; color: #94a3b8; margin-top: -1px;" onclick="event.stopPropagation(); sortTable('remainingEnergy', 'desc')"></i>
+                                    </span>
+                                </div>
+                            </th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; color: var(--text-secondary); cursor: pointer; vertical-align: middle;" onclick="sortTable('soc')" data-sort="soc">
+                                <div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                    SOC
+                                    <span class="sort-arrows" style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <i class="fas fa-caret-up" style="font-size: 8px; cursor: pointer; color: #94a3b8;" onclick="event.stopPropagation(); sortTable('soc', 'asc')"></i>
+                                        <i class="fas fa-caret-down" style="font-size: 8px; cursor: pointer; color: #94a3b8; margin-top: -1px;" onclick="event.stopPropagation(); sortTable('soc', 'desc')"></i>
+                                    </span>
+                                </div>
+                            </th>
+                            <th style="padding: 16px 12px; text-align: left; font-weight: 600; color: var(--text-secondary); vertical-align: middle;"><span id="tableHeaderAddress">地址</span></th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; color: var(--text-secondary); vertical-align: middle;"><span id="tableHeaderActions">操作</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="deviceTableBody">
+                        <!-- 设备数据将通过JavaScript动态添加 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 0 12px;">
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    <span id="paginationTotal1">共</span> <span id="totalCount">0</span> <span id="paginationTotal2">条记录</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="previousPage()" style="padding: 6px 12px;">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span style="padding: 6px 12px; color: var(--text-secondary);">
+                        <span id="paginationPage1">第</span> <span id="currentPage">1</span> <span id="paginationPage2">/</span> <span id="totalPages">1</span> <span id="paginationPage3">页</span>
+                    </span>
+                    <button class="btn" onclick="nextPage()" style="padding: 6px 12px;">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 3D视图容器 -->
+        <div id="scene-container" style="position: relative; display: none;">
+            <div class="loading-indicator" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+                <p>加载视图中...</p>
+            </div>
+        
+        <!-- 统计数据面板 -->
+            <div id="dataPanel" style="position: fixed; top: 150px; right: 20px; z-index: 1001; transition: all 0.3s ease; display: none;">
+                <div style="background: rgba(255, 255, 255, 0.98); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 340px;">
+                    <!-- 标题栏 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
+                        <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: #1f2937;">储能柜监控</h4>
+                        <button onclick="toggleDataPanel()" style="background: none; border: none; cursor: pointer; padding: 2px; color: #64748b;">
+                            <i id="panelToggleIcon" class="fas fa-chevron-up" style="font-size: 12px;"></i>
+                        </button>
+                    </div>
+                    <!-- 内容区域 -->
+                    <div id="dataPanelContent" style="padding: 12px 16px; max-height: calc(100vh - 120px); overflow-y: auto; transition: all 0.3s ease;">
+                    
+                    <!-- 状态概览（合并版） -->
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div style="text-align: center; padding: 8px; background: #f0fdf4; border-radius: 6px;">
+                                <div style="font-size: 16px; font-weight: 600; color: #10b981;" id="online-count">5</div>
+                                <div style="font-size: 10px; color: #666;">在线</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #fef3c7; border-radius: 6px;">
+                                <div style="font-size: 16px; font-weight: 600; color: #f59e0b;" id="offline-count">2</div>
+                                <div style="font-size: 10px; color: #666;">离线</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #fee2e2; border-radius: 6px;">
+                                <div style="font-size: 16px; font-weight: 600; color: #ef4444;" id="fault-count">1</div>
+                                <div style="font-size: 10px; color: #666;">故障</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #dcfce7; border-radius: 6px;">
+                                <div style="font-size: 16px; font-weight: 600; color: #10b981;" id="charging-count">3</div>
+                                <div style="font-size: 10px; color: #666;">充电</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #dbeafe; border-radius: 6px;">
+                                <div style="font-size: 16px; font-weight: 600; color: #3b82f6;" id="discharging-count">2</div>
+                                <div style="font-size: 10px; color: #666;">放电</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                                <div style="font-size: 16px; font-weight: 600; color: #64748b;" id="standby-count">3</div>
+                                <div style="font-size: 10px; color: #666;">待机</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <!-- 关键运行指标 -->
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #666;">系统容量</span>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #333;"><span id="total-capacity">2.5</span> MWh</div>
+                                    <div style="font-size: 10px; color: #999;">总装机容量</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #666;">当前电量</span>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #10b981;"><span id="current-energy">1.96</span> MWh</div>
+                                    <div style="font-size: 10px; color: #999;">占比 <span id="energy-percent">78.4</span>%</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #666;">最高利用率</span>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #f59e0b;"><span id="max-utilization">92</span>%</div>
+                                    <div style="font-size: 10px; color: #999;">储能柜<span id="max-util-cabinet">003</span></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #666;">最低SOC</span>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #ef4444;"><span id="min-soc">15</span>%</div>
+                                    <div style="font-size: 10px; color: #999;">储能柜<span id="min-soc-cabinet">008</span></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #666;">最低SOH</span>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #ef4444;"><span id="min-soh">93.2</span>%</div>
+                                    <div style="font-size: 10px; color: #999;">储能柜<span id="min-soh-cabinet">006</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 收益统计 -->
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 12px;">收益统计</div>
+                        <div style="background: #f8fafc; border-radius: 8px; padding: 12px;">
+                            <!-- 第一排 -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+                                <div style="flex: 1; text-align: center;">
+                                    <div style="font-size: 10px; color: #666; margin-bottom: 4px;">昨日收益</div>
+                                    <div style="font-size: 16px; font-weight: 700; color: #3b82f6;">¥<span id="yesterday-profit">12,350</span></div>
+                                </div>
+                                <div style="width: 1px; height: 40px; background: #e5e7eb;"></div>
+                                <div style="flex: 1; text-align: center;">
+                                    <div style="font-size: 10px; color: #666; margin-bottom: 4px;">今日收益</div>
+                                    <div style="font-size: 16px; font-weight: 700; color: #10b981;">¥<span id="today-profit">8,450</span></div>
+                                </div>
+                            </div>
+                            <!-- 第二排 -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px;">
+                                <div style="flex: 1; text-align: center;">
+                                    <div style="font-size: 10px; color: #666; margin-bottom: 4px;">本月收益</div>
+                                    <div style="font-size: 16px; font-weight: 700; color: #f59e0b;">¥<span id="month-profit">326.5</span>K</div>
+                                </div>
+                                <div style="width: 1px; height: 40px; background: #e5e7eb;"></div>
+                                <div style="flex: 1; text-align: center;">
+                                    <div style="font-size: 10px; color: #666; margin-bottom: 4px;">累计收益</div>
+                                    <div style="font-size: 16px; font-weight: 700; color: #8b5cf6;">¥<span id="total-profit">1.85</span>M</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>
+                </div>
+            </div>
+
+            <!-- 显示数据选择 - 移到顶部水平排列 -->
+            <div id="displayDataOptions" style="position: absolute; top: 10px; left: 0px; z-index: 100;">
+                <div style="background: rgba(255, 255, 255, 0.9); border-radius: 8px; padding: 12px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 20px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #333;">显示数据：</div>
+                    <div style="display: flex; gap: 20px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="displayMode" value="soc" onchange="changeDisplayMode('soc')">
+                            <span style="font-size: 14px; color: #666;">SOC</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="displayMode" value="power" onchange="changeDisplayMode('power')">
+                            <span style="font-size: 14px; color: #666;">功率</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="displayMode" value="temperature" onchange="changeDisplayMode('temperature')">
+                            <span style="font-size: 14px; color: #666;">温度</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="displayMode" value="soh" onchange="changeDisplayMode('soh')">
+                            <span style="font-size: 14px; color: #666;">SOH</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="displayMode" value="utilization" onchange="changeDisplayMode('utilization')">
+                            <span style="font-size: 14px; color: #666;">利用率</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="displayMode" value="status" onchange="changeDisplayMode('status')">
+                            <span style="font-size: 14px; color: #666;">状态</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 储能柜展示区域 -->
+            <div id="cabinetDisplay" style="position: absolute; top: 80px; left: 80px; z-index: 99; width: 60%; max-width: 800px;">
+                <div>
+                    <!-- 第一排 -->
+                    <div style="display: flex; justify-content: flex-start; gap: 35px; margin-bottom: 40px;">
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-1" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜001" id="cabinet-img-1" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(1)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-1" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-2" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜002" id="cabinet-img-2" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(2)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-2" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-3" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜003" id="cabinet-img-3" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(3)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-3" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-4" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜004" id="cabinet-img-4" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(4)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-4" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                    <!-- 第二排 -->
+                    <div style="display: flex; justify-content: flex-start; gap: 35px;">
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-5" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜005" id="cabinet-img-5" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(5)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-5" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-6" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜006" id="cabinet-img-6" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(6)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-6" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-7" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜007" id="cabinet-img-7" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(7)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-7" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                        <div style="position: relative;">
+                            <div class="data-label" id="data-label-8" style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; z-index: 101; display: none;"></div>
+                            <img src="储能柜.jpg" alt="储能柜008" id="cabinet-img-8" style="width: 150px; height: auto; cursor: pointer; transition: all 0.3s ease; " onclick="selectCabinet(8)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="status-overlay" id="status-overlay-8" style="position: absolute; top: calc(15% - 10px); left: calc(15% - 5px); width: calc(70% + 10px); height: calc(70% + 20px); pointer-events: none; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 状态图例 -->
+                <div style="position: absolute; top: 420px; left: 0px; z-index: 100;">
+                    <div style="background: rgba(255, 255, 255, 0.95); border-radius: 8px; padding: 10px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 30px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #22c55e; border-radius: 4px;"></div>
+                            <span style="font-size: 14px; color: #333; font-weight: 500;">Online</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #f97316; border-radius: 4px;"></div>
+                            <span style="font-size: 14px; color: #333; font-weight: 500;">Offline</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                            <span style="font-size: 14px; color: #333; font-weight: 500;">Abnormal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 储能柜信息面板 -->
+            <div class="cabinet-info-panel" id="cabinetInfoPanel">
+                <div class="cabinet-info-header">
+                    <h3 class="cabinet-info-title" id="cabinetName">储能柜 001</h3>
+                    <button class="close-panel" onclick="closeCabinetPanel()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- 基本信息 -->
+                <div class="info-section">
+                    <h4>基本信息</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">型号</span>
+                            <span class="info-value" id="cabinetModel">ESS-2500</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">容量</span>
+                            <span class="info-value" id="cabinetCapacity">312.5 kWh</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">当前SOC</span>
+                            <span class="info-value" id="cabinetSOC">85%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">SOH</span>
+                            <span class="info-value" id="cabinetSOH">98%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">电压</span>
+                            <span class="info-value" id="cabinetVoltage">750.5 V</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">电流</span>
+                            <span class="info-value" id="cabinetCurrent">168.3 A</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">功率</span>
+                            <span class="info-value" id="cabinetPower">126.5 kW</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">温度</span>
+                            <span class="info-value" id="cabinetTemp">26.5°C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 零部件列表 -->
+                <div class="component-list">
+                    <h4>零部件</h4>
+                    <div class="component-item" onclick="selectComponent('battery')">
+                        <div class="component-name">电池模组</div>
+                        <div class="component-status">运行正常 • 温度: 25.8°C</div>
+                    </div>
+                    <div class="component-item" onclick="selectComponent('pcs')">
+                        <div class="component-name">PCS模块</div>
+                        <div class="component-status">运行正常 • 效率: 97.2%</div>
+                    </div>
+                    <div class="component-item" onclick="selectComponent('bms')">
+                        <div class="component-name">BMS系统</div>
+                        <div class="component-status">运行正常 • CPU: 15%</div>
+                    </div>
+                    <div class="component-item" onclick="selectComponent('cooling')">
+                        <div class="component-name">冷却系统</div>
+                        <div class="component-status">运行正常 • 功率: 2.5kW</div>
+                    </div>
+                    <div class="component-item" onclick="selectComponent('fire')">
+                        <div class="component-name">消防系统</div>
+                        <div class="component-status">待机中 • 压力: 正常</div>
+                    </div>
+                </div>
+
+                <!-- 数据图表 -->
+                <div class="data-charts">
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" onclick="switchChartTab('realtime')">实时数据</button>
+                        <button class="chart-tab" onclick="switchChartTab('history')">历史数据</button>
+                    </div>
+                    <div class="chart-content" id="chartContent">
+                        <span>选择零部件查看数据</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- 添加/编辑设备抽屉 (保留原有功能) -->
+    <div id="addDeviceDrawer" style="display: none;">
+        <!-- 遮罩层 -->
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 999;" onclick="closeAddDeviceDrawer()"></div>
+        <!-- 抽屉内容 -->
+        <div style="position: fixed; top: 0; right: -400px; bottom: 0; width: 400px; background: white; box-shadow: -2px 0 8px rgba(0,0,0,0.1); z-index: 1000; transition: right 0.3s ease;">
+            <div style="padding: 24px; height: 100%; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h3 id="drawerTitle" style="margin: 0; font-size: 18px;">添加站点</h3>
+                    <button onclick="closeAddDeviceDrawer()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                </div>
+                <form id="addDeviceForm" style="flex: 1;">
+                    <input type="hidden" name="deviceId" id="deviceId">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">设备编码 <span style="color: #ef4444;">*</span></label>
+                        <input type="text" name="code" class="form-input" required style="width: 100%; height: 40px;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">设备名称 <span style="color: #ef4444;">*</span></label>
+                        <input type="text" name="name" class="form-input" required style="width: 100%; height: 40px;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">所属站点 <span style="color: #ef4444;">*</span></label>
+                        <select name="site" class="form-input" required style="width: 100%; height: 40px;">
+                            <option value="">请选择站点</option>
+                            <option value="site1" data-translate="station1Name">科技园区站</option>
+                            <option value="site2" data-translate="station2Name">工业园区站</option>
+                            <option value="site3" data-translate="station3Name">商业中心站</option>
+                            <option value="site4" data-translate="station4Name">物流园区站</option>
+                            <option value="site5" data-translate="station5Name">研发中心站</option>
+                            <option value="site6" data-translate="station6Name">数据中心站</option>
+                        </select>
+                    </div>
+                    <div style="position: absolute; bottom: 24px; left: 24px; right: 24px; display: flex; gap: 12px;">
+                        <button type="button" class="btn" onclick="closeAddDeviceDrawer()" style="flex: 1; height: 40px;">取消</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1; height: 40px;">确定</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新建站点弹窗 -->
+    <style>
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            max-width: 800px;
+            max-height: 90vh;
+            width: 90%;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0.25rem;
+        }
+        
+        .modal-close:hover {
+            color: #374151;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-label.required::before {
+            content: "*";
+            color: #ef4444;
+            margin-right: 0.25rem;
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+            height: 42px;
+            box-sizing: border-box;
+            line-height: 1.4;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .file-upload {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        
+        .file-upload:hover {
+            border-color: #3562E3;
+        }
+        
+        .file-upload-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .device-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .device-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .device-input {
+            flex: 1;
+        }
+        
+        .add-device-btn {
+            padding: 0.5rem 1rem;
+            background: #3562E3;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .add-device-btn:hover {
+            background: #3562E3;
+        }
+        
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .qr-upload {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .qr-upload:hover {
+            border-color: #3562E3;
+        }
+        
+        .price-type-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .radio-group input[type="radio"] {
+            margin: 0;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        
+        .radio-option input[type="radio"] {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .radio-option span {
+            user-select: none;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .btn-cancel {
+            padding: 0.5rem 1.5rem;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        
+        .btn-cancel:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-submit {
+            padding: 0.5rem 1.5rem;
+            background: #3562E3;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .btn-submit:hover {
+            background: #2c4ed6;
+        }
+        
+        /* 深色主题适配 */
+        [data-theme="dark"] .modal-content {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .modal-header {
+            border-color: #374151;
+        }
+        
+        [data-theme="dark"] .modal-title,
+        [data-theme="dark"] .section-title,
+        [data-theme="dark"] .form-label {
+            color: #f9fafb;
+        }
+        
+        [data-theme="dark"] .section-title {
+            border-color: #374151;
+        }
+        
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] .form-textarea {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+        
+        [data-theme="dark"] .form-input:focus,
+        [data-theme="dark"] .form-select:focus,
+        [data-theme="dark"] .form-textarea:focus {
+            border-color: #3562E3;
+        }
+        
+        [data-theme="dark"] .modal-footer {
+            border-color: #374151;
+        }
+        
+        [data-theme="dark"] .btn-cancel {
+            background: #374151;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+        
+        [data-theme="dark"] .btn-cancel:hover {
+            background: #4b5563;
+        }
+        
+        /* 向导样式 */
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+        }
+        
+        .wizard-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 2;
+            flex-direction: row;
+        }
+        
+        .wizard-step::before {
+            content: '';
+            position: absolute;
+            left: calc(100% + 0.5rem);
+            width: 135px;
+            height: 2px;
+            background: #e5e7eb;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+        
+        .wizard-step:last-child::before {
+            display: none;
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .wizard-step.active .step-number {
+            background: #3562E3;
+            color: white;
+        }
+        
+        .wizard-step.completed .step-number {
+            background: #3562E3;
+            color: white;
+        }
+        
+        .step-title {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .wizard-step.active .step-title {
+            color: #3562E3;
+            font-weight: 600;
+        }
+        
+        .wizard-step.completed .step-title {
+            color: #3562E3;
+        }
+        
+        .wizard-content {
+            display: none;
+        }
+        
+        .wizard-content.active {
+            display: block;
+        }
+        
+        .wizard-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .wizard-nav {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn-secondary {
+            padding: 0.5rem 1.5rem;
+            background: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+        
+        .btn-primary {
+            padding: 0.5rem 1.5rem;
+            background: #3562E3;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary:hover {
+            background: #2c4ed6;
+        }
+        
+        .location-btn {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0.5rem;
+        }
+        
+        .location-btn:hover {
+            color: #3562E3;
+        }
+        
+        /* 地图弹窗样式 */
+        .map-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .map-modal-content {
+            background: white;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .map-modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .map-search-bar {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .map-search-input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        
+        .map-search-btn {
+            padding: 0.5rem 1rem;
+            background: #3562E3;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .map-search-btn:hover {
+            background: #2c4ed6;
+        }
+        
+        .map-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: #f3f4f6;
+        }
+        
+        .map-container #map {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .map-modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .map-coords {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .map-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* 深色主题适配 */
+        [data-theme="dark"] .map-modal-content {
+            background: #1e293b;
+        }
+        
+        [data-theme="dark"] .map-modal-header,
+        [data-theme="dark"] .map-search-bar,
+        [data-theme="dark"] .map-modal-footer {
+            border-color: #334155;
+        }
+        
+        [data-theme="dark"] .map-search-input {
+            background: #334155;
+            border-color: #475569;
+            color: #f1f5f9;
+        }
+        
+        [data-theme="dark"] .map-container {
+            background: #0f172a;
+        }
+        
+        [data-theme="dark"] .map-coords {
+            color: #9ca3af;
+        }
+    </style>
+    
+    <div id="create-station-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="createStationTitle">新建站点</h2>
+                <button class="modal-close" onclick="closeCreateStationModal()">&times;</button>
+            </div>
+            
+            <!-- 步骤指示器 -->
+            <div class="wizard-steps">
+                <div class="wizard-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-title" style="white-space: nowrap;"><span id="stepBasicInfo">基础信息</span></div>
+                </div>
+                <div class="wizard-step" data-step="2" style="margin-left: 150px;">
+                    <div class="step-number">2</div>
+                    <div class="step-title" style="white-space: nowrap;"><span id="stepAddDevice">添加设备</span></div>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <!-- 步骤1：基础信息 -->
+                <div class="wizard-content active" id="wizard-step-1">
+                    <div class="form-section">
+                        <h3 class="section-title" id="stationBasicInfoTitle">基础信息</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- 第一排 -->
+                            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="form-group">
+                                    <label class="form-label required" id="stationNameLabel">电站名称</label>
+                                    <input type="text" class="form-input" id="station-name" data-translate-placeholder="stationNamePlaceholder" placeholder="请输入电站名称">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label required" id="timezoneLabel">时区</label>
+                                    <select class="form-select" id="timezone">
+                                        <option value="" id="timezoneSelectPlaceholder">请选择时区</option>
+                                        <option value="UTC+8" selected data-translate="timezoneBeijing">UTC+8 (北京时间)</option>
+                                        <option value="UTC+7" data-translate="timezoneSEAsia">UTC+7 (东南亚时间)</option>
+                                        <option value="UTC+9" data-translate="timezoneJapanKorea">UTC+9 (日本/韩国时间)</option>
+                                        <option value="UTC+10" data-translate="timezoneAustraliaEast">UTC+10 (澳大利亚东部时间)</option>
+                                        <option value="UTC+5:30" data-translate="timezoneIndia">UTC+5:30 (印度时间)</option>
+                                        <option value="UTC+1" data-translate="timezoneCentralEurope">UTC+1 (中欧时间)</option>
+                                        <option value="UTC+0" data-translate="timezoneGMT">UTC+0 (格林威治时间)</option>
+                                        <option value="UTC-5" data-translate="timezoneUSEast">UTC-5 (美国东部时间)</option>
+                                        <option value="UTC-8" data-translate="timezoneUSPacific">UTC-8 (美国太平洋时间)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- 第二排：地址选择 -->
+                            <div class="form-group" style="margin-bottom: 1.5rem;">
+                                <label class="form-label required" id="addressLabel">地址</label>
+                                <!-- 地址显示框（点击打开弹窗） -->
+                                <div id="address-display-box" onclick="openAddressModal()" style="
+                                    padding: 0.75rem 1rem;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 0.375rem;
+                                    background: white;
+                                    cursor: pointer;
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    min-height: 42px;
+                                ">
+                                    <span id="address-display-text" style="color: #9ca3af;">点击选择地址</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </div>
+                                <!-- 隐藏的地址值 -->
+                                <input type="hidden" id="address" value="">
+                            </div>
+
+                            <!-- 第三排 -->
+                            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="form-group">
+                                    <label class="form-label" id="installedPowerLabel">装机容量(kW)</label>
+                                    <input type="number" class="form-input" id="installed-power" data-translate-placeholder="installedPowerPlaceholder" placeholder="请输入装机容量">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" id="gridDateLabel">并网时间</label>
+                                    <input type="date" class="form-input" id="grid-date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2：添加设备 -->
+                <div class="wizard-content" id="wizard-step-2">
+                    <div class="form-section">
+                        <!-- 标题和添加按钮 -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 class="section-title" id="addDeviceTitle" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">添加设备</h3>
+                            <button type="button" onclick="addDevice()" style="width: 90px; height: 48px; background: #3562E3; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem;">
+                                <span id="addDeviceBtn">添加</span>
+                            </button>
+                        </div>
+                        
+                        <!-- 设备添加表单 -->
+                        <div class="device-form" style="background: #f8fafc; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                
+                                <!-- 设备列表 -->
+                                <div class="device-list-container">
+                                    <div id="device-list">
+                                        <!-- 设备列表将动态添加到这里 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <!-- 分割线 -->
+                <div style="border-top: 1px solid #e5e7eb; width: 733.2px; margin: 0;"></div>
+                
+                <!-- 向导底部按钮 -->
+                <div class="wizard-footer" style="justify-content: flex-end; border-top: none; background: none; padding: 1.5rem 0 0 0; width: 733.2px;">
+                    <div class="wizard-nav">
+                        <button class="btn btn-cancel" onclick="closeCreateStationModal()" style="white-space: nowrap;">
+                            <span id="btnCancel1">取消</span>
+                        </button>
+                        <button class="btn btn-secondary" id="wizard-prev" onclick="prevWizardStep()" style="display: none; white-space: nowrap;">
+                            <span id="btnPrevious">上一步</span>
+                        </button>
+                        <button class="btn btn-primary" id="wizard-next" onclick="nextWizardStep()">
+                            <span id="btnNext">下一步</span>
+                        </button>
+                        <button class="btn btn-primary" id="wizard-finish" onclick="finishCreateStation()" style="display: none;">
+                            <span id="btnFinish">完成</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 地图选择弹窗 -->
+    <div id="map-modal" class="map-modal">
+        <div class="map-modal-content">
+            <div class="map-modal-header">
+                <h3 class="modal-title">选择位置</h3>
+                <button class="modal-close" onclick="closeMapModal()">&times;</button>
+            </div>
+            
+            <div class="map-search-bar">
+                <input type="text" class="map-search-input" id="map-search" placeholder="搜索地点...">
+                <button class="map-search-btn" onclick="searchLocation()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    搜索
+                </button>
+            </div>
+            
+            <div class="map-container">
+                <div id="map" style="width: 100%; height: 100%;"></div>
+            </div>
+            
+            <div class="map-modal-footer">
+                <div class="map-coords">
+                    <span id="selected-coords">经纬度：未选择</span>
+                </div>
+                <div class="map-actions">
+                    <button class="btn btn-cancel" onclick="closeMapModal()">取消</button>
+                    <button class="btn btn-primary" onclick="confirmLocation()">确认选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div> <!-- 结束 content-container -->
+    </main> <!-- 结束 main-content -->
+
+    <!-- 删除确认弹窗 -->
+    <div id="deleteConfirmModal" onclick="if(event.target === this) closeDeleteConfirm()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;">
+            <!-- 关闭按钮 -->
+            <button onclick="closeDeleteConfirm()" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;">
+                <i class="fas fa-times"></i>
+            </button>
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #ef4444;"></i>
+                </div>
+                <h3 style="margin: 0 0 8px 0; font-size: 18px; color: var(--text-primary);"><span id="confirmDeleteTitle">确认删除</span></h3>
+                <p style="margin: 0; font-size: 14px; color: var(--text-secondary);"><span id="confirmDeleteText1">您确定要删除站点</span> <span id="deleteDeviceName" style="font-weight: 600;"></span> <span id="confirmDeleteText2">吗？此操作无法撤销。</span></p>
+                <div id="deleteErrorMessage" style="display: none; margin-top: 16px; padding: 12px; background: #fee2e2; border-radius: 8px; color: #dc2626; font-size: 14px;"></div>
+            </div>
+            <div id="deleteConfirmButtons" style="display: flex; gap: 12px;">
+                <button class="btn" onclick="closeDeleteConfirm()" style="flex: 1; height: 40px;"><span id="btnCancel2">取消</span></button>
+                <button class="btn" onclick="confirmDelete()" style="flex: 1; height: 40px; background: #ef4444; color: white;"><span id="btnDelete">删除</span></button>
+            </div>
+            <div id="deleteErrorButtons" style="display: none; justify-content: center;">
+                <button class="btn" onclick="closeDeleteConfirm()" style="height: 40px; padding: 0 32px;"><span id="btnGotIt">知道了</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        // 导航到设备管理页面并预选站点
+        function navigateToDeviceManagement(siteName) {
+            // 将站点名称映射到对应的值
+            const siteMapping = {
+                '科技园区站': 'site1',
+                '工业园区站': 'site2', 
+                '商业中心站': 'site3',
+                '物流园区站': 'site4',
+                '研发中心站': 'site5',
+                '数据中心站': 'site6'
+            };
+            
+            const siteValue = siteMapping[siteName] || '';
+            
+            // 跳转到设备管理页面，并通过URL参数传递选中的站点
+            window.location.href = `devices.html?site=${encodeURIComponent(siteValue)}&siteName=${encodeURIComponent(siteName)}`;
+        }
+        
+        // 检查登录状态
+        checkAuth();
+        
+        // 设置当前页面菜单项
+        setActiveMenuItem('site1');
+
+        // 监听语言切换事件，重新渲染表格
+        window.addEventListener('languageChanged', function(e) {
+            renderTable();
+        });
+
+        // 模拟设备数据
+        // 实时功率: 正数=充电, 负数=放电, 0=待机
+        let devices = [
+            { id: 1, siteName: '科技园区站', cabinetCount: 8, enabled: true, installedPower: 500, realTimePower: 125.5, remainingEnergy: 425, soc: 85, address: '上海市浦东新区张江高科技园区' },
+            { id: 2, siteName: '科技园区站', cabinetCount: 12, enabled: true, installedPower: 500, realTimePower: -89.3, remainingEnergy: 460, soc: 92, address: '上海市浦东新区张江高科技园区' },
+            { id: 3, siteName: '工业园区站', cabinetCount: 0, enabled: false, installedPower: 800, realTimePower: 0, remainingEnergy: 360, soc: 45, address: '苏州市工业园区星湖街328号' },
+            { id: 4, siteName: '工业园区站', cabinetCount: 10, enabled: true, installedPower: 800, realTimePower: -156.8, remainingEnergy: 624, soc: 78, address: '苏州市工业园区星湖街328号' },
+            { id: 5, siteName: '商业中心站', cabinetCount: 6, enabled: true, installedPower: 600, realTimePower: 0, remainingEnergy: 150, soc: 25, address: '深圳市福田区中心区福华三路' },
+            { id: 6, siteName: '商业中心站', cabinetCount: 15, enabled: false, installedPower: 600, realTimePower: 98.7, remainingEnergy: 402, soc: 67, address: '深圳市福田区中心区福华三路' },
+            { id: 7, siteName: '物流园区站', cabinetCount: 9, enabled: true, installedPower: 1000, realTimePower: -112.4, remainingEnergy: 880, soc: 88, address: '广州市白云区钟落潭物流园' },
+            { id: 8, siteName: '研发中心站', cabinetCount: 7, enabled: true, installedPower: 750, realTimePower: 0, remainingEnergy: 412.5, soc: 55, address: '北京市海淀区中关村软件园' }
+        ];
+
+        let currentPage = 1;
+        let pageSize = 10;
+        let sortField = '';
+        let sortOrder = 'asc';
+        let filteredDevices = [...devices];
+
+        // 渲染表格
+        // 获取站点名称翻译
+        function getTranslatedStationName(zhName) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            if (currentLang === 'zh') return zhName;
+
+            const stationNames = {
+                '科技园区站': 'Tech Park Station',
+                '工业园区站': 'Industrial Park Station',
+                '商业中心站': 'Commercial Center Station',
+                '物流园区站': 'Logistics Park Station',
+                '研发中心站': 'R&D Center Station',
+                '数据中心站': 'Data Center Station',
+                '产业园区站': 'Industry Park Station'
+            };
+            return stationNames[zhName] || zhName;
+        }
+
+        // 获取地址翻译
+        function getTranslatedAddress(zhAddress) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            if (currentLang === 'zh') return zhAddress;
+
+            const addressMap = {
+                '上海市浦东新区张江高科技园区': 'Zhangjiang Hi-Tech Park, Pudong New Area, Shanghai',
+                '苏州市工业园区星湖街328号': '328 Xinghu Street, Suzhou Industrial Park, Suzhou',
+                '深圳市福田区中心区福华三路': 'Fuhua 3rd Road, Central District, Futian District, Shenzhen',
+                '广州市白云区钟落潭物流园': 'Zhongluotan Logistics Park, Baiyun District, Guangzhou',
+                '杭州市滨江区网商路599号': '599 Wangshang Road, Binjiang District, Hangzhou',
+                '南京市江宁区秣周东路9号': '9 Mozhou East Road, Jiangning District, Nanjing'
+            };
+            return addressMap[zhAddress] || zhAddress;
+        }
+
+        // 格式化功率值并添加状态标签
+        // > 0: 充电 (系统从电网吸收功率)
+        // < 0: 放电 (系统向电网释放功率)
+        // = 0: 待机 (系统待机状态)
+        function formatPowerWithStatus(power, lang) {
+            const isZh = lang === 'zh';
+            let statusText, statusColor, statusBg;
+
+            if (power > 0) {
+                statusText = isZh ? '充电' : 'Charging';
+                statusColor = '#059669';
+                statusBg = '#d1fae5';
+            } else if (power < 0) {
+                statusText = isZh ? '放电' : 'Discharging';
+                statusColor = '#dc2626';
+                statusBg = '#fee2e2';
+            } else {
+                statusText = isZh ? '待机' : 'Standby';
+                statusColor = '#6b7280';
+                statusBg = '#f3f4f6';
+            }
+
+            const powerValue = power > 0 ? `+${power}` : power;
+            const statusTag = `<span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; color: ${statusColor}; background: ${statusBg}; margin-left: 8px;">${statusText}</span>`;
+
+            return `${powerValue} kW${statusTag}`;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('deviceTableBody');
+            tbody.innerHTML = '';
+
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageDevices = filteredDevices.slice(start, end);
+            const currentLang = localStorage.getItem('language') || 'zh';
+            const unitText = currentLang === 'zh' ? ' 台' : '';
+
+            pageDevices.forEach(device => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border-color)';
+                tr.style.cursor = 'pointer';
+                tr.style.transition = 'background-color 0.2s ease';
+                tr.setAttribute('onclick', `navigateToDeviceManagement('${device.siteName}')`);
+                tr.setAttribute('onmouseover', 'this.style.backgroundColor = "var(--bg-secondary)"');
+                tr.setAttribute('onmouseout', 'this.style.backgroundColor = ""');
+
+                tr.innerHTML = `
+                    <td style="padding: 16px 12px;">${getTranslatedStationName(device.siteName)}</td>
+                    <td style="padding: 16px 12px; text-align: center; white-space: nowrap;">${device.cabinetCount || 0}${unitText}</td>
+                    <td style="padding: 16px 12px; text-align: center; white-space: nowrap;">${device.installedPower} kW</td>
+                    <td style="padding: 16px 12px; text-align: center; white-space: nowrap;">${formatPowerWithStatus(device.realTimePower, currentLang)}</td>
+                    <td style="padding: 16px 12px; text-align: center; white-space: nowrap;">${device.remainingEnergy} kWh</td>
+                    <td style="padding: 16px 12px; text-align: center; white-space: nowrap;">${device.soc}%</td>
+                    <td style="padding: 16px 12px; max-width: 200px; word-wrap: break-word;">${getTranslatedAddress(device.address)}</td>
+                    <td style="padding: 16px 12px; text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">
+                        <button class="btn" onclick="navigateToDeviceManagement('${device.siteName}')" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="${currentLang === 'zh' ? '进入站点' : 'Enter Station'}">
+                            <i class="fas fa-arrow-right" style="font-size: 16px; color: var(--text-secondary);"></i>
+                        </button>
+                        <button class="btn" onclick="editDevice(${device.id})" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="${currentLang === 'zh' ? '编辑' : 'Edit'}">
+                            <i class="far fa-edit" style="font-size: 16px; color: var(--text-secondary);"></i>
+                        </button>
+                        <button class="btn" onclick="deleteDevice(${device.id})" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="${currentLang === 'zh' ? '删除' : 'Delete'}">
+                            <i class="far fa-trash-alt" style="font-size: 16px; color: #ef4444;"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 更新分页信息
+            document.getElementById('totalCount').textContent = filteredDevices.length;
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = Math.ceil(filteredDevices.length / pageSize);
+        }
+
+        // 获取状态徽章
+        function getStatusBadge(status) {
+            const statusMap = {
+                'standby': { text: '待机', color: '#6b7280' },
+                'charging': { text: '充电', color: '#3b82f6' },
+                'discharging': { text: '放电', color: '#f59e0b' }
+            };
+            const statusInfo = statusMap[status];
+            return `
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${statusInfo.color};"></span>
+                    <span style="color: var(--text-secondary);">${statusInfo.text}</span>
+                </span>
+            `;
+        }
+
+        // 获取模式徽章
+        function getModeBadge(mode) {
+            const modeMap = {
+                'manual-charge': { text: '手动充电', color: '#3b82f6' },
+                'manual-discharge': { text: '手动放电', color: '#f59e0b' },
+                'standby': { text: '待机中', color: '#6b7280' },
+                'auto-charge': { text: '自动充电', color: '#10b981' },
+                'auto-discharge': { text: '自动放电', color: '#8b5cf6' },
+                'waiting': { text: '等待执行', color: '#ec4899' }
+            };
+            const modeInfo = modeMap[mode];
+            return `<span style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; background: ${modeInfo.color}20; color: ${modeInfo.color};">${modeInfo.text}</span>`;
+        }
+
+        // 排序表格
+        function sortTable(field, direction = null) {
+            if (direction) {
+                // 点击箭头
+                if (direction === 'asc') {
+                    // 点击上箭头
+                    if (sortField === field && sortOrder === 'asc') {
+                        // 如果当前就是这列的升序，则取消排序
+                        sortOrder = '';
+                        sortField = '';
+                    } else {
+                        // 否则设置为升序
+                        sortField = field;
+                        sortOrder = 'asc';
+                    }
+                } else if (direction === 'desc') {
+                    // 点击下箭头
+                    if (sortField === field && sortOrder === 'desc') {
+                        // 如果当前就是这列的降序，则取消排序
+                        sortOrder = '';
+                        sortField = '';
+                    } else {
+                        // 否则设置为降序
+                        sortField = field;
+                        sortOrder = 'desc';
+                    }
+                }
+            } else {
+                // 点击列头文字
+                if (sortField === field) {
+                    if (sortOrder === 'asc') {
+                        sortOrder = 'desc';
+                    } else if (sortOrder === 'desc') {
+                        sortOrder = '';
+                        sortField = '';
+                    } else {
+                        sortOrder = 'asc';
+                    }
+                } else {
+                    sortField = field;
+                    sortOrder = 'asc';
+                }
+            }
+
+            // 更新排序图标
+            updateSortIcons();
+
+            // 重新应用搜索条件
+            searchDevices();
+        }
+
+        // 更新排序图标
+        function updateSortIcons() {
+            // 重置所有排序箭头颜色
+            document.querySelectorAll('.sort-arrows i').forEach(arrow => {
+                arrow.style.color = '#94a3b8';
+            });
+
+            // 更新当前排序列的图标
+            if (sortField && sortOrder) {
+                const th = document.querySelector(`[data-sort="${sortField}"]`);
+                if (th) {
+                    const arrows = th.querySelector('.sort-arrows');
+                    if (arrows) {
+                        if (sortOrder === 'asc') {
+                            arrows.querySelector('.fa-caret-up').style.color = '#3b82f6';
+                        } else if (sortOrder === 'desc') {
+                            arrows.querySelector('.fa-caret-down').style.color = '#3b82f6';
+                        }
+                    }
+                }
+            }
+        }
+
+        // 搜索设备
+        function searchDevices() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredDevices = devices.filter(device => {
+                const matchSearch = !searchText || 
+                    device.siteName.toLowerCase().includes(searchText);
+                
+                return matchSearch;
+            });
+
+            // 应用排序
+            if (sortField && sortOrder) {
+                filteredDevices.sort((a, b) => {
+                    let aVal = a[sortField];
+                    let bVal = b[sortField];
+                    
+                    if (sortOrder === 'asc') {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+            }
+
+            currentPage = 1;
+            renderTable();
+        }
+
+        // 重置搜索
+        function resetSearch() {
+            document.getElementById('searchInput').value = '';
+            searchDevices();
+        }
+
+        // 分页功能
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredDevices.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        // 查看详情
+        function viewDetails(id) {
+            // 跳转到储能柜详情页面
+            window.location.href = `cabinet-detail.html?cabinetId=${id}`;
+        }
+
+        // 编辑设备
+        function editDevice(id) {
+            const device = devices.find(d => d.id === id);
+            if (device) {
+                // 使用新建站点弹窗进行编辑
+                const modal = document.getElementById('create-station-modal');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // 填充数据
+                document.getElementById('station-name').value = getTranslatedStationName(device.siteName);
+                document.getElementById('address').value = getTranslatedAddress(device.address);
+                document.getElementById('timezone').value = 'UTC+8';
+                document.getElementById('installed-power').value = device.installedPower;
+                document.getElementById('grid-date').value = '';
+
+                // 修改标题为编辑站点
+                const editTitle = translations[currentLang].editStationTitle || '编辑站点';
+                document.querySelector('#create-station-modal .modal-title').textContent = editTitle;
+                
+                // 保存设备ID用于更新
+                window.editingDeviceId = id;
+                
+                // 重置向导到第一步
+                currentWizardStep = 1;
+                updateWizardStep();
+            }
+        }
+
+        // 删除设备
+        let deleteDeviceId = null;
+        function deleteDevice(id) {
+            const device = devices.find(d => d.id === id);
+            if (device) {
+                deleteDeviceId = id;
+                document.getElementById('deleteDeviceName').textContent = getTranslatedStationName(device.siteName);
+                
+                // 检查储能柜数量
+                if (device.cabinetCount > 0) {
+                    // 显示错误提示，不能删除
+                    document.getElementById('deleteErrorMessage').style.display = 'block';
+                    const errorMsg = currentLang === 'zh'
+                        ? `该站点有 ${device.cabinetCount} 个储能柜，请先删除设备后再删除站点。`
+                        : `This station has ${device.cabinetCount} cabinets. Please delete the devices first.`;
+                    document.getElementById('deleteErrorMessage').innerHTML = `<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>${errorMsg}`;
+                    document.getElementById('deleteConfirmButtons').style.display = 'none';
+                    document.getElementById('deleteErrorButtons').style.display = 'flex';
+                } else {
+                    // 可以删除
+                    document.getElementById('deleteErrorMessage').style.display = 'none';
+                    document.getElementById('deleteConfirmButtons').style.display = 'flex';
+                    document.getElementById('deleteErrorButtons').style.display = 'none';
+                }
+                
+                document.getElementById('deleteConfirmModal').style.display = 'flex';
+            }
+        }
+
+        // 确认删除
+        function confirmDelete() {
+            if (deleteDeviceId) {
+                devices = devices.filter(d => d.id !== deleteDeviceId);
+                searchDevices();
+                closeDeleteConfirm();
+                
+                // 显示成功提示
+                showToast('站点删除成功！', '#ef4444');
+            }
+        }
+
+        // 关闭删除确认
+        function closeDeleteConfirm() {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            deleteDeviceId = null;
+        }
+
+        // 显示添加设备抽屉
+        function showAddDeviceModal() {
+            // 显示新建站点弹窗而不是抽屉
+            const modal = document.getElementById('create-station-modal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // 初始化表单
+            resetCreateStationForm();
+            
+            // 重置向导到第一步
+            currentWizardStep = 1;
+            updateWizardStep();
+        }
+
+        // 关闭添加设备抽屉
+        function closeAddDeviceDrawer() {
+            const drawer = document.getElementById('addDeviceDrawer');
+            const drawerContent = drawer.querySelector('div:last-child');
+            drawerContent.style.right = '-400px';
+            setTimeout(() => {
+                drawer.style.display = 'none';
+                document.getElementById('addDeviceForm').reset();
+            }, 300);
+        }
+
+        // 处理添加/编辑设备表单提交
+        document.getElementById('addDeviceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const deviceId = formData.get('deviceId');
+            const code = formData.get('code');
+            const name = formData.get('name');
+            const site = formData.get('site');
+            
+            if (deviceId) {
+                // 编辑模式
+                const device = devices.find(d => d.id === parseInt(deviceId));
+                if (device) {
+                    device.code = code;
+                    device.name = name;
+                    device.site = site;
+                    // 更新站点名称
+                    const siteOption = document.querySelector(`select[name="site"] option[value="${site}"]`);
+                    if (siteOption) {
+                        device.siteName = siteOption.textContent;
+                    }
+                }
+                searchDevices();
+                closeAddDeviceDrawer();
+                
+                // 显示成功提示
+                showToast('设备编辑成功！', '#10b981');
+            } else {
+                // 添加模式
+                // 获取站点名称
+                const siteOption = document.querySelector(`select[name="site"] option[value="${site}"]`);
+                const siteName = siteOption ? siteOption.textContent : '';
+                
+                const newDevice = {
+                    id: devices.length + 1,
+                    code: code,
+                    name: name,
+                    site: site,
+                    siteName: siteName,
+                    soc: Math.floor(Math.random() * 50 + 50), // 随机生成50-100之间的值
+                    soh: Math.floor(Math.random() * 10 + 90), // 随机生成90-100之间的值
+                    power: 0, // 默认功率为0
+                    status: 'standby',
+                    mode: 'standby'
+                };
+                
+                devices.push(newDevice);
+                searchDevices();
+                closeAddDeviceDrawer();
+                
+                // 显示成功提示
+                showToast('设备添加成功！', '#10b981');
+            }
+        });
+
+        // 显示提示消息
+        function showToast(message, color = '#10b981') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `position: fixed; top: 20px; right: 20px; background: ${color}; color: white; padding: 12px 24px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2000;`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 初始化站点选择下拉
+        function initSiteDropdown() {
+            const siteFilterInput = document.getElementById('siteFilterInput');
+            const siteDropdown = document.getElementById('siteDropdown');
+            const siteSearchInput = document.getElementById('siteSearchInput');
+            const siteOptions = document.querySelectorAll('.site-option');
+            const siteFilter = document.getElementById('siteFilter');
+            
+            // 点击输入框显示下拉
+            siteFilterInput.addEventListener('click', function(e) {
+                e.stopPropagation();
+                siteDropdown.style.display = 'block';
+                siteSearchInput.focus();
+            });
+            
+            // 搜索功能
+            siteSearchInput.addEventListener('input', function() {
+                const searchValue = this.value.toLowerCase();
+                siteOptions.forEach(option => {
+                    const text = option.textContent.toLowerCase();
+                    if (text.includes(searchValue)) {
+                        option.style.display = 'block';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+            
+            // 选择站点
+            siteOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const value = this.getAttribute('data-value');
+                    const text = this.textContent;
+                    siteFilter.value = value;
+                    siteFilterInput.value = text;
+                    siteDropdown.style.display = 'none';
+                    siteSearchInput.value = '';
+                    // 触发搜索
+                    searchDevices();
+                });
+            });
+            
+            // 点击外部关闭下拉
+            document.addEventListener('click', function() {
+                siteDropdown.style.display = 'none';
+                siteSearchInput.value = '';
+                // 重置搜索结果
+                siteOptions.forEach(option => {
+                    option.style.display = 'block';
+                });
+            });
+            
+            // 设置初始值
+            siteFilterInput.value = '全部站点';
+        }
+        
+        // 初始化
+        searchDevices();
+        
+        // 初始化浮动弹窗
+        setTimeout(() => {
+            initFloatingModal();
+        }, 100);
+        
+        // 浮动弹窗拖动功能
+        function initFloatingModal() {
+            const modal = document.getElementById('floatingModal');
+            const dragHandle = document.getElementById('dragHandle');
+            
+            console.log('Modal:', modal);
+            console.log('DragHandle:', dragHandle);
+            
+            // 确保元素存在
+            if (!modal || !dragHandle) {
+                console.error('Modal elements not found');
+                return;
+            }
+            
+            console.log('Initializing drag functionality...');
+            
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            dragHandle.onmousedown = dragMouseDown;
+            console.log('Drag event handler attached');
+            
+            function dragMouseDown(e) {
+                console.log('Drag started!');
+                e = e || window.event;
+                e.preventDefault();
+                
+                // 记录鼠标初始位置
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                // 绑定移动和释放事件
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                
+                // 改变光标
+                dragHandle.style.cursor = 'grabbing';
+                document.body.style.userSelect = 'none';
+                
+                console.log('Drag events bound');
+            }
+            
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                
+                // 计算鼠标移动距离
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                // 设置元素的新位置
+                const newTop = modal.offsetTop - pos2;
+                const newLeft = modal.offsetLeft - pos1;
+                
+                modal.style.top = newTop + "px";
+                modal.style.left = newLeft + "px";
+            }
+            
+            function closeDragElement() {
+                // 停止移动
+                document.onmouseup = null;
+                document.onmousemove = null;
+                
+                // 恢复光标
+                dragHandle.style.cursor = 'move';
+                document.body.style.userSelect = '';
+            }
+        }
+        
+        // 切换弹窗大小
+        function toggleModalSize() {
+            const modal = document.getElementById('floatingModal');
+            const icon = document.getElementById('resizeIcon');
+            
+            if (modal.classList.contains('expanded')) {
+                modal.classList.remove('expanded');
+                icon.className = 'fas fa-expand';
+            } else {
+                modal.classList.add('expanded');
+                icon.className = 'fas fa-compress';
+            }
+        }
+        
+        // 切换Tab
+        function switchTab(tabName) {
+            // 更新按钮状态
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.tab-button').classList.add('active');
+            
+            const tableView = document.getElementById('table-view');
+            const sceneContainer = document.getElementById('scene-container');
+            const queryArea = document.getElementById('query-area');
+            const dataPanel = document.getElementById('dataPanel');
+            const mainContent = document.getElementById('mainContent');
+            
+            const siteSelector = document.getElementById('siteSelector');
+            const tablePlaceholder = document.getElementById('tablePlaceholder');
+            
+            if (tabName === 'table') {
+                // 显示表格视图
+                if (tableView) tableView.style.display = 'block';
+                if (sceneContainer) sceneContainer.style.display = 'none';
+                if (queryArea) queryArea.style.display = 'block'; // 表格模式显示查询区域
+                if (dataPanel) dataPanel.style.display = 'none'; // 表格模式隐藏储能柜监控面板
+                if (siteSelector) siteSelector.style.display = 'none'; // 隐藏站点选择器
+                if (tablePlaceholder) tablePlaceholder.style.display = 'block'; // 显示占位元素
+                // 保持视图切换按钮的padding
+                if (mainContent) {
+                    mainContent.style.padding = '24px';
+                    mainContent.style.background = ''; // 恢复默认背景
+                }
+            } else if (tabName === 'view') {
+                // 显示3D视图
+                if (tableView) tableView.style.display = 'none';
+                if (sceneContainer) {
+                    sceneContainer.style.display = 'block';
+                    // 确保容器填满可用空间，减去顶部导航栏和视图切换按钮的高度
+                    sceneContainer.style.height = 'calc(100vh - 64px - 60px - 20px)'; // 导航栏 + 切换按钮 + margin
+                    
+                    // 如果3D场景还未初始化，则初始化
+                    if (!window.sceneInitialized) {
+                        init3DScene();
+                        window.sceneInitialized = true;
+                    }
+                }
+                if (queryArea) queryArea.style.display = 'none'; // 视图模式隐藏查询区域
+                if (dataPanel) dataPanel.style.display = 'block'; // 视图模式显示储能柜监控面板
+                if (siteSelector) siteSelector.style.display = 'flex'; // 显示站点选择器
+                if (tablePlaceholder) tablePlaceholder.style.display = 'none'; // 隐藏占位元素
+                // 3D视图模式下也保持padding，确保视图切换按钮正常显示
+                if (mainContent) {
+                    mainContent.style.padding = '24px';
+                    mainContent.style.paddingBottom = '0'; // 底部不需要padding
+                    mainContent.style.background = ''; // 使用默认背景
+                }
+            }
+        }
+        
+        // 场景相关变量
+        let cabinets = [];
+        let selectedCabinet = null;
+        let stats = {
+            totalCapacity: 2.5, // MWh
+            currentEnergy: 1.96, // MWh
+            onlineCount: 5,
+            offlineCount: 2,
+            faultCount: 1
+        };
+        
+        // 初始化简单背景
+        function init3DScene() {
+            console.log('开始初始化场景');
+            
+            const container = document.getElementById('scene-container');
+            if (!container) {
+                throw new Error('找不到scene-container元素');
+            }
+            
+            // 设置容器样式
+            container.style.background = 'transparent';
+            container.style.position = 'relative';
+            container.style.height = 'calc(100vh - 64px)';
+            container.style.overflow = 'hidden';
+            container.style.display = 'block';
+            
+            // 隐藏加载提示
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // 确保数据面板可见
+            const dataPanel = document.getElementById('dataPanel');
+            if (dataPanel) {
+                dataPanel.style.display = 'block';
+            }
+            
+            // 确保显示数据选择可见
+            const displayDataOptions = document.getElementById('displayDataOptions');
+            if (displayDataOptions) {
+                displayDataOptions.style.display = 'block';
+            }
+            
+            // 确保状态图例可见
+            const statusLegend = document.getElementById('cabinetStatusLegend');
+            if (statusLegend) {
+                statusLegend.style.display = 'block';
+            }
+            
+            // 确保储能柜展示区域可见
+            const cabinetDisplay = document.getElementById('cabinetDisplay');
+            if (cabinetDisplay) {
+                cabinetDisplay.style.display = 'block';
+            }
+            
+            // 更新统计面板
+            updateStatsPanel();
+            
+            // 默认选择SOC显示模式
+            changeDisplayMode('soc');
+        }
+        
+        // 设置灯光
+        function setupLights() {
+            // 灯光系统已删除
+        }
+        
+        // 创建地面
+        function createGround() {
+            // 不创建地面和网格，保持空场景
+        }
+        
+        // 加载3D储能柜
+        function loadCabinets3D() {
+            cabinets = [];
+            
+            // 暂时不创建任何储能柜模型
+            
+            // 更新统计面板
+            updateStatsPanel();
+        }
+        
+        // 创建2D储能柜
+        function createCabinet2D(index) {
+            // 创建储能柜容器
+            const cabinetElement = document.createElement('div');
+            cabinetElement.className = 'cabinet-item';
+            cabinetElement.style.cssText = `
+                position: relative;
+                width: 100%;
+                height: 100%;
+                min-height: 300px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            `;
+            
+            // 随机生成状态
+            const statuses = ['standby', 'charging', 'discharging', 'standby', 'charging'];
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            const soc = Math.floor(Math.random() * 40 + 60);
+            const power = status === 'charging' ? (Math.random() * 100 + 50).toFixed(1) : 
+                        status === 'discharging' ? -(Math.random() * 100 + 50).toFixed(1) : 0;
+            const temperature = Math.random() * 15 + 25;
+            const soh = 95 + Math.random() * 5;
+            
+            // 状态颜色
+            const statusColors = {
+                online: '#10b981',
+                offline: '#f97316',
+                fault: '#ef4444'
+            };
+            
+            // 状态指示灯
+            const statusLight = document.createElement('div');
+            statusLight.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 12px;
+                height: 12px;
+                background: ${statusColors[status]};
+                border-radius: 50%;
+                box-shadow: 0 0 8px ${statusColors[status]};
+            `;
+            cabinetElement.appendChild(statusLight);
+            
+            // 储能柜图片
+            const img = document.createElement('img');
+            img.src = '储能柜.png';
+            img.alt = '储能柜';
+            img.style.cssText = `
+                max-width: 80%;
+                max-height: 200px;
+                object-fit: contain;
+            `;
+            
+            // 图片加载失败时使用备用样式
+            img.onerror = function() {
+                this.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.style.cssText = `
+                    width: 120px;
+                    height: 180px;
+                    background: #3a4556;
+                    border-radius: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 18px;
+                    font-weight: bold;
+                `;
+                fallback.innerHTML = `
+                    <div>储能柜</div>
+                    <div style="font-size: 24px; margin-top: 10px;">${String(index + 1).padStart(3, '0')}</div>
+                `;
+                cabinetElement.appendChild(fallback);
+            };
+            
+            cabinetElement.appendChild(img);
+            
+            // 信息面板
+            const infoPanel = document.createElement('div');
+            infoPanel.style.cssText = `
+                width: 100%;
+                margin-top: 16px;
+                text-align: center;
+            `;
+            
+            infoPanel.innerHTML = `
+                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">储能柜 ${String(index + 1).padStart(3, '0')}</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                    <div style="text-align: left;">
+                        <span style="color: #666;">SOC:</span>
+                        <span style="font-weight: 600; color: #333;">${soc}%</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="color: #666;">功率:</span>
+                        <span style="font-weight: 600; color: #333;">${power}kW</span>
+                    </div>
+                </div>
+            `;
+            
+            cabinetElement.appendChild(infoPanel);
+            
+            // 悬停效果
+            cabinetElement.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px)';
+                this.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
+            });
+            
+            cabinetElement.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                }
+            });
+            
+            // 点击事件
+            cabinetElement.addEventListener('click', function() {
+                selectCabinet2D(index);
+            });
+            
+            // 存储数据
+            const cabinetData = {
+                element: cabinetElement,
+                index: index,
+                status: status,
+                soc: soc,
+                power: parseFloat(power),
+                temperature: temperature,
+                soh: soh,
+                utilization: Math.random() * 100,
+                data: {
+                    name: `储能柜 ${String(index + 1).padStart(3, '0')}`,
+                    model: 'ESS-2500',
+                    capacity: '312.5 kWh',
+                    voltage: (Math.random() * 50 + 700).toFixed(1) + ' V',
+                    current: (Math.random() * 100 + 150).toFixed(1) + ' A'
+                }
+            };
+            
+            return cabinetData;
+        }
+        
+        // 不需要动画循环和窗口调整，因为只是静态背景
+        
+        // 显示储能柜信息
+        function showCabinetInfo(cabinet) {
+            if (!cabinet) return;
+            
+            const panel = document.getElementById('cabinetInfoPanel');
+            if (!panel) return;
+            
+            // 更新面板信息
+            document.getElementById('cabinetName').textContent = cabinet.data.name;
+            document.getElementById('cabinetModel').textContent = cabinet.data.model;
+            document.getElementById('cabinetCapacity').textContent = cabinet.data.capacity;
+            document.getElementById('cabinetSOC').textContent = cabinet.soc + '%';
+            document.getElementById('cabinetSOH').textContent = cabinet.soh.toFixed(1) + '%';
+            document.getElementById('cabinetVoltage').textContent = cabinet.data.voltage;
+            document.getElementById('cabinetCurrent').textContent = cabinet.data.current;
+            document.getElementById('cabinetPower').textContent = cabinet.power + ' kW';
+            document.getElementById('cabinetTemp').textContent = cabinet.temperature.toFixed(1) + '°C';
+            
+            // 显示面板
+            panel.style.display = 'block';
+        }
+        
+        // 关闭储能柜信息面板
+        function closeCabinetPanel() {
+            const panel = document.getElementById('cabinetInfoPanel');
+            if (panel) {
+                panel.classList.remove('active');
+                panel.style.display = 'none';
+            }
+            selectedCabinet = null;
+        }
+        
+        // 选择储能柜
+        function selectCabinet(cabinetId) {
+            console.log('选择储能柜:', cabinetId);
+            
+            // 跳转到储能柜详情页面
+            window.location.href = `cabinet-detail.html?cabinetId=${cabinetId}`;
+        }
+        
+        // 改变显示模式
+        function changeDisplayMode(mode) {
+            console.log('切换显示模式:', mode);
+            
+            // 更新全局显示模式
+            window.currentDisplayMode = mode;
+            
+            // 更新单选按钮状态
+            const radioButtons = document.querySelectorAll('input[name="displayMode"]');
+            radioButtons.forEach(radio => {
+                radio.checked = radio.value === mode;
+            });
+            
+            // 更新所有储能柜的数据标签
+            if (cabinets.length > 0) {
+                cabinets.forEach(cabinet => {
+                    const label = document.getElementById(`data-label-${cabinet.id}`);
+                    if (label) {
+                        let displayText = '';
+                        switch(mode) {
+                            case 'soc':
+                                displayText = `${cabinet.soc}%`;
+                                break;
+                            case 'power':
+                                displayText = `${cabinet.power} kWh`;
+                                break;
+                            case 'temperature':
+                                displayText = `${cabinet.temperature}°`;
+                                break;
+                            case 'soh':
+                                displayText = `${cabinet.soh}%`;
+                                break;
+                            case 'utilization':
+                                displayText = `${cabinet.utilization}%`;
+                                break;
+                            case 'status':
+                                displayText = cabinet.status === 'charging' ? '充电' : 
+                                            cabinet.status === 'discharging' ? '放电' : '待机';
+                                break;
+                        }
+                        label.textContent = displayText;
+                        label.style.display = 'block';
+                    }
+                });
+            }
+        }
+        
+        // 切换数据面板
+        function toggleDataPanel() {
+            const content = document.getElementById('dataPanelContent');
+            const icon = document.getElementById('panelToggleIcon');
+            
+            if (content.style.maxHeight === '0px') {
+                content.style.maxHeight = 'calc(100vh - 120px)';
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                content.style.maxHeight = '0px';
+                icon.className = 'fas fa-chevron-down';
+            }
+        }
+        
+        // 切换展开部分
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const icon = document.getElementById(sectionId + '-icon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+        
+        // 选择组件
+        function selectComponent(componentName) {
+            console.log('选择组件:', componentName);
+            // 可以在这里添加组件高亮或显示详细信息的逻辑
+        }
+        
+        // 切换图表选项卡
+        function switchChartTab(tabName) {
+            console.log('切换图表选项卡:', tabName);
+            // 可以在这里添加图表切换逻辑
+        }
+        
+        function updateStatsPanel() {
+            // 初始化储能柜数据（如果还没有）
+            if (cabinets.length === 0) {
+                // 创建8个储能柜的模拟数据
+                for (let i = 1; i <= 8; i++) {
+                    cabinets.push({
+                        id: i,
+                        status: i <= 3 ? 'charging' : (i <= 6 ? 'discharging' : 'standby'),
+                        soc: Math.floor(Math.random() * 40 + 50),
+                        soh: Math.floor(Math.random() * 10 + 90),
+                        power: i <= 3 ? Math.floor(Math.random() * 100 + 50) : 
+                               (i <= 6 ? -Math.floor(Math.random() * 100 + 50) : 0),
+                        voltage: (Math.random() * 50 + 720).toFixed(1),
+                        current: (Math.random() * 100 + 100).toFixed(1),
+                        temperature: (Math.random() * 5 + 23).toFixed(1),
+                        charge_status: i <= 3 ? 'charging' : (i <= 5 ? 'discharging' : 'standby'),
+                        efficiency: Math.floor(Math.random() * 5 + 93),
+                        utilization: Math.floor(Math.random() * 30 + 60)
+                    });
+                }
+            }
+            
+            // 统计状态
+            let onlineCount = 0;
+            let offlineCount = 0;
+            let faultCount = 0;
+            let totalSOC = 0;
+            let totalPower = 0;
+            let chargePower = 0;
+            let dischargePower = 0;
+            let socValues = [];
+            let temperatures = [];
+            let efficiencies = [];
+            
+            cabinets.forEach(cabinet => {
+                // 状态统计
+                if (cabinet.status === 'charging') onlineCount++;
+                else if (cabinet.status === 'discharging') offlineCount++;
+                else if (cabinet.status === 'standby') faultCount++;
+                
+                // 收集SOC值
+                if (cabinet.status !== 'standby') {
+                    totalSOC += cabinet.soc;
+                    socValues.push(cabinet.soc);
+                }
+                
+                // 温度数据（模拟）
+                const temp = Math.random() * 15 + 25; // 25-40°C
+                temperatures.push(temp);
+                
+                // 效率数据（模拟）
+                if (cabinet.status !== 'standby') {
+                    const efficiency = Math.random() * 5 + 92; // 92-97%
+                    efficiencies.push(efficiency);
+                }
+                
+                // 功率统计
+                const power = parseFloat(cabinet.power);
+                if (cabinet.status !== 'standby') {
+                    totalPower += Math.abs(power);
+                    // 根据状态分配充放电
+                    if (cabinet.status === 'charging') {
+                        chargePower += Math.abs(power);
+                    } else if (cabinet.status === 'discharging') {
+                        dischargePower += power * 0.6;
+                    }
+                }
+            });
+            
+            // 计算关键指标
+            const avgSOC = onlineCount > 0 ? Math.round(totalSOC / onlineCount) : 0;
+            const socRange = socValues.length > 0 ? Math.max(...socValues) - Math.min(...socValues) : 0;
+            const maxTemp = temperatures.length > 0 ? Math.max(...temperatures).toFixed(1) : 0;
+            const tempRange = temperatures.length > 0 ? (Math.max(...temperatures) - Math.min(...temperatures)).toFixed(1) : 0;
+            
+            // 运行指标
+            const totalCapacity = cabinets.length * 0.3125; // MWh
+            const dispatchableCapacity = onlineCount * 0.3125 * 0.9; // 90%可调度
+            const avgEfficiency = efficiencies.length > 0 ? (efficiencies.reduce((a, b) => a + b) / efficiencies.length).toFixed(1) : 0;
+            const throughput = (Math.random() * 2 + 2).toFixed(1); // 模拟吞吐量
+            
+            // 更新DOM元素
+            // 状态概览
+            const onlineCountEl = document.getElementById('online-count');
+            const offlineCountEl = document.getElementById('offline-count');
+            const faultCountEl = document.getElementById('fault-count');
+            if (onlineCountEl) onlineCountEl.textContent = onlineCount;
+            if (offlineCountEl) offlineCountEl.textContent = offlineCount;
+            if (faultCountEl) faultCountEl.textContent = faultCount;
+            
+            // 充放电状态
+            let chargingCount = 0;
+            let dischargingCount = 0;
+            let standbyCount = 0;
+            cabinets.forEach(cabinet => {
+                if (cabinet.charge_status === 'charging') chargingCount++;
+                else if (cabinet.charge_status === 'discharging') dischargingCount++;
+                else if (cabinet.charge_status === 'standby') standbyCount++;
+            });
+            const chargingCountEl = document.getElementById('charging-count');
+            const dischargingCountEl = document.getElementById('discharging-count');
+            const standbyCountEl = document.getElementById('standby-count');
+            if (chargingCountEl) chargingCountEl.textContent = chargingCount;
+            if (dischargingCountEl) dischargingCountEl.textContent = dischargingCount;
+            if (standbyCountEl) standbyCountEl.textContent = standbyCount;
+            
+            // 关键运行指标
+            const totalCapacityEl = document.getElementById('total-capacity');
+            const currentEnergyEl = document.getElementById('current-energy');
+            const energyPercentEl = document.getElementById('energy-percent');
+            const maxUtilizationEl = document.getElementById('max-utilization');
+            const maxUtilCabinetEl = document.getElementById('max-util-cabinet');
+            const minSocEl = document.getElementById('min-soc');
+            const minSocCabinetEl = document.getElementById('min-soc-cabinet');
+            const minSohEl = document.getElementById('min-soh');
+            const minSohCabinetEl = document.getElementById('min-soh-cabinet');
+            
+            if (totalCapacityEl) totalCapacityEl.textContent = totalCapacity.toFixed(1);
+            if (currentEnergyEl) currentEnergyEl.textContent = (totalCapacity * avgSOC / 100).toFixed(2);
+            if (energyPercentEl) energyPercentEl.textContent = avgSOC;
+            
+            // 找出最高利用率和最低SOC/SOH的储能柜
+            let maxUtil = { value: 0, id: 0 };
+            let minSoc = { value: 100, id: 0 };
+            let minSoh = { value: 100, id: 0 };
+            
+            cabinets.forEach(cabinet => {
+                if (cabinet.utilization > maxUtil.value) {
+                    maxUtil.value = cabinet.utilization;
+                    maxUtil.id = cabinet.id;
+                }
+                if (cabinet.soc < minSoc.value) {
+                    minSoc.value = cabinet.soc;
+                    minSoc.id = cabinet.id;
+                }
+                if (cabinet.soh < minSoh.value) {
+                    minSoh.value = cabinet.soh;
+                    minSoh.id = cabinet.id;
+                }
+            });
+            
+            if (maxUtilizationEl) maxUtilizationEl.textContent = maxUtil.value;
+            if (maxUtilCabinetEl) maxUtilCabinetEl.textContent = String(maxUtil.id).padStart(3, '0');
+            if (minSocEl) minSocEl.textContent = minSoc.value;
+            if (minSocCabinetEl) minSocCabinetEl.textContent = String(minSoc.id).padStart(3, '0');
+            if (minSohEl) minSohEl.textContent = minSoh.value;
+            if (minSohCabinetEl) minSohCabinetEl.textContent = String(minSoh.id).padStart(3, '0');
+            
+            // 收益统计
+            const yesterdayProfitEl = document.getElementById('yesterday-profit');
+            const todayProfitEl = document.getElementById('today-profit');
+            const monthProfitEl = document.getElementById('month-profit');
+            const totalProfitEl = document.getElementById('total-profit');
+            
+            if (yesterdayProfitEl) yesterdayProfitEl.textContent = '12,350';
+            if (todayProfitEl) todayProfitEl.textContent = '8,450';
+            if (monthProfitEl) monthProfitEl.textContent = '326.5';
+            if (totalProfitEl) totalProfitEl.textContent = '1.85';
+            
+            // 更新储能柜状态颜色叠加
+            cabinets.forEach((cabinet, index) => {
+                const overlay = document.getElementById(`status-overlay-${cabinet.id}`);
+                if (overlay) {
+                    if (cabinet.status === 'charging') {
+                        // 充电 - 蓝色叠加
+                        overlay.style.backgroundColor = 'rgba(59, 130, 246, 0.3)';
+                    } else if (cabinet.status === 'discharging') {
+                        // 放电 - 橙色叠加
+                        overlay.style.backgroundColor = 'rgba(245, 158, 11, 0.3)';
+                    } else if (cabinet.status === 'standby') {
+                        // 待机 - 灰色叠加
+                        overlay.style.backgroundColor = 'rgba(107, 114, 128, 0.3)';
+                    }
+                }
+            });
+        }
+
+        // 不需要鼠标事件，因为没有模型
+
+        // 切换站点
+        function changeSite() {
+            const siteSelect = document.getElementById('siteSelect');
+            const selectedSite = siteSelect.value;
+            
+            console.log('切换到站点:', selectedSite);
+            
+            // 根据站点更新储能柜数量和布局
+            updateCabinetDisplay(selectedSite);
+            
+            // 更新统计数据
+            updateStatsPanel();
+        }
+        
+        // 根据站点更新储能柜显示
+        function updateCabinetDisplay(siteId) {
+            // 这里可以根据不同站点更新储能柜的数量和数据
+            // 示例：不同站点有不同数量的储能柜
+            const siteConfigs = {
+                'sz': { count: 8, name: '深圳储能站' },
+                'gz': { count: 12, name: '广州储能站' },
+                'sh': { count: 10, name: '上海储能站' },
+                'bj': { count: 15, name: '北京储能站' },
+                'cd': { count: 6, name: '成都储能站' },
+                'hz': { count: 9, name: '杭州储能站' },
+                'wh': { count: 11, name: '武汉储能站' },
+                'xa': { count: 8, name: '西安储能站' },
+                'nj': { count: 7, name: '南京储能站' },
+                'cq': { count: 13, name: '重庆储能站' }
+            };
+            
+            const config = siteConfigs[siteId] || siteConfigs['sz'];
+            console.log(`加载${config.name}，共${config.count}台储能柜`);
+            
+            // 这里可以动态更新储能柜的显示
+            // 例如：隐藏多余的储能柜图片，或者重新排列等
+        }
+        
+        // 当前向导步骤
+        let currentWizardStep = 1;
+        
+        // 新建站点函数
+        function createStation() {
+            showAddDeviceModal();
+        }
+        
+        // 关闭新建站点弹窗
+        function closeCreateStationModal() {
+            const modal = document.getElementById('create-station-modal');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        
+        // 更新向导步骤显示
+        function updateWizardStep() {
+            // 更新步骤指示器
+            document.querySelectorAll('.wizard-step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index + 1 < currentWizardStep) {
+                    step.classList.add('completed');
+                } else if (index + 1 === currentWizardStep) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // 更新内容显示
+            document.querySelectorAll('.wizard-content').forEach((content, index) => {
+                content.classList.remove('active');
+                if (index + 1 === currentWizardStep) {
+                    content.classList.add('active');
+                }
+            });
+            
+            // 更新按钮显示
+            const prevBtn = document.getElementById('wizard-prev');
+            const nextBtn = document.getElementById('wizard-next');
+            const finishBtn = document.getElementById('wizard-finish');
+            
+            prevBtn.style.display = currentWizardStep > 1 ? 'inline-block' : 'none';
+            nextBtn.style.display = currentWizardStep < 2 ? 'inline-block' : 'none';
+            finishBtn.style.display = currentWizardStep === 2 ? 'inline-block' : 'none';
+        }
+
+        // 下一步
+        function nextWizardStep() {
+            if (currentWizardStep < 2) {
+                currentWizardStep++;
+                updateWizardStep();
+            }
+        }
+        
+        // 上一步
+        function prevWizardStep() {
+            if (currentWizardStep > 1) {
+                currentWizardStep--;
+                updateWizardStep();
+            }
+        }
+        
+        // 完成新建站点
+        function finishCreateStation() {
+            // 收集表单数据
+            const stationData = {
+                name: document.getElementById('station-name').value,
+                type: '工商储',
+                address: document.getElementById('address').value,
+                timezone: document.getElementById('timezone').value,
+                installedPower: document.getElementById('installed-power').value,
+                gridDate: document.getElementById('grid-date').value,
+                devices: getDeviceListData()
+            };
+            
+            // 判断是编辑还是新建
+            if (window.editingDeviceId) {
+                // 编辑模式
+                const device = devices.find(d => d.id === window.editingDeviceId);
+                if (device) {
+                    device.siteName = stationData.name;
+                    device.address = stationData.address;
+                    device.installedPower = parseInt(stationData.installedPower) || 0;
+                    // 其他字段更新...
+                }
+                console.log('编辑站点数据：', stationData);
+                // alert('站点编辑成功！'); // 已移除浏览器提示
+                window.editingDeviceId = null;
+            } else {
+                // 新建模式
+                console.log('新建站点数据：', stationData);
+                // alert('站点创建成功！'); // 已移除浏览器提示
+            }
+            
+            // 关闭弹窗
+            closeCreateStationModal();
+            
+            // 刷新页面数据
+            renderTable();
+        }
+        
+        // 重置新建站点表单
+        function resetCreateStationForm() {
+            document.getElementById('station-name').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('timezone').value = 'UTC+8';
+            document.getElementById('installed-power').value = '';
+            document.getElementById('grid-date').value = '';
+            document.getElementById('device-list').innerHTML = '';
+            currentWizardStep = 1;
+            updateWizardStep();
+        }
+        
+        // 添加设备
+        function addDevice() {
+            const deviceList = document.getElementById('device-list');
+            const deviceItem = document.createElement('div');
+            deviceItem.className = 'device-item';
+            deviceItem.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.75rem; background: white; border-radius: 0.375rem; align-items: center;';
+
+            const currentLang = localStorage.getItem('language') || 'zh';
+            const t = translations[currentLang];
+
+            deviceItem.innerHTML = `
+                <input type="text" class="form-input device-sn" placeholder="${t.deviceSnPlaceholder}" style="flex: 1;">
+                <input type="text" class="form-input device-name" placeholder="${t.deviceNamePlaceholder}" style="flex: 1;">
+                <button type="button" onclick="removeDevice(this)" style="background: none; border: none; color: #6b7280; cursor: pointer; padding: 0.5rem; font-size: 1rem;">
+                    <span>${t.deviceRemoveBtn}</span>
+                </button>
+            `;
+            deviceList.appendChild(deviceItem);
+        }
+        
+        // 删除设备
+        function removeDevice(button) {
+            button.parentElement.remove();
+        }
+        
+        // 获取设备列表数据
+        function getDeviceListData() {
+            const devices = [];
+            const deviceItems = document.querySelectorAll('#device-list .device-item');
+            deviceItems.forEach(item => {
+                const sn = item.querySelector('.device-sn').value;
+                const name = item.querySelector('.device-name').value;
+                if (sn || name) {
+                    devices.push({ sn, name });
+                }
+            });
+            return devices;
+        }
+        
+        // 地图相关变量
+        let map = null;
+        let selectedLocation = null;
+        let marker = null;
+        
+        // 打开地图弹窗
+        function openMapModal() {
+            const modal = document.getElementById('map-modal');
+            modal.style.display = 'flex';
+            
+            // 初始化地图（这里使用模拟实现）
+            if (!map) {
+                initMap();
+            }
+        }
+        
+        // 关闭地图弹窗
+        function closeMapModal() {
+            const modal = document.getElementById('map-modal');
+            modal.style.display = 'none';
+        }
+        
+        // 初始化地图（模拟实现）
+        function initMap() {
+            const mapContainer = document.getElementById('map');
+            map = true; // 标记已初始化
+            
+            // 创建模拟地图界面
+            mapContainer.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e5e7eb;">
+                    <div style="text-align: center; padding: 2rem;">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" style="margin: 0 auto;">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <p style="margin-top: 1rem; color: #6b7280;">点击地图选择位置</p>
+                        <p style="margin-top: 0.5rem; color: #9ca3af; font-size: 0.875rem;">（演示模式：实际应用中将集成地图API）</p>
+                    </div>
+                </div>
+            `;
+            
+            // 添加点击事件（模拟）
+            mapContainer.addEventListener('click', function(e) {
+                // 模拟选择位置
+                const mockLocations = [
+                    { lat: 31.2304, lng: 121.4737, address: '上海市浦东新区张江高科技园区' },
+                    { lat: 39.9042, lng: 116.4074, address: '北京市海淀区中关村科技园' },
+                    { lat: 22.5431, lng: 114.0579, address: '深圳市南山区科技园南路' },
+                    { lat: 23.1291, lng: 113.2644, address: '广州市天河区科韵路' }
+                ];
+                
+                const randomLocation = mockLocations[Math.floor(Math.random() * mockLocations.length)];
+                placeMarker(randomLocation);
+            });
+        }
+        
+        // 放置标记（模拟）
+        function placeMarker(location) {
+            selectedLocation = location;
+            
+            // 更新坐标显示
+            document.getElementById('selected-coords').textContent = 
+                `经纬度：${location.lng.toFixed(6)}, ${location.lat.toFixed(6)}`;
+            
+            // 更新地图显示（模拟）
+            const mapContainer = document.getElementById('map');
+            mapContainer.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e5e7eb; position: relative;">
+                    <div style="text-align: center;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="#ef4444" stroke="none">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                        <p style="margin-top: 1rem; color: #374151; font-weight: 500;">${location.address}</p>
+                        <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">已选择位置</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 搜索位置（模拟）
+        function searchLocation() {
+            const keyword = document.getElementById('map-search').value.trim();
+            if (!keyword) return;
+            
+            // 模拟搜索结果
+            const searchResults = {
+                '上海': { lat: 31.2304, lng: 121.4737, address: '上海市浦东新区张江高科技园区' },
+                '北京': { lat: 39.9042, lng: 116.4074, address: '北京市海淀区中关村科技园' },
+                '深圳': { lat: 22.5431, lng: 114.0579, address: '深圳市南山区科技园南路' },
+                '广州': { lat: 23.1291, lng: 113.2644, address: '广州市天河区科韵路' },
+                '张江': { lat: 31.2304, lng: 121.4737, address: '上海市浦东新区张江高科技园区' },
+                '中关村': { lat: 39.9042, lng: 116.4074, address: '北京市海淀区中关村科技园' }
+            };
+            
+            for (let key in searchResults) {
+                if (keyword.includes(key) || key.includes(keyword)) {
+                    placeMarker(searchResults[key]);
+                    return;
+                }
+            }
+            
+            alert('未找到相关地点，请尝试搜索：上海、北京、深圳、广州、张江、中关村');
+        }
+        
+        // 确认选择位置（从地图）
+        function confirmLocation() {
+            if (!selectedLocation) {
+                alert('请先在地图上选择一个位置');
+                return;
+            }
+
+            // 设置地址值
+            const address = selectedLocation.address;
+            document.getElementById('address').value = address;
+            document.getElementById('address-display-text').textContent = address;
+            document.getElementById('address-display-text').style.color = '#374151';
+
+            // 关闭地址面板和地图弹窗
+            document.getElementById('address-panel').style.display = 'none';
+            closeMapModal();
+        }
+
+        // 切换地址选择面板
+        function toggleAddressPanel() {
+            const panel = document.getElementById('address-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 获取当前位置
+        function getLocation() {
+            // 模拟获取位置（实际应用中使用 navigator.geolocation）
+            const mockLocations = [
+                '上海市浦东新区张江高科技园区',
+                '北京市海淀区中关村科技园',
+                '深圳市南山区科技园南路',
+                '广州市天河区科韵路'
+            ];
+            const randomAddress = mockLocations[Math.floor(Math.random() * mockLocations.length)];
+
+            // 设置地址
+            document.getElementById('address').value = randomAddress;
+            document.getElementById('address-display-text').textContent = randomAddress;
+            document.getElementById('address-display-text').style.color = '#374151';
+
+            // 关闭面板
+            document.getElementById('address-panel').style.display = 'none';
+
+            // 提示
+            alert('已获取当前位置：' + randomAddress);
+        }
+
+        // 省市区数据
+        const addressData = {
+            '中国': {
+                '上海市': {
+                    '上海市': ['浦东新区', '黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '虹口区', '杨浦区', '闵行区', '宝山区', '嘉定区', '松江区']
+                },
+                '北京市': {
+                    '北京市': ['东城区', '西城区', '朝阳区', '海淀区', '丰台区', '石景山区', '通州区', '顺义区', '大兴区', '昌平区']
+                },
+                '广东省': {
+                    '广州市': ['天河区', '越秀区', '海珠区', '荔湾区', '白云区', '黄埔区', '番禺区', '花都区', '南沙区'],
+                    '深圳市': ['福田区', '罗湖区', '南山区', '盐田区', '宝安区', '龙岗区', '龙华区', '坪山区', '光明区']
+                },
+                '江苏省': {
+                    '南京市': ['玄武区', '秦淮区', '鼓楼区', '建邺区', '栖霞区', '雨花台区', '江宁区', '浦口区'],
+                    '苏州市': ['姑苏区', '虎丘区', '吴中区', '相城区', '吴江区', '工业园区']
+                },
+                '浙江省': {
+                    '杭州市': ['上城区', '下城区', '江干区', '拱墅区', '西湖区', '滨江区', '萧山区', '余杭区', '富阳区'],
+                    '宁波市': ['海曙区', '江北区', '北仑区', '镇海区', '鄞州区', '奉化区']
+                },
+                '四川省': {
+                    '成都市': ['锦江区', '青羊区', '金牛区', '武侯区', '成华区', '龙泉驿区', '青白江区', '新都区', '温江区', '高新区']
+                },
+                '湖北省': {
+                    '武汉市': ['江岸区', '江汉区', '硚口区', '汉阳区', '武昌区', '青山区', '洪山区', '东西湖区', '蔡甸区', '江夏区']
+                }
+            },
+            '澳大利亚': {
+                '新南威尔士州': {
+                    '悉尼': ['悉尼CBD', '北悉尼', '帕拉马塔', '邦迪']
+                },
+                '维多利亚州': {
+                    '墨尔本': ['墨尔本CBD', '南岸', '里士满', '卡尔顿']
+                }
+            }
+        };
+
+        // 更新省份选项
+        function updateProvinces() {
+            const country = document.getElementById('address-country').value;
+            const provinceSelect = document.getElementById('address-province');
+            const citySelect = document.getElementById('address-city');
+            const districtSelect = document.getElementById('address-district');
+
+            // 清空
+            provinceSelect.innerHTML = '<option value="">请选择省份</option>';
+            citySelect.innerHTML = '<option value="">请选择城市</option>';
+            districtSelect.innerHTML = '<option value="">请选择区县</option>';
+
+            if (country && addressData[country]) {
+                Object.keys(addressData[country]).forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province;
+                    option.textContent = province;
+                    provinceSelect.appendChild(option);
+                });
+            }
+        }
+
+        // 更新城市选项
+        function updateCities() {
+            const country = document.getElementById('address-country').value;
+            const province = document.getElementById('address-province').value;
+            const citySelect = document.getElementById('address-city');
+            const districtSelect = document.getElementById('address-district');
+
+            // 清空
+            citySelect.innerHTML = '<option value="">请选择城市</option>';
+            districtSelect.innerHTML = '<option value="">请选择区县</option>';
+
+            if (country && province && addressData[country] && addressData[country][province]) {
+                Object.keys(addressData[country][province]).forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            }
+        }
+
+        // 更新区县选项
+        function updateDistricts() {
+            const country = document.getElementById('address-country').value;
+            const province = document.getElementById('address-province').value;
+            const city = document.getElementById('address-city').value;
+            const districtSelect = document.getElementById('address-district');
+
+            // 清空
+            districtSelect.innerHTML = '<option value="">请选择区县</option>';
+
+            if (country && province && city && addressData[country] && addressData[country][province] && addressData[country][province][city]) {
+                addressData[country][province][city].forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    districtSelect.appendChild(option);
+                });
+            }
+        }
+
+        // 确认地址选择
+        function confirmAddressSelection() {
+            const country = document.getElementById('address-country').value;
+            const province = document.getElementById('address-province').value;
+            const city = document.getElementById('address-city').value;
+            const district = document.getElementById('address-district').value;
+            const street = document.getElementById('address-street').value;
+
+            // 验证必填项
+            if (!province) {
+                alert('请选择省份');
+                return;
+            }
+
+            // 组合地址
+            let fullAddress = '';
+            if (country && country !== '中国') {
+                fullAddress += country + ' ';
+            }
+            if (province) fullAddress += province;
+            if (city && city !== province) fullAddress += city;
+            if (district) fullAddress += district;
+            if (street) fullAddress += street;
+
+            // 设置地址值
+            document.getElementById('address').value = fullAddress;
+            document.getElementById('address-display-text').textContent = fullAddress;
+            document.getElementById('address-display-text').style.color = '#374151';
+
+            // 关闭面板
+            document.getElementById('address-panel').style.display = 'none';
+        }
+        
+        // 添加时段
+        let timeSlotCounter = {};
+        
+        function addTimeSlot(type, period) {
+            const key = `${type}-${period}`;
+            if (!timeSlotCounter[key]) {
+                timeSlotCounter[key] = 1;
+            }
+            timeSlotCounter[key]++;
+            
+            const slotId = `${key}-slot-${timeSlotCounter[key]}`;
+            const container = document.getElementById(`${key}-additional-slots`);
+            
+            const newSlot = document.createElement('div');
+            newSlot.id = slotId;
+            newSlot.style.cssText = 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;';
+            newSlot.innerHTML = `
+                <input type="time" class="form-input" id="${key}-start${timeSlotCounter[key]}" style="width: 120px;">
+                <span style="line-height: 36px;">至</span>
+                <input type="time" class="form-input" id="${key}-end${timeSlotCounter[key]}" style="width: 120px;">
+                <button onclick="removeTimeSlot('${slotId}')" style="padding: 0 12px; height: 36px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    <i class="fas fa-minus"></i> 删除
+                </button>
+            `;
+            
+            container.appendChild(newSlot);
+        }
+        
+        function removeTimeSlot(slotId) {
+            const element = document.getElementById(slotId);
+            if (element) {
+                element.remove();
+            }
+        }
+
+
+        // 电价相关函数已删除
+    </script>
+
+    <!-- 地址选择弹窗 - 参考 vppservice 样式 -->
+    <div id="address-modal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+    ">
+        <div style="
+            background: white;
+            border-radius: 8px;
+            width: 520px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        ">
+            <!-- 弹窗头部 -->
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 24px;
+                border-bottom: 1px solid #f0f0f0;
+            ">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #1f2937;">选择地址</h2>
+                <button onclick="closeAddressModal()" style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #9ca3af;
+                    transition: color 0.2s;
+                " onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tab 导航 -->
+            <div style="padding: 0 24px; border-bottom: 1px solid #f0f0f0;">
+                <div style="display: flex; gap: 32px;">
+                    <div id="tab-location-btn" onclick="switchMainTab('location')" style="
+                        padding: 16px 0;
+                        cursor: pointer;
+                        font-size: 15px;
+                        color: #3b82f6;
+                        border-bottom: 2px solid #3b82f6;
+                        margin-bottom: -1px;
+                        font-weight: 500;
+                    ">使用定位</div>
+                    <div id="tab-manual-btn" onclick="switchMainTab('manual')" style="
+                        padding: 16px 0;
+                        cursor: pointer;
+                        font-size: 15px;
+                        color: #6b7280;
+                        border-bottom: 2px solid transparent;
+                        margin-bottom: -1px;
+                    ">手动选择</div>
+                </div>
+            </div>
+
+            <!-- Tab 内容区域 -->
+            <div style="min-height: 280px;">
+                <!-- 使用定位 Tab -->
+                <div id="tab-location-content" style="padding: 24px;">
+                    <!-- 获取位置按钮 - 居中显示 -->
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px;">
+                        <button id="get-location-btn" onclick="getLocation()" style="
+                            padding: 12px 32px;
+                            background: #3b82f6;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            transition: background 0.2s;
+                        " onmouseover="if(!this.disabled)this.style.background='#2563eb'" onmouseout="if(!this.disabled)this.style.background='#3b82f6'">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                            </svg>
+                            <span id="get-location-btn-text">获取当前位置</span>
+                        </button>
+                    </div>
+
+                    <!-- 定位结果/错误提示显示 -->
+                    <div id="location-result" style="display: none; margin-top: 16px;"></div>
+                </div>
+
+                <!-- 手动选择 Tab -->
+                <div id="tab-manual-content" style="padding: 24px; display: none;">
+                    <!-- 级联选择器 -->
+                    <div style="margin-bottom: 16px;">
+                        <div id="cascader-display" onclick="toggleCascaderDropdown()" style="
+                            width: 100%;
+                            padding: 12px 16px;
+                            border: 1px solid #d1d5db;
+                            border-radius: 6px;
+                            background: white;
+                            cursor: pointer;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            box-sizing: border-box;
+                            transition: border-color 0.2s;
+                        " onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='#d1d5db'">
+                            <span id="cascader-text" style="color: #9ca3af; font-size: 14px;">请选择地区</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+
+                        <!-- 级联下拉菜单 -->
+                        <div id="cascader-dropdown" style="
+                            display: none;
+                            position: relative;
+                            margin-top: 4px;
+                            background: white;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 6px;
+                            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                            max-height: 240px;
+                            overflow: hidden;
+                        ">
+                            <div style="display: flex; height: 240px;">
+                                <!-- 第一列：国家/省 -->
+                                <div id="cascader-col-1" style="
+                                    width: 140px;
+                                    border-right: 1px solid #f0f0f0;
+                                    overflow-y: auto;
+                                "></div>
+                                <!-- 第二列：市 -->
+                                <div id="cascader-col-2" style="
+                                    width: 140px;
+                                    border-right: 1px solid #f0f0f0;
+                                    overflow-y: auto;
+                                    display: none;
+                                "></div>
+                                <!-- 第三列：区 -->
+                                <div id="cascader-col-3" style="
+                                    width: 140px;
+                                    overflow-y: auto;
+                                    display: none;
+                                "></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细地址输入 -->
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #374151;">详细地址</label>
+                        <input type="text" id="detail-address-input" placeholder="请输入详细地址（门牌号、楼栋等）" style="
+                            width: 100%;
+                            padding: 12px 16px;
+                            border: 1px solid #d1d5db;
+                            border-radius: 6px;
+                            font-size: 14px;
+                            box-sizing: border-box;
+                            transition: border-color 0.2s;
+                        " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#d1d5db'">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部按钮 -->
+            <div style="
+                padding: 16px 24px;
+                border-top: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            ">
+                <button onclick="closeAddressModal()" style="
+                    padding: 10px 24px;
+                    background: white;
+                    color: #374151;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    transition: all 0.2s;
+                " onmouseover="this.style.borderColor='#9ca3af'" onmouseout="this.style.borderColor='#d1d5db'">取消</button>
+                <button id="confirm-address-btn" onclick="confirmAddressFromModal()" style="
+                    padding: 10px 24px;
+                    background: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    transition: background 0.2s;
+                " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 地址弹窗相关变量
+        let selectedAddressData = {
+            country: '',
+            province: '',
+            city: '',
+            district: '',
+            street: ''
+        };
+        let currentTab = 'location';
+        let locationAddress = '';
+
+        // 打开地址弹窗
+        function openAddressModal() {
+            document.getElementById('address-modal').style.display = 'flex';
+            // 重置状态
+            selectedAddressData = { country: '', province: '', city: '', district: '', street: '' };
+            locationAddress = '';
+            currentTab = 'location';
+
+            // 重置UI
+            switchMainTab('location');
+            resetLocationButton();
+            document.getElementById('location-result').style.display = 'none';
+            document.getElementById('location-result').innerHTML = '';
+            document.getElementById('cascader-text').textContent = '请选择地区';
+            document.getElementById('cascader-text').style.color = '#9ca3af';
+            document.getElementById('cascader-dropdown').style.display = 'none';
+            document.getElementById('detail-address-input').value = '';
+
+            // 初始化级联选择器
+            initCascader();
+        }
+
+        // 关闭地址弹窗
+        function closeAddressModal() {
+            document.getElementById('address-modal').style.display = 'none';
+            document.getElementById('cascader-dropdown').style.display = 'none';
+        }
+
+        // 切换主 Tab（使用定位 / 手动选择）
+        function switchMainTab(tab) {
+            currentTab = tab;
+            const locationBtn = document.getElementById('tab-location-btn');
+            const manualBtn = document.getElementById('tab-manual-btn');
+            const locationContent = document.getElementById('tab-location-content');
+            const manualContent = document.getElementById('tab-manual-content');
+
+            if (tab === 'location') {
+                locationBtn.style.color = '#3b82f6';
+                locationBtn.style.borderBottom = '2px solid #3b82f6';
+                locationBtn.style.fontWeight = '500';
+                manualBtn.style.color = '#6b7280';
+                manualBtn.style.borderBottom = '2px solid transparent';
+                manualBtn.style.fontWeight = 'normal';
+                locationContent.style.display = 'block';
+                manualContent.style.display = 'none';
+            } else {
+                manualBtn.style.color = '#3b82f6';
+                manualBtn.style.borderBottom = '2px solid #3b82f6';
+                manualBtn.style.fontWeight = '500';
+                locationBtn.style.color = '#6b7280';
+                locationBtn.style.borderBottom = '2px solid transparent';
+                locationBtn.style.fontWeight = 'normal';
+                manualContent.style.display = 'block';
+                locationContent.style.display = 'none';
+            }
+        }
+
+        // 重置定位按钮
+        function resetLocationButton() {
+            const btn = document.getElementById('get-location-btn');
+            const btnText = document.getElementById('get-location-btn-text');
+            btn.disabled = false;
+            btn.style.background = '#3b82f6';
+            btnText.textContent = '获取当前位置';
+        }
+
+        // 获取当前位置（简化版，参考 vppservice 样式）
+        function getLocation() {
+            const btn = document.getElementById('get-location-btn');
+            const btnText = document.getElementById('get-location-btn-text');
+            const resultDiv = document.getElementById('location-result');
+
+            // 设置按钮为加载状态
+            btn.disabled = true;
+            btn.style.background = '#93c5fd';
+            btnText.textContent = '定位中...';
+            resultDiv.style.display = 'none';
+
+            // 模拟定位延迟
+            setTimeout(() => {
+                const mockLocations = [
+                    '上海市浦东新区张江高科技园区',
+                    '北京市海淀区中关村科技园',
+                    '深圳市南山区科技园南路',
+                    '广州市天河区科韵路'
+                ];
+                locationAddress = mockLocations[Math.floor(Math.random() * mockLocations.length)];
+
+                // 显示成功结果
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <div style="
+                        padding: 12px 16px;
+                        background: #f0fdf4;
+                        border: 1px solid #bbf7d0;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    ">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span style="font-size: 14px; color: #166534;">${locationAddress}</span>
+                    </div>
+                `;
+
+                // 恢复按钮
+                btn.disabled = false;
+                btn.style.background = '#3b82f6';
+                btnText.textContent = '获取当前位置';
+            }, 1500);
+        }
+
+        // 显示定位错误（用于真实定位失败时）
+        function showLocationError(message) {
+            const resultDiv = document.getElementById('location-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div style="
+                    padding: 12px 16px;
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <span style="font-size: 14px; color: #dc2626;">${message}</span>
+                </div>
+            `;
+            resetLocationButton();
+        }
+
+        // 初始化级联选择器
+        function initCascader() {
+            const col1 = document.getElementById('cascader-col-1');
+            col1.innerHTML = '';
+
+            // 添加国家/省份选项
+            Object.keys(addressData).forEach(country => {
+                Object.keys(addressData[country]).forEach(province => {
+                    const item = createCascaderItem(province, () => selectCascaderProvince(country, province));
+                    col1.appendChild(item);
+                });
+            });
+        }
+
+        // 创建级联选择项
+        function createCascaderItem(text, onClick, hasChildren = true) {
+            const item = document.createElement('div');
+            item.style.cssText = `
+                padding: 10px 12px;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 14px;
+                color: #374151;
+                transition: background 0.15s;
+            `;
+            item.innerHTML = `
+                <span>${text}</span>
+                ${hasChildren ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>' : ''}
+            `;
+            item.onmouseover = () => item.style.background = '#f3f4f6';
+            item.onmouseout = () => item.style.background = 'transparent';
+            item.onclick = onClick;
+            return item;
+        }
+
+        // 切换级联下拉显示
+        function toggleCascaderDropdown() {
+            const dropdown = document.getElementById('cascader-dropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 选择省份
+        function selectCascaderProvince(country, province) {
+            selectedAddressData.country = country;
+            selectedAddressData.province = province;
+            selectedAddressData.city = '';
+            selectedAddressData.district = '';
+
+            // 高亮选中项
+            highlightCascaderItem('cascader-col-1', province);
+
+            // 显示第二列
+            const col2 = document.getElementById('cascader-col-2');
+            col2.style.display = 'block';
+            col2.innerHTML = '';
+
+            if (addressData[country] && addressData[country][province]) {
+                Object.keys(addressData[country][province]).forEach(city => {
+                    const hasDistricts = addressData[country][province][city].length > 0;
+                    const item = createCascaderItem(city, () => selectCascaderCity(country, province, city), hasDistricts);
+                    col2.appendChild(item);
+                });
+            }
+
+            // 隐藏第三列
+            document.getElementById('cascader-col-3').style.display = 'none';
+
+            updateCascaderDisplay();
+        }
+
+        // 选择城市
+        function selectCascaderCity(country, province, city) {
+            selectedAddressData.city = city;
+            selectedAddressData.district = '';
+
+            // 高亮选中项
+            highlightCascaderItem('cascader-col-2', city);
+
+            // 显示第三列
+            const col3 = document.getElementById('cascader-col-3');
+
+            if (addressData[country] && addressData[country][province] && addressData[country][province][city]) {
+                const districts = addressData[country][province][city];
+                if (districts.length > 0) {
+                    col3.style.display = 'block';
+                    col3.innerHTML = '';
+                    districts.forEach(district => {
+                        const item = createCascaderItem(district, () => selectCascaderDistrict(district), false);
+                        col3.appendChild(item);
+                    });
+                } else {
+                    col3.style.display = 'none';
+                    // 没有区县，直接关闭下拉
+                    document.getElementById('cascader-dropdown').style.display = 'none';
+                }
+            }
+
+            updateCascaderDisplay();
+        }
+
+        // 选择区县
+        function selectCascaderDistrict(district) {
+            selectedAddressData.district = district;
+
+            // 高亮选中项
+            highlightCascaderItem('cascader-col-3', district);
+
+            updateCascaderDisplay();
+
+            // 关闭下拉
+            document.getElementById('cascader-dropdown').style.display = 'none';
+        }
+
+        // 高亮级联选中项
+        function highlightCascaderItem(colId, text) {
+            const col = document.getElementById(colId);
+            Array.from(col.children).forEach(item => {
+                const itemText = item.querySelector('span').textContent;
+                if (itemText === text) {
+                    item.style.background = '#eff6ff';
+                    item.style.color = '#3b82f6';
+                } else {
+                    item.style.background = 'transparent';
+                    item.style.color = '#374151';
+                }
+            });
+        }
+
+        // 更新级联显示文本
+        function updateCascaderDisplay() {
+            const textEl = document.getElementById('cascader-text');
+            let display = '';
+
+            if (selectedAddressData.province) display += selectedAddressData.province;
+            if (selectedAddressData.city && selectedAddressData.city !== selectedAddressData.province) {
+                display += ' / ' + selectedAddressData.city;
+            }
+            if (selectedAddressData.district) display += ' / ' + selectedAddressData.district;
+
+            if (display) {
+                textEl.textContent = display;
+                textEl.style.color = '#374151';
+            } else {
+                textEl.textContent = '请选择地区';
+                textEl.style.color = '#9ca3af';
+            }
+        }
+
+        // 确认地址选择
+        function confirmAddressFromModal() {
+            let fullAddress = '';
+
+            if (currentTab === 'location') {
+                // 使用定位模式
+                if (!locationAddress) {
+                    alert('请先获取当前位置');
+                    return;
+                }
+                fullAddress = locationAddress;
+            } else {
+                // 手动选择模式
+                if (!selectedAddressData.province) {
+                    alert('请选择地区');
+                    return;
+                }
+
+                if (selectedAddressData.country && selectedAddressData.country !== '中国') {
+                    fullAddress += selectedAddressData.country + ' ';
+                }
+                if (selectedAddressData.province) fullAddress += selectedAddressData.province;
+                if (selectedAddressData.city && selectedAddressData.city !== selectedAddressData.province) {
+                    fullAddress += selectedAddressData.city;
+                }
+                if (selectedAddressData.district) fullAddress += selectedAddressData.district;
+
+                const detailAddress = document.getElementById('detail-address-input').value;
+                if (detailAddress) fullAddress += detailAddress;
+            }
+
+            // 设置到表单
+            document.getElementById('address').value = fullAddress;
+            document.getElementById('address-display-text').textContent = fullAddress;
+            document.getElementById('address-display-text').style.color = '#374151';
+
+            // 关闭弹窗
+            closeAddressModal();
+        }
+
+        // 点击弹窗外部关闭级联下拉
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('cascader-dropdown');
+            const display = document.getElementById('cascader-display');
+            if (dropdown && display && !dropdown.contains(e.target) && !display.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>

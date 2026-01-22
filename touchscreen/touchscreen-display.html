@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touchscreen Display - 13.3"</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #2c3e50;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            overflow: hidden;
+        }
+
+        /* 13.3寸触摸屏外壳 */
+        .touchscreen-device {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 2px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        /* 屏幕边框 */
+        .screen-frame {
+            background: #000;
+            border-radius: 15px;
+            padding: 8px;
+            position: relative;
+        }
+
+        /* 13.3寸屏幕 - 16:9比例 */
+        .screen-display {
+            width: 1366px;
+            height: 768px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: visible;
+            position: relative;
+        }
+        
+        /* 响应式缩放 */
+        @media (max-height: 900px) {
+            .touchscreen-device {
+                transform: scale(0.8);
+            }
+        }
+        
+        @media (max-height: 800px) {
+            .touchscreen-device {
+                transform: scale(0.7);
+            }
+        }
+        
+        @media (max-height: 700px) {
+            .touchscreen-device {
+                transform: scale(0.6);
+            }
+        }
+
+        /* 屏幕反光效果 */
+        .screen-glare {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.1) 25%,
+                rgba(255, 255, 255, 0) 50%,
+                rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-radius: 10px;
+            z-index: 2;
+            animation: glareShimmer 8s ease-in-out infinite;
+        }
+
+        @keyframes glareShimmer {
+            0%, 100% {
+                background: linear-gradient(135deg, 
+                    rgba(255, 255, 255, 0.2) 0%,
+                    rgba(255, 255, 255, 0.1) 25%,
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(255, 255, 255, 0) 100%);
+            }
+            25% {
+                background: linear-gradient(145deg, 
+                    rgba(255, 255, 255, 0.15) 0%,
+                    rgba(255, 255, 255, 0.08) 30%,
+                    rgba(255, 255, 255, 0) 60%,
+                    rgba(255, 255, 255, 0) 100%);
+            }
+            50% {
+                background: linear-gradient(155deg, 
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(255, 255, 255, 0.05) 35%,
+                    rgba(255, 255, 255, 0) 70%,
+                    rgba(255, 255, 255, 0) 100%);
+            }
+            75% {
+                background: linear-gradient(125deg, 
+                    rgba(255, 255, 255, 0.18) 0%,
+                    rgba(255, 255, 255, 0.09) 28%,
+                    rgba(255, 255, 255, 0) 55%,
+                    rgba(255, 255, 255, 0) 100%);
+            }
+        }
+
+        /* 屏幕边框发光 */
+        .screen-display::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                rgba(0, 150, 255, 0.3), 
+                rgba(0, 200, 255, 0.2),
+                rgba(0, 150, 255, 0.3));
+            border-radius: 12px;
+            z-index: -1;
+            opacity: 0;
+            animation: screenGlow 10s ease-in-out infinite;
+        }
+
+        @keyframes screenGlow {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.4; }
+        }
+
+        /* 嵌入的系统界面 */
+        .screen-content {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* 触摸屏内部粒子系统 */
+        .screen-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .screen-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .screen-particle.inner-type-1 {
+            width: 2px;
+            height: 2px;
+            background: rgba(100, 200, 255, 0.3);
+            animation: innerFloat1 25s ease-in-out infinite;
+        }
+
+        .screen-particle.inner-type-2 {
+            width: 3px;
+            height: 3px;
+            background: rgba(150, 220, 255, 0.25);
+            animation: innerFloat2 28s ease-in-out infinite;
+        }
+
+        .screen-particle.inner-type-3 {
+            width: 1px;
+            height: 1px;
+            background: rgba(200, 240, 255, 0.4);
+            animation: innerFloat3 22s ease-in-out infinite;
+        }
+
+        @keyframes innerFloat1 {
+            0% { 
+                transform: translate(-10px, 30%);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            20% { transform: translate(15%, 25%); }
+            35% { transform: translate(35%, 40%); }
+            50% { transform: translate(55%, 35%); }
+            65% { transform: translate(75%, 50%); }
+            80% { transform: translate(90%, 45%); }
+            90% { opacity: 1; }
+            100% { 
+                transform: translate(105%, 40%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes innerFloat2 {
+            0% { 
+                transform: translate(105%, 60%);
+                opacity: 0;
+            }
+            12% { opacity: 1; }
+            25% { transform: translate(80%, 55%); }
+            40% { transform: translate(60%, 70%); }
+            55% { transform: translate(35%, 65%); }
+            70% { transform: translate(20%, 50%); }
+            85% { transform: translate(5%, 45%); }
+            88% { opacity: 1; }
+            100% { 
+                transform: translate(-15px, 40%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes innerFloat3 {
+            0% { 
+                transform: translate(50%, -10px);
+                opacity: 0;
+            }
+            15% { opacity: 1; }
+            25% { transform: translate(45%, 20%); }
+            40% { transform: translate(35%, 35%); }
+            55% { transform: translate(30%, 55%); }
+            70% { transform: translate(40%, 75%); }
+            85% { transform: translate(55%, 90%); }
+            85% { opacity: 1; }
+            100% { 
+                transform: translate(70%, 105%);
+                opacity: 0;
+            }
+        }
+
+        /* 设备品牌标识 */
+        .device-brand {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* 状态指示灯 */
+        .status-led {
+            position: absolute;
+            bottom: 5px;
+            right: 20px;
+            width: 6px;
+            height: 6px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00ff00;
+            animation: advancedPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes advancedPulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 8px #00ff00, 0 0 16px rgba(0, 255, 0, 0.3);
+            }
+            25% {
+                opacity: 0.9;
+                transform: scale(1.1);
+                box-shadow: 0 0 12px #00ff00, 0 0 24px rgba(0, 255, 0, 0.5);
+            }
+            50% { 
+                opacity: 0.5;
+                transform: scale(1.2);
+                box-shadow: 0 0 16px #00ff00, 0 0 32px rgba(0, 255, 0, 0.7);
+            }
+            75% {
+                opacity: 0.7;
+                transform: scale(1.1);
+                box-shadow: 0 0 12px #00ff00, 0 0 24px rgba(0, 255, 0, 0.5);
+            }
+        }
+
+        /* 功能按钮 - 隐藏 */
+        .device-buttons {
+            display: none;
+        }
+
+        .device-btn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, #404040, #2a2a2a);
+            border: none;
+            border-radius: 50%;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 16px;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .device-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .device-btn:hover {
+            background: linear-gradient(145deg, #505050, #3a3a3a);
+            color: #fff;
+            transform: scale(1.15) translateY(-2px);
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .device-btn:hover::before {
+            left: 100%;
+        }
+
+        .device-btn:active {
+            transform: scale(0.9) translateY(1px);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* 设备信息 */
+        .device-info {
+            display: none;
+        }
+
+
+        .info-line {
+            margin: 5px 0;
+        }
+
+        .info-label {
+            opacity: 0.7;
+            margin-right: 10px;
+        }
+
+        /* 缩放控制 */
+        .scale-controls {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+        }
+
+        .scale-btn {
+            padding: 8px 12px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(240, 240, 240, 0.9));
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scale-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.4s;
+        }
+
+        .scale-btn:hover {
+            background: linear-gradient(145deg, white, rgba(250, 250, 250, 1));
+            transform: translateY(-2px) scale(1.08);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .scale-btn:hover::before {
+            left: 100%;
+        }
+
+        .scale-btn:active {
+            transform: translateY(0) scale(0.95);
+            box-shadow: 
+                0 1px 2px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        /* 缩放效果 */
+        .scale-75 {
+            transform: scale(0.75);
+        }
+
+        .scale-50 {
+            transform: scale(0.5);
+        }
+
+        .scale-100 {
+            transform: scale(1);
+        }
+
+        /* 设备主体动画 - 移除抖动 */
+        .touchscreen-device {
+            transform-origin: center center;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+        }
+
+        /* 浮动粒子系统 */
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .particle.type-1 {
+            width: 3px;
+            height: 3px;
+            background: rgba(100, 200, 255, 0.5);
+            animation: floatSmooth1 20s ease-in-out infinite;
+        }
+
+        .particle.type-2 {
+            width: 5px;
+            height: 5px;
+            background: rgba(150, 220, 255, 0.4);
+            animation: floatSmooth2 24s ease-in-out infinite;
+        }
+
+        .particle.type-3 {
+            width: 2px;
+            height: 2px;
+            background: rgba(200, 240, 255, 0.6);
+            animation: floatSmooth3 18s ease-in-out infinite;
+        }
+
+        .particle.type-4 {
+            width: 4px;
+            height: 4px;
+            background: rgba(120, 210, 255, 0.4);
+            animation: floatSmooth4 26s ease-in-out infinite;
+        }
+
+        .particle.type-5 {
+            width: 1px;
+            height: 1px;
+            background: rgba(180, 230, 255, 0.8);
+            animation: floatSmooth5 22s ease-in-out infinite;
+        }
+
+        @keyframes floatSmooth1 {
+            0% { 
+                transform: translate(-20px, 45vh);
+                opacity: 0;
+            }
+            8% { opacity: 1; }
+            15% { transform: translate(12vw, 38vh); }
+            25% { transform: translate(28vw, 42vh); }
+            35% { transform: translate(45vw, 35vh); }
+            50% { transform: translate(62vw, 48vh); }
+            65% { transform: translate(78vw, 52vh); }
+            80% { transform: translate(92vw, 58vh); }
+            92% { opacity: 1; }
+            100% { 
+                transform: translate(105vw, 63vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatSmooth2 {
+            0% { 
+                transform: translate(102vw, 25vh);
+                opacity: 0;
+            }
+            12% { opacity: 1; }
+            18% { transform: translate(88vw, 32vh); }
+            28% { transform: translate(72vw, 45vh); }
+            42% { transform: translate(55vw, 58vh); }
+            58% { transform: translate(38vw, 52vh); }
+            72% { transform: translate(22vw, 38vh); }
+            85% { transform: translate(8vw, 28vh); }
+            88% { opacity: 1; }
+            100% { 
+                transform: translate(-25px, 22vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatSmooth3 {
+            0% { 
+                transform: translate(55vw, -25px);
+                opacity: 0;
+            }
+            15% { opacity: 1; }
+            22% { transform: translate(48vw, 18vh); }
+            35% { transform: translate(35vw, 32vh); }
+            48% { transform: translate(28vw, 48vh); }
+            62% { transform: translate(42vw, 65vh); }
+            75% { transform: translate(58vw, 78vh); }
+            88% { transform: translate(72vw, 88vh); }
+            85% { opacity: 1; }
+            100% { 
+                transform: translate(85vw, 105vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatSmooth4 {
+            0% { 
+                transform: translate(25vw, 102vh);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            20% { transform: translate(32vw, 88vh); }
+            32% { transform: translate(48vw, 75vh); }
+            45% { transform: translate(65vw, 68vh); }
+            58% { transform: translate(82vw, 55vh); }
+            70% { transform: translate(92vw, 38vh); }
+            82% { transform: translate(98vw, 22vh); }
+            90% { opacity: 1; }
+            100% { 
+                transform: translate(108vw, 8vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatSmooth5 {
+            0% { 
+                transform: translate(-15px, 65vh);
+                opacity: 0;
+            }
+            12% { opacity: 1; }
+            20% { transform: translate(18vw, 72vh); }
+            35% { transform: translate(42vw, 85vh); }
+            50% { transform: translate(68vw, 78vh); }
+            65% { transform: translate(85vw, 65vh); }
+            78% { transform: translate(95vw, 45vh); }
+            88% { transform: translate(102vw, 28vh); }
+            88% { opacity: 1; }
+            100% { 
+                transform: translate(115vw, 15vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 浮动粒子背景 -->
+    <div class="floating-particles" id="particleContainer"></div>
+
+    <!-- 设备信息提示 -->
+    <div class="device-info">
+        <div class="info-line">
+            <span class="info-label">型号:</span>
+            <span>工业触摸屏 TPC-1333</span>
+        </div>
+        <div class="info-line">
+            <span class="info-label">屏幕:</span>
+            <span>13.3英寸 IPS</span>
+        </div>
+        <div class="info-line">
+            <span class="info-label">分辨率:</span>
+            <span>1366 x 768</span>
+        </div>
+        <div class="info-line">
+            <span class="info-label">触控:</span>
+            <span>10点电容触控</span>
+        </div>
+    </div>
+
+    <!-- 13.3寸触摸屏设备 -->
+    <div class="touchscreen-device" id="device" style="transform: scale(0.7);">
+        <div class="screen-frame">
+            <div class="screen-display">
+                <!-- 嵌入系统界面 -->
+                <iframe src="./login-iframe.html" class="screen-content" id="screenContent" frameborder="0"></iframe>
+                <!-- 触摸屏内部粒子效果 -->
+                <div class="screen-particles" id="screenParticleContainer"></div>
+                <!-- 屏幕反光效果 -->
+                <div class="screen-glare"></div>
+            </div>
+        </div>
+        
+        <!-- 品牌标识 -->
+        <div class="device-brand">INDUSTRIAL TOUCH PANEL</div>
+        
+        <!-- 状态指示灯 -->
+        <div class="status-led"></div>
+
+    </div>
+
+    <!-- 缩放控制 -->
+    <div class="scale-controls">
+        <button class="scale-btn" onclick="setScale(50)">50%</button>
+        <button class="scale-btn" onclick="setScale(75)">75%</button>
+        <button class="scale-btn" onclick="setScale(100)">100%</button>
+    </div>
+
+    <script>
+        // 设置缩放
+        function setScale(percentage) {
+            const device = document.getElementById('device');
+            device.className = 'touchscreen-device';
+            
+            if (percentage === 75) {
+                device.classList.add('scale-75');
+            } else if (percentage === 50) {
+                device.classList.add('scale-50');
+            }
+        }
+
+        // 自动适应屏幕大小
+        function adjustScale() {
+            const device = document.getElementById('device');
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            const deviceHeight = 820; // 设备总高度约为820px
+            const deviceWidth = 1420; // 设备总宽度约为1420px
+            
+            // 计算需要的缩放比例
+            const scaleHeight = (viewportHeight - 20) / deviceHeight;
+            const scaleWidth = (viewportWidth - 20) / deviceWidth;
+            const scale = Math.min(scaleHeight, scaleWidth, 0.98);
+            
+            // 应用缩放
+            device.style.transform = `scale(${scale})`;
+            
+            console.log('Scale calculated:', scale, 'viewport:', viewportWidth, 'x', viewportHeight);
+        }
+        
+        // 立即执行缩放
+        document.addEventListener('DOMContentLoaded', function() {
+            adjustScale();
+        });
+        
+        window.addEventListener('resize', adjustScale);
+        
+        // 确保在所有资源加载完成后再次调整
+        window.onload = function() {
+            setTimeout(adjustScale, 100);
+            
+            // 检查iframe是否正确加载
+            const iframe = document.getElementById('screenContent');
+            iframe.onload = function() {
+                console.log('Iframe loaded successfully');
+                console.log('Iframe src:', iframe.src);
+                console.log('Iframe contentDocument:', iframe.contentDocument);
+            };
+            iframe.onerror = function() {
+                console.error('Iframe failed to load');
+            };
+            
+            // 强制重新加载iframe
+            setTimeout(() => {
+                iframe.src = iframe.src;
+            }, 1000);
+        };
+        
+        // 监听iframe中的登录成功消息
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'login_success') {
+                console.log('Login successful, user:', event.data.user);
+                // 登录成功后跳转到index页面
+                document.getElementById('screenContent').src = './index.html';
+            }
+        });
+
+        // 创建浮动粒子系统
+        function createFloatingParticles() {
+            const container = document.getElementById('particleContainer');
+            const particleCount = 120; // 增加更多粒子数量
+            
+            // 创建自由飘动的粒子
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = `particle type-${(i % 5) + 1}`;
+                
+                // 粒子从屏幕四周的随机位置开始
+                const startSide = Math.floor(Math.random() * 4);
+                switch(startSide) {
+                    case 0: // 从左边进入
+                        particle.style.left = '-20px';
+                        particle.style.top = Math.random() * 100 + '%';
+                        break;
+                    case 1: // 从右边进入
+                        particle.style.left = '100%';
+                        particle.style.top = Math.random() * 100 + '%';
+                        break;
+                    case 2: // 从顶部进入
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = '-20px';
+                        break;
+                    case 3: // 从底部进入
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = '100%';
+                        break;
+                }
+                
+                // 随机延迟开始时间
+                particle.style.animationDelay = Math.random() * 25 + 's';
+                
+                // 随机缩放以增加层次感
+                const scale = 0.3 + Math.random() * 1.4;
+                const alpha = 0.2 + Math.random() * 0.7;
+                particle.style.transform = `scale(${scale})`;
+                particle.style.opacity = alpha;
+                
+                container.appendChild(particle);
+            }
+
+            // 添加屏幕中央的飘动粒子
+            for (let i = 0; i < 60; i++) {
+                const particle = document.createElement('div');
+                particle.className = `particle type-${(i % 5) + 1}`;
+                
+                // 从屏幕中央区域开始
+                particle.style.left = (20 + Math.random() * 60) + '%';
+                particle.style.top = (20 + Math.random() * 60) + '%';
+                
+                // 随机延迟
+                particle.style.animationDelay = Math.random() * 30 + 's';
+                
+                // 较小的粒子用于背景层
+                const scale = 0.2 + Math.random() * 0.8;
+                const alpha = 0.1 + Math.random() * 0.5;
+                particle.style.transform = `scale(${scale})`;
+                particle.style.opacity = alpha;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // 创建触摸屏内部粒子系统
+        function createScreenParticles() {
+            const container = document.getElementById('screenParticleContainer');
+            const particleCount = 25; // 触摸屏内部粒子数量
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = `screen-particle inner-type-${(i % 3) + 1}`;
+                
+                // 从屏幕边缘随机位置开始
+                const startSide = Math.floor(Math.random() * 4);
+                switch(startSide) {
+                    case 0: // 左边
+                        particle.style.left = '-5px';
+                        particle.style.top = Math.random() * 100 + '%';
+                        break;
+                    case 1: // 右边
+                        particle.style.left = '100%';
+                        particle.style.top = Math.random() * 100 + '%';
+                        break;
+                    case 2: // 顶部
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = '-5px';
+                        break;
+                    case 3: // 底部
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = '100%';
+                        break;
+                }
+                
+                // 随机延迟和透明度
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                const alpha = 0.1 + Math.random() * 0.3;
+                const scale = 0.5 + Math.random() * 1.0;
+                particle.style.opacity = alpha;
+                particle.style.transform = `scale(${scale})`;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // 在页面加载完成后创建粒子
+        window.addEventListener('DOMContentLoaded', function() {
+            createFloatingParticles();
+            createScreenParticles();
+        });
+    </script>
+    <script src="../common.js"></script>
+    <script>
+        // 更新页面标题的函数
+        function updatePageTitle() {
+            try {
+                // 获取当前语言设置
+                const savedLang = localStorage.getItem('language') || 'en';
+
+                // 查找title元素
+                const titleElement = document.querySelector('title[data-translate]');
+                if (!titleElement) {
+                    console.warn('Title element with data-translate not found');
+                    return;
+                }
+
+                // 获取翻译键
+                const titleKey = titleElement.getAttribute('data-translate');
+
+                // 检查translations对象是否存在
+                if (typeof translations === 'undefined') {
+                    console.warn('translations object not found');
+                    return;
+                }
+
+                // 获取对应语言的翻译
+                if (translations[savedLang] && translations[savedLang][titleKey]) {
+                    document.title = translations[savedLang][titleKey];
+                    console.log('Title updated to:', document.title, 'Language:', savedLang);
+                } else {
+                    console.warn('Translation not found for key:', titleKey, 'language:', savedLang);
+                }
+            } catch (error) {
+                console.error('Error updating title:', error);
+            }
+        }
+
+        // 在DOM加载完成后更新标题
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updatePageTitle, 200);
+        });
+
+        // 在页面完全加载后再次更新标题
+        window.addEventListener('load', function() {
+            setTimeout(updatePageTitle, 300);
+        });
+
+        // 监听语言变化(如果currentLang变量被更新)
+        if (typeof MutationObserver !== 'undefined') {
+            const observer = new MutationObserver(function() {
+                updatePageTitle();
+            });
+            // 观察localStorage的变化需要定期检查
+            let lastLang = localStorage.getItem('language');
+            setInterval(function() {
+                const currentStoredLang = localStorage.getItem('language');
+                if (currentStoredLang !== lastLang) {
+                    lastLang = currentStoredLang;
+                    updatePageTitle();
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>

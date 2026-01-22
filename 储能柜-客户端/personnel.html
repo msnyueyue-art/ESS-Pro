@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人员管理 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 20px 0;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .search-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .search-right {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .search-input {
+            width: 300px;
+            height: 40px;
+            padding-left: 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-select {
+            width: 200px;
+            height: 40px;
+            padding: 0 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-input:focus,
+        .search-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            height: 40px;
+            padding: 0 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: auto;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* 表格样式 */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: #f3f4f6 !important;
+        }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .pagination-info {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .page-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .page-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 600px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .close-btn:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* 权限设置 */
+        .permission-section {
+            margin-top: 16px;
+        }
+
+        .permission-title {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .site-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .site-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .site-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .site-item label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+            flex: 1;
+        }
+
+        /* 侧边栏菜单样式修正 */
+        .sidebar .menu-item {
+            display: flex;
+            justify-content: flex-start;
+            padding-right: 16px;
+        }
+
+        .sidebar .submenu {
+            padding-left: 0;
+        }
+
+        .sidebar .submenu .menu-item {
+            padding-left: 40px !important;
+            display: flex !important;
+            justify-content: flex-start !important;
+            padding-right: 16px !important;
+        }
+
+        /* 角色标签 */
+        .role-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e0e7ff;
+            color: #3730a3;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body data-page="personnel">
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <h1 class="page-title" id="personnelPageTitle" data-translate="personnelPageTitle">人员管理</h1>
+        </div>
+
+        <!-- 查询区域 -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="search-container">
+                <div class="search-left">
+                    <div class="input-wrapper">
+                        <i class="fas fa-search input-icon"></i>
+                        <input type="text" class="search-input" data-translate-placeholder="personnelSearchPlaceholder" placeholder="搜索昵称、账号..." id="searchInput" onkeypress="if(event.keyCode==13) searchPersonnel(event)">
+                    </div>
+                    <select class="search-select" id="roleFilter">
+                        <option value="" id="personnelFilterAllRoles" data-translate="personnelFilterAllRoles">全部角色</option>
+                        <option value="1" data-translate="roleDataSuperAdmin">超级管理员</option>
+                        <option value="2" data-translate="roleDataOperator">运维人员</option>
+                        <option value="3" data-translate="roleDataUser">操作员</option>
+                        <option value="4" data-translate="roleDataGuest">访客</option>
+                    </select>
+                </div>
+                <div class="search-right">
+                    <button class="btn btn-primary" onclick="searchPersonnel(event)">
+                        <i class="fas fa-search"></i> <span id="personnelBtnSearch" data-translate="personnelBtnSearch">查询</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetSearch()">
+                        <i class="fas fa-redo"></i> <span id="personnelBtnReset" data-translate="personnelBtnReset">重置</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格视图容器 -->
+        <div class="card">
+            <div style="margin-bottom: 20px; display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="showAddPersonModal()">
+                    <i class="fas fa-plus"></i>
+                    <span id="personnelBtnAdd" data-translate="personnelBtnAdd">新增人员</span>
+                </button>
+                <button class="btn btn-secondary" onclick="exportPersonnel()">
+                    <i class="fas fa-download"></i>
+                    <span id="personnelBtnExport" data-translate="personnelBtnExport">导出</span>
+                </button>
+            </div>
+            <div class="table-container" style="background: transparent; box-shadow: none; margin-bottom: 0;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th id="personnelTableHeaderNickname" data-translate="personnelTableHeaderNickname">昵称</th>
+                        <th id="personnelTableHeaderAccount" data-translate="personnelTableHeaderAccount">账号</th>
+                        <th id="personnelTableHeaderRole" data-translate="personnelTableHeaderRole">角色</th>
+                        <th id="personnelTableHeaderSites" data-translate="personnelTableHeaderSites">权限站点</th>
+                        <th id="personnelTableHeaderStatus" data-translate="personnelTableHeaderStatus">状态</th>
+                        <th id="personnelTableHeaderCreateTime" data-translate="personnelTableHeaderCreateTime">创建时间</th>
+                        <th id="personnelTableHeaderActions" data-translate="personnelTableHeaderActions">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="personnelTableBody">
+                    <!-- 数据将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+            </div>
+            
+            <!-- 分页 -->
+            <div class="pagination" style="margin-top: 20px;">
+                <div class="pagination-info">
+                    <span data-translate="commonPaginationShow">显示</span> <span id="startRecord">1</span> - <span id="endRecord">10</span> <span data-translate="commonPaginationTo">条,共</span> <span id="totalRecords">0</span> <span data-translate="commonPaginationTotal">条</span>
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 新增/编辑人员模态框 -->
+    <div id="personModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="personnelModalTitleAdd" data-translate="personnelModalTitleAdd">新增人员</h2>
+                <button class="close-btn" onclick="closePersonModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="personForm">
+                    <div class="form-group">
+                        <label class="form-label" for="personName" id="personnelLabelNickname" data-translate="personnelLabelNickname">
+                            昵称 <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text" class="form-input" id="personName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="personEmail" id="personnelLabelAccount" data-translate="personnelLabelAccount">
+                            账号 <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="email" class="form-input" id="personEmail" data-translate-placeholder="personnelPlaceholderEmail" placeholder="请输入邮箱作为账号" required>
+                    </div>
+                    
+                    
+                    <div class="form-group">
+                        <label class="form-label" id="personnelLabelRole" data-translate="personnelLabelRole">角色</label>
+                        <div class="roles-container" style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="role-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="roles" value="1" style="width: 16px; height: 16px; cursor: pointer;">
+                                <span data-translate="roleDataSuperAdmin">超级管理员</span>
+                            </label>
+                            <label class="role-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="roles" value="2" style="width: 16px; height: 16px; cursor: pointer;">
+                                <span data-translate="roleDataOperator">运维人员</span>
+                            </label>
+                            <label class="role-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="roles" value="3" style="width: 16px; height: 16px; cursor: pointer;">
+                                <span data-translate="roleDataUser">操作员</span>
+                            </label>
+                            <label class="role-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="roles" value="4" style="width: 16px; height: 16px; cursor: pointer;">
+                                <span data-translate="roleDataGuest">访客</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" id="personnelLabelDevicePermission" data-translate="personnelLabelDevicePermission">设备权限</label>
+                        <div class="permission-tree" id="sitePermissionTree">
+                            <!-- 站点权限树将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="personStatus" id="personnelLabelStatus" data-translate="personnelLabelStatus">状态</label>
+                        <select class="form-select" id="personStatus">
+                            <option value="active" id="personnelStatusActive" data-translate="personnelStatusActive">启用</option>
+                            <option value="inactive" id="personnelStatusInactive" data-translate="personnelStatusInactive">禁用</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePersonModal()"><span id="personnelBtnCancel" data-translate="personnelBtnCancel">取消</span></button>
+                <button type="button" class="btn btn-primary" onclick="savePerson()"><span id="personnelBtnSave" data-translate="personnelBtnSave">保存</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content" style="width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="personnelDeleteTitle" data-translate="personnelDeleteTitle">删除确认</h2>
+                <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <p><span data-translate="personnelDeleteConfirm">确定要删除人员</span> "<span id="deletePersonName"></span>" 吗？</p>
+                <p style="color: #ef4444; font-size: 14px; margin-top: 8px;" data-translate="personnelDeleteWarning">此操作不可撤销！</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()"><span data-translate="personnelBtnCancel">取消</span></button>
+                <button type="button" class="btn delete-btn" onclick="performDelete()"><span id="personnelBtnConfirmDelete" data-translate="personnelBtnConfirmDelete">确定删除</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入公共脚本 -->
+    <script src="common.js"></script>
+    <script>
+        // 检查登录状态
+        checkAuth();
+        
+        // 人员数据
+        let personnelData = [
+            {
+                id: 1,
+                name: '张三',
+                nameKey: 'personnelDataZhangSan',
+                phone: '13800138001',
+                roles: ['1'],
+                email: 'zhangsan@example.com',
+                role: { id: 1, name: '超级管理员', nameKey: 'roleDataSuperAdmin' },
+                sites: ['全部站点'],
+                status: 'active',
+                createTime: '2024-01-01 10:00:00'
+            },
+            {
+                id: 2,
+                name: '李四',
+                nameKey: 'personnelDataLiSi',
+                phone: '13800138002',
+                roles: ['2'],
+                email: 'lisi@example.com',
+                role: { id: 2, name: '运维人员', nameKey: 'roleDataOperator' },
+                sites: ['北京数据中心', '上海工业园区'],
+                status: 'active',
+                createTime: '2024-01-02 14:30:00'
+            },
+            {
+                id: 3,
+                name: '王五',
+                nameKey: 'personnelDataWangWu',
+                phone: '13800138003',
+                roles: ['3'],
+                email: 'wangwu@example.com',
+                role: { id: 3, name: '操作员', nameKey: 'roleDataUser' },
+                sites: ['深圳科技园'],
+                status: 'active',
+                createTime: '2024-01-03 09:15:00'
+            },
+            {
+                id: 4,
+                name: '赵六',
+                nameKey: 'personnelDataZhaoLiu',
+                phone: '13800138004',
+                roles: ['4'],
+                email: 'zhaoliu@example.com',
+                role: { id: 4, name: '访客', nameKey: 'roleDataGuest' },
+                sites: ['广州商业中心', '成都物流基地'],
+                status: 'inactive',
+                createTime: '2024-01-05 16:20:00'
+            }
+        ];
+
+        const roleMap = {
+            '1': '超级管理员',
+            '2': '运维人员',
+            '3': '操作员',
+            '4': '访客'
+        };
+
+        // 站点名称到翻译Key的映射
+        const siteNameMap = {
+            '全部站点': 'siteAllSites',
+            '北京数据中心': 'siteBeijingDataCenter',
+            '上海工业园区': 'siteShanghaiIndustrialPark',
+            '深圳科技园': 'siteShenzhenTechPark',
+            '广州商业中心': 'siteGuangzhouBusinessCenter',
+            '成都物流基地': 'siteChengduLogisticsBase'
+        };
+
+        let currentEditingPerson = null;
+        let currentDeletePersonId = null;
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPersonnelTable();
+            setupEventListeners();
+
+            // 监听语言切换事件，重新渲染人员表格
+            window.addEventListener('languageChanged', function(event) {
+                renderPersonnelTable();
+            });
+        });
+
+        // 设置事件监听
+        function setupEventListeners() {
+            // 点击模态框外部关闭
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    if (e.target.id === 'personModal') {
+                        closePersonModal();
+                    } else if (e.target.id === 'deleteModal') {
+                        closeDeleteModal();
+                    }
+                }
+            });
+
+        }
+        
+        // 站点权限树数据
+        const sitePermissionData = [
+            {
+                id: 'site1',
+                name: '北京数据中心',
+                nameKey: 'siteBeijingDataCenter',
+                devices: [
+                    { id: 'device1', name: '储能柜-001', nameKey: 'deviceCabinet001' },
+                    { id: 'device2', name: '储能柜-002', nameKey: 'deviceCabinet002' },
+                    { id: 'device3', name: '储能柜-003', nameKey: 'deviceCabinet003' }
+                ]
+            },
+            {
+                id: 'site2',
+                name: '上海工业园区',
+                nameKey: 'siteShanghaiIndustrialPark',
+                devices: [
+                    { id: 'device4', name: '储能柜-004', nameKey: 'deviceCabinet004' },
+                    { id: 'device5', name: '储能柜-005', nameKey: 'deviceCabinet005' }
+                ]
+            },
+            {
+                id: 'site3',
+                name: '深圳科技园',
+                nameKey: 'siteShenzhenTechPark',
+                devices: [
+                    { id: 'device6', name: '储能柜-006', nameKey: 'deviceCabinet006' },
+                    { id: 'device7', name: '储能柜-007', nameKey: 'deviceCabinet007' },
+                    { id: 'device8', name: '储能柜-008', nameKey: 'deviceCabinet008' },
+                    { id: 'device9', name: '储能柜-009', nameKey: 'deviceCabinet009' }
+                ]
+            },
+            {
+                id: 'site4',
+                name: '广州商业中心',
+                nameKey: 'siteGuangzhouBusinessCenter',
+                devices: [
+                    { id: 'device10', name: '储能柜-010', nameKey: 'deviceCabinet010' }
+                ]
+            },
+            {
+                id: 'site5',
+                name: '成都物流基地',
+                nameKey: 'siteChengduLogisticsBase',
+                devices: [
+                    { id: 'device11', name: '储能柜-011', nameKey: 'deviceCabinet011' },
+                    { id: 'device12', name: '储能柜-012', nameKey: 'deviceCabinet012' }
+                ]
+            }
+        ];
+        
+        // 渲染站点权限树
+        function renderSitePermissionTree(selectedSites = []) {
+            const container = document.getElementById('sitePermissionTree');
+            container.innerHTML = '';
+            container.style.cssText = 'max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;';
+
+            const lang = localStorage.getItem('language') === 'en' ? 'en' : 'zh';
+
+            sitePermissionData.forEach(site => {
+                const siteDiv = document.createElement('div');
+                siteDiv.style.marginBottom = '12px';
+
+                // 站点复选框
+                const siteLabel = document.createElement('label');
+                siteLabel.style.cssText = 'display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; margin-bottom: 8px;';
+
+                const siteCheckbox = document.createElement('input');
+                siteCheckbox.type = 'checkbox';
+                siteCheckbox.id = site.id;
+                siteCheckbox.style.cssText = 'width: 16px; height: 16px; cursor: pointer;';
+                siteCheckbox.onchange = function() {
+                    // 选中/取消站点时，同步所有设备
+                    const deviceCheckboxes = siteDiv.querySelectorAll('.device-checkbox');
+                    deviceCheckboxes.forEach(cb => cb.checked = this.checked);
+                };
+
+                // 检查是否已选中
+                if (selectedSites.includes(site.name)) {
+                    siteCheckbox.checked = true;
+                }
+
+                const expandIcon = document.createElement('span');
+                expandIcon.innerHTML = '▶';
+                expandIcon.style.cssText = 'font-size: 12px; transition: transform 0.2s; cursor: pointer;';
+                expandIcon.onclick = function(e) {
+                    e.preventDefault();
+                    const devicesDiv = siteDiv.querySelector('.devices-container');
+                    if (devicesDiv.style.display === 'none') {
+                        devicesDiv.style.display = 'block';
+                        expandIcon.style.transform = 'rotate(90deg)';
+                    } else {
+                        devicesDiv.style.display = 'none';
+                        expandIcon.style.transform = 'rotate(0deg)';
+                    }
+                };
+
+                // 获取翻译后的站点名称
+                const siteName = site.nameKey && translations[lang][site.nameKey]
+                    ? translations[lang][site.nameKey]
+                    : site.name;
+
+                siteLabel.appendChild(expandIcon);
+                siteLabel.appendChild(siteCheckbox);
+                siteLabel.appendChild(document.createTextNode(siteName));
+                siteDiv.appendChild(siteLabel);
+                
+                // 设备容器
+                const devicesDiv = document.createElement('div');
+                devicesDiv.className = 'devices-container';
+                devicesDiv.style.cssText = 'margin-left: 32px; display: none;';
+                
+                site.devices.forEach(device => {
+                    const deviceLabel = document.createElement('label');
+                    deviceLabel.style.cssText = 'display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px; font-size: 14px; color: #6b7280;';
+
+                    const deviceCheckbox = document.createElement('input');
+                    deviceCheckbox.type = 'checkbox';
+                    deviceCheckbox.className = 'device-checkbox';
+                    deviceCheckbox.value = device.id;
+                    deviceCheckbox.style.cssText = 'width: 14px; height: 14px; cursor: pointer;';
+                    deviceCheckbox.onchange = function() {
+                        // 检查是否所有设备都被选中
+                        const allDeviceCheckboxes = siteDiv.querySelectorAll('.device-checkbox');
+                        const checkedDevices = siteDiv.querySelectorAll('.device-checkbox:checked');
+                        siteCheckbox.checked = allDeviceCheckboxes.length === checkedDevices.length;
+                    };
+
+                    // 获取翻译后的设备名称
+                    const deviceName = device.nameKey && translations[lang][device.nameKey]
+                        ? translations[lang][device.nameKey]
+                        : device.name;
+
+                    deviceLabel.appendChild(deviceCheckbox);
+                    deviceLabel.appendChild(document.createTextNode(deviceName));
+                    devicesDiv.appendChild(deviceLabel);
+                });
+                
+                siteDiv.appendChild(devicesDiv);
+                container.appendChild(siteDiv);
+            });
+        }
+        
+        // 获取选中的站点
+        function getSelectedSites() {
+            const selectedSites = [];
+            sitePermissionData.forEach(site => {
+                const siteCheckbox = document.getElementById(site.id);
+                if (siteCheckbox && siteCheckbox.checked) {
+                    selectedSites.push(site.name);
+                }
+            });
+            return selectedSites;
+        }
+        
+
+        // 渲染人员表格
+        function renderPersonnelTable() {
+            const tbody = document.getElementById('personnelTableBody');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const lang = localStorage.getItem('language') === 'en' ? 'en' : 'zh';
+
+            // 过滤数据
+            let filteredData = personnelData;
+            if (searchTerm) {
+                filteredData = filteredData.filter(person =>
+                    person.name.toLowerCase().includes(searchTerm) ||
+                    person.email.toLowerCase().includes(searchTerm)
+                );
+            }
+            if (roleFilter) {
+                filteredData = filteredData.filter(person => person.role.id == roleFilter);
+            }
+
+            // 计算分页
+            const totalRecords = filteredData.length;
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalRecords);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            // 渲染表格
+            tbody.innerHTML = pageData.map(person => {
+                // 获取翻译后的人员姓名
+                const personName = person.nameKey && translations[lang][person.nameKey]
+                    ? translations[lang][person.nameKey]
+                    : person.name;
+
+                // 获取翻译后的角色名称
+                let roleDisplay = '';
+                if (person.roles && person.roles.length > 0) {
+                    roleDisplay = person.roles.map(r => {
+                        const roleKey = r === '1' ? 'roleDataSuperAdmin' :
+                                       r === '2' ? 'roleDataOperator' :
+                                       r === '3' ? 'roleDataUser' :
+                                       r === '4' ? 'roleDataGuest' : null;
+                        const roleName = roleKey && translations[lang][roleKey]
+                            ? translations[lang][roleKey]
+                            : roleMap[r];
+                        return `<span class="role-tag">${roleName}</span>`;
+                    }).join('');
+                } else if (person.role) {
+                    const roleName = person.role.nameKey && translations[lang][person.role.nameKey]
+                        ? translations[lang][person.role.nameKey]
+                        : person.role.name;
+                    roleDisplay = `<span class="role-tag">${roleName}</span>`;
+                }
+
+                // 获取翻译后的站点名称
+                const translatedSites = person.sites.map(siteName => {
+                    const siteKey = siteNameMap[siteName];
+                    return siteKey && translations[lang][siteKey]
+                        ? translations[lang][siteKey]
+                        : siteName;
+                });
+                const sitesDisplay = translatedSites.slice(0, 2).join(', ') + (translatedSites.length > 2 ? '...' : '');
+
+                return `
+                    <tr>
+                        <td>${personName}</td>
+                        <td>${person.email}</td>
+                        <td>${roleDisplay}</td>
+                        <td>${sitesDisplay}</td>
+                        <td>
+                            <span class="status-badge ${person.status === 'active' ? 'status-active' : 'status-inactive'}">
+                                ${person.status === 'active' ? translations[lang].personnelStatusActive : translations[lang].personnelStatusInactive}
+                            </span>
+                        </td>
+                        <td>${person.createTime}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="action-btn" onclick="editPerson(${person.id})" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="编辑">
+                                    <i class="far fa-edit" style="font-size: 16px; color: var(--text-secondary);"></i>
+                                </button>
+                                <button class="action-btn" onclick="deletePerson(${person.id})" style="padding: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer;" title="删除">
+                                    <i class="far fa-trash-alt" style="font-size: 16px; color: #ef4444;"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // 更新分页信息
+            document.getElementById('startRecord').textContent = totalRecords > 0 ? startIndex + 1 : 0;
+            document.getElementById('endRecord').textContent = endIndex;
+            document.getElementById('totalRecords').textContent = totalRecords;
+            
+            // 渲染分页控件
+            renderPagination(totalPages);
+        }
+
+        // 渲染分页控件
+        function renderPagination(totalPages) {
+            const controls = document.getElementById('paginationControls');
+            let html = '';
+            
+            // 上一页
+            html += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+            
+            // 页码
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<span style="padding: 0 8px;">...</span>`;
+                }
+            }
+            
+            // 下一页
+            html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+            
+            controls.innerHTML = html;
+        }
+
+        // 跳转页面
+        function goToPage(page) {
+            const totalPages = Math.ceil(personnelData.length / pageSize);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderPersonnelTable();
+            }
+        }
+
+        // 搜索人员
+        function searchPersonnel(event) {
+            event.preventDefault();
+            currentPage = 1;
+            renderPersonnelTable();
+        }
+
+        // 重置搜索
+        function resetSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = '';
+            currentPage = 1;
+            renderPersonnelTable();
+        }
+
+        // 显示新增人员模态框
+        function showAddPersonModal() {
+            currentEditingPerson = null;
+            const lang = localStorage.getItem('language') === 'en' ? 'en' : 'zh';
+            document.getElementById('personnelModalTitleAdd').textContent = translations[lang].personnelModalTitleAdd;
+            document.getElementById('personForm').reset();
+            renderSitePermissionTree();
+            document.getElementById('personModal').classList.add('show');
+        }
+
+        // 编辑人员
+        function editPerson(personId) {
+            const person = personnelData.find(p => p.id === personId);
+            if (!person) return;
+
+            currentEditingPerson = personId;
+            const lang = localStorage.getItem('language') === 'en' ? 'en' : 'zh';
+            document.getElementById('personnelModalTitleAdd').textContent = translations[lang].personnelModalTitleEdit;
+            document.getElementById('personName').value = person.name;
+            document.getElementById('personEmail').value = person.email;
+            document.getElementById('personStatus').value = person.status;
+            
+            
+            // 设置角色（多选）
+            const roleCheckboxes = document.querySelectorAll('input[name="roles"]');
+            roleCheckboxes.forEach(cb => cb.checked = false);
+            if (person.roles) {
+                person.roles.forEach(roleId => {
+                    const checkbox = document.querySelector(`input[name="roles"][value="${roleId}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            } else if (person.role) {
+                const checkbox = document.querySelector(`input[name="roles"][value="${person.role.id}"]`);
+                if (checkbox) checkbox.checked = true;
+            }
+            
+            renderSitePermissionTree(person.sites);
+            document.getElementById('personModal').classList.add('show');
+        }
+
+        // 保存人员
+        function savePerson() {
+            const personName = document.getElementById('personName').value.trim();
+            const personEmail = document.getElementById('personEmail').value.trim();
+            const personStatus = document.getElementById('personStatus').value;
+            const personPassword = document.getElementById('personPassword').value;
+            
+            // 获取选中的角色
+            const selectedRoles = [];
+            document.querySelectorAll('input[name="roles"]:checked').forEach(cb => {
+                selectedRoles.push(cb.value);
+            });
+            
+            if (!personName || !personEmail) {
+                alert('请填写必填项');
+                return;
+            }
+            
+            // 新增用户时，使用默认密码123456，不需要验证
+            // if (!currentEditingPerson && !personPassword) {
+            //     alert('新增用户必须设置密码');
+            //     return;
+            // }
+            
+            
+            // 获取选中的站点权限
+            const selectedSites = getSelectedSites();
+            
+            if (currentEditingPerson) {
+                // 更新人员
+                const person = personnelData.find(p => p.id === currentEditingPerson);
+                if (person) {
+                    person.name = personName;
+                    person.email = personEmail;
+                    person.roles = selectedRoles;
+                    person.sites = selectedSites;
+                    person.status = personStatus;
+                    
+                }
+            } else {
+                // 新增人员
+                const newPerson = {
+                    id: Math.max(...personnelData.map(p => p.id)) + 1,
+                    name: personName,
+                    email: personEmail,
+                    roles: selectedRoles,
+                    sites: selectedSites,
+                    status: personStatus,
+                    createTime: new Date().toLocaleString('zh-CN'),
+                    password: '123456' // 默认密码
+                };
+                
+                personnelData.push(newPerson);
+            }
+            
+            renderPersonnelTable();
+            closePersonModal();
+        }
+
+        // 删除人员
+        function deletePerson(personId) {
+            const person = personnelData.find(p => p.id === personId);
+            if (!person) return;
+            
+            currentDeletePersonId = personId;
+            document.getElementById('deletePersonName').textContent = person.name;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        // 执行删除
+        function performDelete() {
+            if (currentDeletePersonId) {
+                personnelData = personnelData.filter(p => p.id !== currentDeletePersonId);
+                renderPersonnelTable();
+                closeDeleteModal();
+            }
+        }
+
+        // 关闭模态框
+        function closePersonModal() {
+            document.getElementById('personModal').classList.remove('show');
+            document.getElementById('personForm').reset();
+            currentEditingPerson = null;
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            currentDeletePersonId = null;
+        }
+
+        // 导出人员数据
+        function exportPersonnel() {
+            alert('导出功能开发中...');
+            // 实际实现时可以导出为 Excel 或 CSV 格式
+        }
+    </script>
+
+    
+    </div>
+
+    <style>
+        /* 用户下拉菜单样式 */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-divider {
+            border-top: 1px solid var(--border-color);
+            margin: 4px 0;
+        }
+    </style>
+</body>
+</html>

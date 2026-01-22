@@ -1,0 +1,91 @@
+/* 页面切换过渡效果 - 彻底消除白屏 */
+
+/* 强制设置页面初始背景,避免白屏闪烁 */
+html {
+    background-color: #0a0e1a;
+}
+
+body {
+    background-color: #0a0e1a;
+    /* 移除全局淡入动画,避免每次页面加载都从透明开始导致白屏 */
+}
+
+/* 页面淡出动画 - 极速过渡,最短白屏 */
+body.page-transitioning {
+    animation: fadeOut 0.15s ease-out forwards;
+}
+
+/* 仅在特定场景下使用淡入 - 通过 JS 动态添加类控制 */
+body.page-fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* 加载遮罩层 - 提升 z-index 确保在最顶层 */
+.page-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0a0e1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999; /* 提升层级 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.05s ease; /* 极快显示,立即覆盖白屏 */
+}
+
+.page-loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* 加载动画 - 优化视觉效果 */
+.page-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(0, 150, 255, 0.1);
+    border-top-color: #0096ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    /* 添加发光效果 */
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.3);
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 加载文本 */
+.page-loading-text {
+    color: #0096ff;
+    font-size: 14px;
+    margin-top: 15px;
+    text-align: center;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+}
+
+/* 移除 visibility 避免字体模糊 */

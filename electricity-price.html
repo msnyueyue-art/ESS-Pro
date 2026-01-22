@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电价设置 - AlwaysControl Technology</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 页面容器 */
+        .electricity-price-container {
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 8px 0;
+        }
+
+        .page-description {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        /* Tab 切换 */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: #3b82f6;
+        }
+
+        .tab-btn.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 数据表格区域 */
+        .data-table-wrapper {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            height: 36px;
+            padding: 0 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            width: auto;
+            flex-shrink: 0;
+            min-width: fit-content;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-text {
+            background: transparent;
+            color: #3b82f6;
+            padding: 0 8px;
+            height: auto;
+        }
+
+        .btn-text:hover {
+            color: #2563eb;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: #f8fafc;
+        }
+
+        .data-table th {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .data-table td {
+            padding: 16px 20px;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        /* 标签 */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .badge-warning {
+            background: rgba(234, 179, 8, 0.15);
+            color: #eab308;
+        }
+
+        .badge-gray {
+            background: rgba(148, 163, 184, 0.15);
+            color: #94a3b8;
+        }
+
+        .badge-purple {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* 表单 */
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .form-label.required::after {
+            content: '*';
+            color: #ef4444;
+            margin-left: 4px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            height: 36px;
+            padding: 0 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            color: #1e293b;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-textarea {
+            height: auto;
+            min-height: 80px;
+            padding: 10px 12px;
+            resize: vertical;
+        }
+
+        .form-input:hover,
+        .form-select:hover,
+        .form-textarea:hover {
+            border-color: #3b82f6;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 时间段配置 */
+        .time-periods {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .time-period-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .time-period-card:hover {
+            border-color: #3b82f6;
+        }
+
+        .time-period-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .time-period-type {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-period-type-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .time-period-type-icon.peak {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .time-period-type-icon.valley {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .time-period-type-icon.flat {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .time-period-type-icon.super-peak {
+            background: rgba(220, 38, 38, 0.15);
+            color: #dc2626;
+        }
+
+        .time-period-remove {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-period-remove:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .time-period-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .add-period-btn {
+            width: 100%;
+            height: 40px;
+            border: 1px dashed #e2e8f0;
+            background: transparent;
+            color: #3b82f6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .add-period-btn:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #64748b;
+            margin: 0 0 8px 0;
+        }
+
+        .empty-state-description {
+            font-size: 14px;
+            color: #94a3b8;
+            margin: 0;
+        }
+
+        /* 操作按钮组 */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 站点卡片 */
+        .site-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .site-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+
+        .site-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .site-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .site-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body data-page="electricity-price">
+    <!-- 导航栏容器 -->
+    <div id="navbar-container"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="electricity-price-container">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-bolt" style="color: #3b82f6; margin-right: 8px;"></i>
+                    电价设置
+                </h1>
+                <p class="page-description">管理电价模版并应用到电站，实现峰谷平尖时段、分时电价等多种定价策略</p>
+            </div>
+
+            <!-- Tab 切换 -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('templates')">
+                    <i class="fas fa-file-alt"></i> 电价模版库
+                </button>
+                <button class="tab-btn" onclick="switchTab('sites')">
+                    <i class="fas fa-building"></i> 电站电价配置
+                </button>
+            </div>
+
+            <!-- Tab 1: 电价模版库 -->
+            <div class="tab-content active" id="templates-tab">
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h2 class="table-title">电价模版管理</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-primary" onclick="openTemplateModal()">
+                                <i class="fas fa-plus"></i>
+                                新建模版
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>模版名称</th>
+                                <th>类型</th>
+                                <th>时段配置</th>
+                                <th>已应用站点</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="templatesTableBody">
+                            <!-- 数据将由JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: 电站电价配置 -->
+            <div class="tab-content" id="sites-tab">
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h2 class="table-title">电站电价配置</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-secondary" onclick="refreshSites()">
+                                <i class="fas fa-sync"></i>
+                                刷新
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="padding: 20px;" id="sitesContainer">
+                        <!-- 站点卡片将由JavaScript动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 模版编辑模态框 -->
+    <div class="modal-overlay" id="templateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="templateModalTitle">新建电价模版</h3>
+                <button class="modal-close" onclick="closeTemplateModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="templateForm">
+                    <!-- 基本信息 -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">基本信息</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label required">模版名称</label>
+                                <input type="text" class="form-input" id="templateName" placeholder="如：江苏峰谷电价" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">策略类型</label>
+                                <select class="form-select" id="templateStrategy" required onchange="onTemplateStrategyChange()">
+                                    <option value="">请选择</option>
+                                    <option value="peak-valley">峰谷平尖</option>
+                                    <option value="tou">分时电价</option>
+                                    <option value="fixed">固定电价</option>
+                                    <option value="tiered">阶梯电价</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">模版说明</label>
+                                <textarea class="form-textarea" id="templateDescription" placeholder="可选：描述此模版的适用场景"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 固定电价配置 -->
+                    <div class="form-section" id="fixedPriceSection" style="display: none;">
+                        <h4 class="form-section-title">固定电价配置</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label required">买入电价 (元/kWh)</label>
+                                <input type="number" class="form-input" id="fixedBuyPrice" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">卖出电价 (元/kWh)</label>
+                                <input type="number" class="form-input" id="fixedSellPrice" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 时段电价配置 -->
+                    <div class="form-section" id="periodPriceSection" style="display: none;">
+                        <h4 class="form-section-title">时段电价配置</h4>
+                        <div class="time-periods" id="timePeriods">
+                            <!-- 时段卡片将由JavaScript动态添加 -->
+                        </div>
+                        <button type="button" class="add-period-btn" onclick="addTimePeriod()">
+                            <i class="fas fa-plus"></i>
+                            添加时间段
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTemplateModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveTemplate()">
+                    <i class="fas fa-save"></i>
+                    保存模版
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 应用模版到站点模态框 -->
+    <div class="modal-overlay" id="applyTemplateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">应用电价模版到站点</h3>
+                <button class="modal-close" onclick="closeApplyModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-section">
+                    <h4 class="form-section-title">选择电价模版</h4>
+                    <div class="form-group">
+                        <label class="form-label required">电价模版</label>
+                        <select class="form-select" id="applyTemplateSelect" required>
+                            <option value="">请选择模版</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label required">生效时间</label>
+                        <input type="datetime-local" class="form-input" id="applyEffectiveTime" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeApplyModal()">取消</button>
+                <button class="btn btn-success" onclick="confirmApplyTemplate()">
+                    <i class="fas fa-check"></i>
+                    确认应用
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入公共脚本 -->
+    <script src="navbar.js"></script>
+    <script src="common.js"></script>
+    <script src="i18n.js"></script>
+
+    <script>
+        // ==================== 数据模型 ====================
+
+        // 电价模版数据
+        let priceTemplates = [
+            {
+                id: 1,
+                name: '江苏峰谷电价',
+                type: 'peak-valley',
+                typeName: '峰谷平尖',
+                description: '适用于江苏地区工商业用电',
+                createTime: '2024-01-15 10:30',
+                periods: [
+                    { type: 'super-peak', start: '19:00', end: '21:00', buyPrice: 1.2, sellPrice: 0.9 },
+                    { type: 'peak', start: '08:00', end: '11:00', buyPrice: 0.9, sellPrice: 0.7 },
+                    { type: 'peak', start: '14:00', end: '19:00', buyPrice: 0.9, sellPrice: 0.7 },
+                    { type: 'flat', start: '11:00', end: '14:00', buyPrice: 0.6, sellPrice: 0.5 },
+                    { type: 'flat', start: '21:00', end: '23:00', buyPrice: 0.6, sellPrice: 0.5 },
+                    { type: 'valley', start: '23:00', end: '08:00', buyPrice: 0.3, sellPrice: 0.25 }
+                ]
+            },
+            {
+                id: 2,
+                name: '广东分时电价',
+                type: 'tou',
+                typeName: '分时电价',
+                description: '适用于广东地区商业用电',
+                createTime: '2024-01-20 14:20',
+                periods: [
+                    { type: 'peak', start: '08:00', end: '22:00', buyPrice: 0.85, sellPrice: 0.65 },
+                    { type: 'valley', start: '22:00', end: '08:00', buyPrice: 0.45, sellPrice: 0.35 }
+                ]
+            },
+            {
+                id: 3,
+                name: '居民固定电价',
+                type: 'fixed',
+                typeName: '固定电价',
+                description: '适用于居民用电',
+                createTime: '2024-02-01 09:15',
+                fixedPrice: { buyPrice: 0.52, sellPrice: 0.42 }
+            }
+        ];
+
+        // 电站数据（从系统其他页面获取）
+        let sites = [
+            { id: 'site1', name: '科技园区站', location: '江苏南京', capacity: '2.5MWh', deviceCount: 8, templateId: 1 },
+            { id: 'site2', name: '工业园区站', location: '广东深圳', capacity: '3.75MWh', deviceCount: 12, templateId: 2 },
+            { id: 'site3', name: '商业中心站', location: '浙江杭州', capacity: '3.1MWh', deviceCount: 10, templateId: null },
+            { id: 'site4', name: '物流园区站', location: '上海浦东', capacity: '4.7MWh', deviceCount: 15, templateId: null }
+        ];
+
+        let currentEditTemplateId = null;
+        let currentApplySiteId = null;
+        let periodCounter = 0;
+
+        // ==================== 页面初始化 ====================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTemplatesTable();
+            renderSitesCards();
+        });
+
+        // ==================== Tab 切换 ====================
+
+        function switchTab(tab) {
+            // 更新按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+
+            // 切换内容
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            // 根据tab类型重新渲染数据
+            if (tab === 'templates') {
+                renderTemplatesTable();
+            } else if (tab === 'sites') {
+                renderSitesCards();
+            }
+        }
+
+        // ==================== 模版管理功能 ====================
+
+        // 渲染模版表格
+        function renderTemplatesTable() {
+            const tbody = document.getElementById('templatesTableBody');
+
+            if (priceTemplates.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                                <h3 class="empty-state-title">暂无电价模版</h3>
+                                <p class="empty-state-description">点击"新建模版"创建您的第一个电价策略模版</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = priceTemplates.map(template => {
+                const appliedSites = sites.filter(s => s.templateId === template.id);
+                const periodInfo = template.type === 'fixed'
+                    ? `买入${template.fixedPrice.buyPrice}元 卖出${template.fixedPrice.sellPrice}元`
+                    : `${template.periods.length}个时段`;
+
+                return `
+                    <tr>
+                        <td><strong>${template.name}</strong></td>
+                        <td><span class="badge badge-primary">${template.typeName}</span></td>
+                        <td>${periodInfo}</td>
+                        <td>${appliedSites.length}个站点</td>
+                        <td>${template.createTime}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-text" onclick="viewTemplate(${template.id})">
+                                    <i class="fas fa-eye"></i> 查看
+                                </button>
+                                <button class="btn btn-text" onclick="editTemplate(${template.id})">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </button>
+                                <button class="btn btn-text" style="color: #ef4444;" onclick="deleteTemplate(${template.id})">
+                                    <i class="fas fa-trash"></i> 删除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 打开模版编辑模态框
+        function openTemplateModal() {
+            currentEditTemplateId = null;
+            document.getElementById('templateModalTitle').textContent = '新建电价模版';
+            document.getElementById('templateForm').reset();
+            clearTimePeriods();
+            hideTemplateSections();
+            document.getElementById('templateModal').classList.add('active');
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('templateModal').classList.remove('active');
+        }
+
+        // 编辑模版
+        function editTemplate(id) {
+            const template = priceTemplates.find(t => t.id === id);
+            if (!template) return;
+
+            currentEditTemplateId = id;
+            document.getElementById('templateModalTitle').textContent = '编辑电价模版';
+            document.getElementById('templateName').value = template.name;
+            document.getElementById('templateStrategy').value = template.type;
+            document.getElementById('templateDescription').value = template.description || '';
+
+            onTemplateStrategyChange();
+
+            if (template.type === 'fixed') {
+                document.getElementById('fixedBuyPrice').value = template.fixedPrice.buyPrice;
+                document.getElementById('fixedSellPrice').value = template.fixedPrice.sellPrice;
+            } else {
+                clearTimePeriods();
+                template.periods.forEach(period => addTimePeriod(period));
+            }
+
+            document.getElementById('templateModal').classList.add('active');
+        }
+
+        // 查看模版
+        function viewTemplate(id) {
+            editTemplate(id);
+            // 可以添加只读逻辑
+        }
+
+        // 删除模版
+        function deleteTemplate(id) {
+            const appliedSites = sites.filter(s => s.templateId === id);
+            if (appliedSites.length > 0) {
+                showToast(`该模版已应用到${appliedSites.length}个站点，无法删除`, 'error');
+                return;
+            }
+
+            if (confirm('确定要删除此模版吗？')) {
+                priceTemplates = priceTemplates.filter(t => t.id !== id);
+                renderTemplatesTable();
+                showToast('删除成功', 'success');
+            }
+        }
+
+        // 策略类型变更
+        function onTemplateStrategyChange() {
+            const strategy = document.getElementById('templateStrategy').value;
+            hideTemplateSections();
+
+            if (strategy === 'fixed') {
+                document.getElementById('fixedPriceSection').style.display = 'block';
+            } else if (strategy === 'tou' || strategy === 'peak-valley' || strategy === 'tiered') {
+                document.getElementById('periodPriceSection').style.display = 'block';
+            }
+        }
+
+        function hideTemplateSections() {
+            document.getElementById('fixedPriceSection').style.display = 'none';
+            document.getElementById('periodPriceSection').style.display = 'none';
+        }
+
+        // 保存模版
+        function saveTemplate() {
+            const form = document.getElementById('templateForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('templateName').value;
+            const type = document.getElementById('templateStrategy').value;
+            const description = document.getElementById('templateDescription').value;
+
+            const typeNames = {
+                'peak-valley': '峰谷平尖',
+                'tou': '分时电价',
+                'fixed': '固定电价',
+                'tiered': '阶梯电价'
+            };
+
+            const template = {
+                id: currentEditTemplateId || Date.now(),
+                name,
+                type,
+                typeName: typeNames[type],
+                description,
+                createTime: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
+            };
+
+            if (type === 'fixed') {
+                template.fixedPrice = {
+                    buyPrice: parseFloat(document.getElementById('fixedBuyPrice').value),
+                    sellPrice: parseFloat(document.getElementById('fixedSellPrice').value)
+                };
+            } else {
+                template.periods = [];
+                document.querySelectorAll('.time-period-card').forEach(card => {
+                    const typeSelect = card.querySelector('select');
+                    const inputs = card.querySelectorAll('input');
+                    template.periods.push({
+                        type: typeSelect.value,
+                        start: inputs[0].value,
+                        end: inputs[1].value,
+                        buyPrice: parseFloat(inputs[2].value),
+                        sellPrice: parseFloat(inputs[3].value)
+                    });
+                });
+            }
+
+            if (currentEditTemplateId) {
+                const index = priceTemplates.findIndex(t => t.id === currentEditTemplateId);
+                priceTemplates[index] = template;
+                showToast('模版更新成功', 'success');
+            } else {
+                priceTemplates.unshift(template);
+                showToast('模版创建成功', 'success');
+            }
+
+            renderTemplatesTable();
+            closeTemplateModal();
+        }
+
+        // ==================== 时间段管理 ====================
+
+        function addTimePeriod(data = null) {
+            periodCounter++;
+            const periodsContainer = document.getElementById('timePeriods');
+            const periodCard = document.createElement('div');
+            periodCard.className = 'time-period-card';
+            periodCard.id = `period-${periodCounter}`;
+
+            const typeOptions = {
+                'super-peak': { label: '尖时段', icon: '⚡' },
+                'peak': { label: '峰时段', icon: '📈' },
+                'flat': { label: '平时段', icon: '➡️' },
+                'valley': { label: '谷时段', icon: '📉' }
+            };
+
+            const selectedType = data?.type || 'peak';
+
+            periodCard.innerHTML = `
+                <div class="time-period-header">
+                    <div class="time-period-type">
+                        <div class="time-period-type-icon ${selectedType}">
+                            ${typeOptions[selectedType].icon}
+                        </div>
+                        <select class="form-select" style="background: transparent; border: none; font-weight: 600; cursor: pointer; padding: 0;">
+                            ${Object.entries(typeOptions).map(([value, {label}]) =>
+                                `<option value="${value}" ${value === selectedType ? 'selected' : ''}>${label}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <button type="button" class="time-period-remove" onclick="removePeriod(${periodCounter})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="time-period-fields">
+                    <div class="form-group">
+                        <label class="form-label">开始时间</label>
+                        <input type="time" class="form-input" value="${data?.start || '00:00'}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">结束时间</label>
+                        <input type="time" class="form-input" value="${data?.end || '23:59'}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">买入电价(元/kWh)</label>
+                        <input type="number" class="form-input" placeholder="0.00" step="0.01" min="0" value="${data?.buyPrice || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">卖出电价(元/kWh)</label>
+                        <input type="number" class="form-input" placeholder="0.00" step="0.01" min="0" value="${data?.sellPrice || ''}">
+                    </div>
+                </div>
+            `;
+
+            periodsContainer.appendChild(periodCard);
+        }
+
+        function removePeriod(periodId) {
+            const periodCard = document.getElementById(`period-${periodId}`);
+            if (periodCard) periodCard.remove();
+        }
+
+        function clearTimePeriods() {
+            document.getElementById('timePeriods').innerHTML = '';
+            periodCounter = 0;
+        }
+
+        // ==================== 电站配置功能 ====================
+
+        // 渲染电站卡片
+        function renderSitesCards() {
+            const container = document.getElementById('sitesContainer');
+
+            if (sites.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-building"></i></div>
+                        <h3 class="empty-state-title">暂无电站</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sites.map(site => {
+                const template = site.templateId ? priceTemplates.find(t => t.id === site.templateId) : null;
+
+                return `
+                    <div class="site-card">
+                        <div class="site-card-header">
+                            <div>
+                                <div class="site-name">
+                                    <i class="fas fa-building" style="color: #3b82f6; margin-right: 8px;"></i>
+                                    ${site.name}
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                ${template ? `
+                                    <button class="btn btn-secondary" onclick="viewSiteTemplate('${site.id}')">
+                                        <i class="fas fa-eye"></i> 查看配置
+                                    </button>
+                                    <button class="btn btn-primary" onclick="changeSiteTemplate('${site.id}')">
+                                        <i class="fas fa-exchange-alt"></i> 更换模版
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-success" onclick="applySiteTemplate('${site.id}')">
+                                        <i class="fas fa-plus"></i> 应用模版
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                        <div class="site-info">
+                            <div class="info-item">
+                                <div class="info-label">所在地区</div>
+                                <div class="info-value">${site.location}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">装机容量</div>
+                                <div class="info-value">${site.capacity}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">设备数量</div>
+                                <div class="info-value">${site.deviceCount} 台</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">当前电价模版</div>
+                                <div class="info-value">
+                                    ${template
+                                        ? `<span class="badge badge-success">${template.name}</span>`
+                                        : `<span class="badge badge-gray">未配置</span>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 应用模版到站点
+        function applySiteTemplate(siteId) {
+            currentApplySiteId = siteId;
+
+            // 填充模版选择器
+            const select = document.getElementById('applyTemplateSelect');
+            select.innerHTML = '<option value="">请选择模版</option>' +
+                priceTemplates.map(t => `<option value="${t.id}">${t.name} (${t.typeName})</option>`).join('');
+
+            // 设置默认生效时间为当前时间
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('applyEffectiveTime').value = now.toISOString().slice(0, 16);
+
+            document.getElementById('applyTemplateModal').classList.add('active');
+        }
+
+        // 更换站点模版
+        function changeSiteTemplate(siteId) {
+            applySiteTemplate(siteId);
+        }
+
+        // 查看站点模版配置
+        function viewSiteTemplate(siteId) {
+            const site = sites.find(s => s.id === siteId);
+            if (!site || !site.templateId) return;
+
+            const template = priceTemplates.find(t => t.id === site.templateId);
+            if (!template) return;
+
+            viewTemplate(template.id);
+        }
+
+        function closeApplyModal() {
+            document.getElementById('applyTemplateModal').classList.remove('active');
+            currentApplySiteId = null;
+        }
+
+        // 确认应用模版
+        function confirmApplyTemplate() {
+            const templateId = parseInt(document.getElementById('applyTemplateSelect').value);
+            const effectiveTime = document.getElementById('applyEffectiveTime').value;
+
+            if (!templateId) {
+                showToast('请选择电价模版', 'error');
+                return;
+            }
+
+            if (!effectiveTime) {
+                showToast('请设置生效时间', 'error');
+                return;
+            }
+
+            const site = sites.find(s => s.id === currentApplySiteId);
+            const template = priceTemplates.find(t => t.id === templateId);
+
+            site.templateId = templateId;
+            site.effectiveTime = effectiveTime;
+
+            closeApplyModal();
+            renderSitesCards();
+            showToast(`成功将"${template.name}"应用到"${site.name}"`, 'success');
+        }
+
+        function refreshSites() {
+            renderSitesCards();
+            showToast('已刷新', 'success');
+        }
+
+        // ==================== 工具函数 ====================
+
+        function showToast(message, type = 'success') {
+            const colors = {
+                'success': '#22c55e',
+                'error': '#ef4444',
+                'info': '#3b82f6'
+            };
+
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: ${colors[type]};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // 添加动画样式
+        const toastAnimationStyle = document.createElement('style');
+        toastAnimationStyle.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(toastAnimationStyle);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号设置 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <script src="../ueh/components/i18n.js"></script>
+    <style>
+        .settings-container {
+            display: flex;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 左侧垂直标签 */
+        .settings-tabs {
+            width: 200px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            height: fit-content;
+            position: sticky;
+            top: 24px;
+        }
+
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .tab-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .tab-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .tab-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* 右侧内容区 */
+        .settings-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .settings-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+        }
+
+        .settings-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            height: 40px;
+            padding: 0 24px;
+            border: 1px solid #e5e5e5;
+            background: white;
+            color: #333;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 100px;
+        }
+
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #d0d0d0;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: 1px solid #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 1px solid #e5e5e5;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #d0d0d0;
+        }
+
+        [data-theme="dark"] .btn {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        [data-theme="dark"] .btn:hover {
+            background: #374151;
+            border-color: #6b7280;
+        }
+
+        [data-theme="dark"] .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        [data-theme="dark"] .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #374151;
+            color: #9ca3af;
+            border-color: #4b5563;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #4b5563;
+            border-color: #6b7280;
+        }
+
+        /* 信息内容布局 */
+        .info-content {
+            padding: 8px 0;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            width: 120px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding-top: 8px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .text-muted {
+            color: var(--text-secondary);
+        }
+
+        /* 头像样式 */
+        .avatar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .avatar-display {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            overflow: hidden;
+            position: relative;
+            border: 2px solid var(--border-color);
+        }
+
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .avatar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            transition: opacity 0.2s;
+        }
+
+        .link-btn:hover {
+            opacity: 0.7;
+        }
+
+        .divider {
+            color: var(--border-color);
+            margin: 0 4px;
+        }
+
+        .info-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* 可编辑字段 */
+        .editable-field {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--primary-color);
+        }
+
+        .edit-field {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-control-inline {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .btn-small {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-small.btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-small.btn-cancel {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-small:hover {
+            opacity: 0.9;
+        }
+
+        /* 表单组 */
+        .form-group-inline {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .form-group-inline label {
+            width: 120px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .form-group-inline .form-control {
+            flex: 1;
+        }
+
+        .input-with-btn {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .input-with-btn .form-control {
+            flex: 1;
+        }
+
+        /* 输入组 */
+        .input-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+        .btn-outline {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 验证方式选择 */
+        .verify-method {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            margin-bottom: 0;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .radio-label {
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .verify-section {
+            margin-bottom: 20px;
+        }
+
+        .success-message, .error-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .password-strength {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+
+        .strength-bar.active.weak {
+            background: var(--error-color);
+        }
+
+        .strength-bar.active.medium {
+            background: var(--warning-color);
+        }
+
+        .strength-bar.active.strong {
+            background: var(--success-color);
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .settings-container {
+                flex-direction: column;
+            }
+
+            .settings-tabs {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+                padding: 8px;
+                position: static;
+            }
+
+            .tab-item {
+                flex-shrink: 0;
+                margin-bottom: 0;
+                margin-right: 8px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-label {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body data-page="account-settings">
+    <!-- 导航栏由navbar.js自动生成 -->
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        <!-- 页面标题 -->
+        <div class="page-header" style="padding: 0 24px; margin-bottom: 24px;">
+            <h1 class="page-title" id="accountSettingsTitle" data-i18n="accountSettings.pageTitle">账号设置</h1>
+            <p class="page-subtitle" id="accountSettingsSubtitle" data-i18n="accountSettings.pageSubtitle">管理您的个人信息和账号安全</p>
+        </div>
+
+        <div class="settings-container">
+            <!-- 左侧垂直标签 -->
+            <div class="settings-tabs">
+                <button class="tab-item active" onclick="switchTab('basic')" data-tab="basic">
+                    <i class="fas fa-user"></i>
+                    <span id="tabBasicInfo" data-i18n="accountSettings.tabs.basicInfo">基础信息</span>
+                </button>
+                <button class="tab-item" onclick="switchTab('password')" data-tab="password">
+                    <i class="fas fa-lock"></i>
+                    <span id="tabChangePassword" data-i18n="accountSettings.tabs.changePassword">修改密码</span>
+                </button>
+            </div>
+
+            <!-- 右侧内容区 -->
+            <div class="settings-content">
+
+                <!-- 成功/错误消息 -->
+                <div class="success-message" id="successMessage">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="msgSaveSuccess" data-i18n="accountSettings.messages.saveSuccess">保存成功！</span>
+                </div>
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="msgSaveFailed" data-i18n="accountSettings.messages.saveFailed">保存失败，请稍后重试</span>
+                </div>
+
+                <!-- 基础信息面板 -->
+                <div class="tab-panel active" id="basic-panel">
+                    <!-- 基本信息卡片 -->
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <div class="settings-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h2 class="settings-title" id="cardBasicInfoTitle" data-i18n="accountSettings.basicInfo.cardTitle">基本信息</h2>
+                        </div>
+
+                        <div class="info-content">
+                            <!-- 头像行 -->
+                            <div class="info-row">
+                                <div class="info-label" id="labelAvatar" data-i18n="accountSettings.basicInfo.avatar">头像</div>
+                                <div class="info-value">
+                                    <div class="avatar-wrap">
+                                        <div class="avatar-display">
+                                            <img id="avatarImg" src="" alt="" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                            <div id="avatarText" class="avatar-placeholder">D</div>
+                                        </div>
+                                        <div class="avatar-actions">
+                                            <button class="link-btn" onclick="document.getElementById('avatarInput').click()" id="btnChangeAvatar" data-i18n="accountSettings.basicInfo.changeAvatar">
+                                                更换头像
+                                            </button>
+                                            <span class="divider">|</span>
+                                            <button class="link-btn" onclick="removeAvatar()" id="btnRemoveAvatar" data-i18n="accountSettings.basicInfo.removeAvatar">
+                                                移除
+                                            </button>
+                                            <input type="file" id="avatarInput" style="display: none;" accept="image/*" onchange="handleAvatarChange(event)">
+                                        </div>
+                                    </div>
+                                    <div class="info-hint" id="hintAvatarFormat" data-i18n="accountSettings.basicInfo.avatarHint">支持 JPG、PNG 格式，大小不超过 2MB</div>
+                                </div>
+                            </div>
+
+                            <!-- 昵称行 -->
+                            <div class="info-row" style="border-bottom: none;">
+                                <div class="info-label" id="labelNickname" data-i18n="accountSettings.basicInfo.nickname">昵称</div>
+                                <div class="info-value">
+                                    <form id="nicknameForm" onsubmit="saveNickname(event); return false;" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                                        <input type="text" class="form-control" id="nicknameInput" value="demo" data-i18n-placeholder="accountSettings.basicInfo.nicknamePlaceholder" placeholder="请输入昵称" style="max-width: 300px;">
+                                        <div style="text-align: right;">
+                                            <button type="submit" class="btn btn-primary" style="height: 40px; padding: 0 12px; font-size: 14px; width: 90px;">
+                                                <span id="btnSaveNickname" data-i18n="accountSettings.basicInfo.save">保存</span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修改密码面板 -->
+                <div class="tab-panel" id="password-panel">
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <div class="settings-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <h2 class="settings-title" data-i18n="accountSettings.passwordSettings.cardTitle">密码设置</h2>
+                        </div>
+
+                        <!-- 验证方式选择 -->
+                        <div class="form-row">
+                            <label class="form-label" data-i18n="accountSettings.passwordSettings.changeMethod">修改方式</label>
+                            <div style="display: flex; align-items: center; gap: 24px;">
+                                <label class="radio-item">
+                                    <input type="radio" name="verifyMethod" value="password" checked onchange="switchVerifyMethod('password')">
+                                    <span class="radio-label" data-i18n="accountSettings.passwordSettings.usePassword">使用原密码验证</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="verifyMethod" value="email" onchange="switchVerifyMethod('email')">
+                                    <span class="radio-label" data-i18n="accountSettings.passwordSettings.useEmail">使用邮箱验证</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <form id="passwordForm">
+                            <!-- 原密码验证 -->
+                            <div id="passwordVerify" class="verify-section">
+                                <div class="form-row">
+                                    <label class="form-label" data-i18n="accountSettings.passwordSettings.currentPassword">原密码</label>
+                                    <input type="password" class="form-control" id="currentPassword" placeholder="请输入原密码" data-i18n-placeholder="accountSettings.passwordSettings.currentPasswordPlaceholder">
+                                </div>
+                            </div>
+
+                            <!-- 邮箱验证 -->
+                            <div id="emailVerify" class="verify-section" style="display: none;">
+                                <div class="form-row">
+                                    <label class="form-label" data-i18n="accountSettings.passwordSettings.emailVerification">邮箱验证</label>
+                                    <div class="input-group">
+                                        <input type="email" class="form-control" value="admin@example.com" disabled style="background: var(--bg-secondary);">
+                                        <button type="button" class="btn btn-outline" onclick="sendPasswordResetCode()">
+                                            <span data-i18n="accountSettings.passwordSettings.getVerificationCode">获取验证码</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label class="form-label" data-i18n="accountSettings.passwordSettings.verificationCode">验证码</label>
+                                    <input type="text" class="form-control" id="resetCode" placeholder="请输入验证码" data-i18n-placeholder="accountSettings.passwordSettings.verificationCodePlaceholder" maxlength="6">
+                                </div>
+                            </div>
+
+                            <!-- 新密码设置 -->
+                            <div class="form-row">
+                                <label class="form-label" data-i18n="accountSettings.passwordSettings.newPassword">新密码</label>
+                                <div style="width: 100%;">
+                                    <input type="password" class="form-control" id="newPassword" placeholder="请输入新密码" data-i18n-placeholder="accountSettings.passwordSettings.newPasswordPlaceholder" oninput="checkPasswordStrength(this.value)">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label" data-i18n="accountSettings.passwordSettings.confirmPassword">确认密码</label>
+                                <input type="password" class="form-control" id="confirmPassword" placeholder="请再次输入新密码" data-i18n-placeholder="accountSettings.passwordSettings.confirmPasswordPlaceholder">
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="resetPasswordForm()" style="width: 90px; height: 40px;">
+                                    <span data-i18n="accountSettings.passwordSettings.reset">重置</span>
+                                </button>
+                                <button type="submit" class="btn btn-primary" style="width: 110px; height: 40px;">
+                                    <span data-i18n="accountSettings.passwordSettings.changePassword">修改密码</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="common.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 用户下拉菜单样式 */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-divider {
+            border-top: 1px solid var(--border-color);
+            margin: 4px 0;
+        }
+
+        /* 设置当前菜单为不活跃状态 */
+        .menu-item.active {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+    </style>
+    <script>
+        // 用户下拉菜单和退出功能已在common.js中定义
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            // 设置新的活动状态
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-panel`).classList.add('active');
+
+            // 隐藏消息提示
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 处理头像上传
+        function handleAvatarChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    showError(window.i18n.getText('accountSettings.basicInfo.avatarSizeError'));
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const avatarImg = document.getElementById('avatarImg');
+                    const avatarText = document.getElementById('avatarText');
+                    avatarImg.src = e.target.result;
+                    avatarImg.style.display = 'block';
+                    avatarText.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 移除头像
+        function removeAvatar() {
+            const avatarImg = document.getElementById('avatarImg');
+            const avatarText = document.getElementById('avatarText');
+            avatarImg.src = '';
+            avatarImg.style.display = 'none';
+            avatarText.style.display = 'flex';
+            document.getElementById('avatarInput').value = '';
+        }
+
+        // 切换验证方式
+        function switchVerifyMethod(method) {
+            const passwordVerify = document.getElementById('passwordVerify');
+            const emailVerify = document.getElementById('emailVerify');
+            
+            if (method === 'password') {
+                passwordVerify.style.display = 'block';
+                emailVerify.style.display = 'none';
+            } else {
+                passwordVerify.style.display = 'none';
+                emailVerify.style.display = 'block';
+            }
+        }
+
+
+        // 发送密码重置验证码
+        function sendPasswordResetCode() {
+            const btn = event.target;
+            let countdown = 60;
+            btn.disabled = true;
+            btn.textContent = `${countdown}` + window.i18n.getText('accountSettings.emailBinding.retryAfter');
+            
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = window.i18n.getText('accountSettings.emailBinding.getCode');
+                } else {
+                    btn.textContent = `${countdown}` + window.i18n.getText('accountSettings.emailBinding.retryAfter');
+                }
+            }, 1000);
+            
+            showSuccess(window.i18n.getText('accountSettings.messages.codeSent'));
+        }
+
+
+        // 显示成功消息
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.innerHTML = `<i class="fas fa-check-circle"></i><span>${message}</span>`;
+            successMsg.style.display = 'flex';
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i><span>${message}</span>`;
+            errorMsg.style.display = 'flex';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        // 检查密码强度
+        function checkPasswordStrength(password) {
+            const bars = document.querySelectorAll('.strength-bar');
+            bars.forEach(bar => bar.className = 'strength-bar');
+            
+            if (password.length < 6) {
+                return;
+            }
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            const strengthLevels = ['weak', 'medium', 'strong'];
+            const level = Math.min(Math.floor(strength * 3 / 4), 2);
+            
+            for (let i = 0; i <= level; i++) {
+                bars[i].classList.add('active', strengthLevels[level]);
+            }
+        }
+
+        // 保存昵称
+        function saveNickname(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            const newNickname = document.getElementById('nicknameInput').value.trim();
+            if (!newNickname) {
+                showError(window.i18n.getText('accountSettings.messages.nicknameEmpty'));
+                return;
+            }
+            
+            // 更新页面上的用户名显示
+            document.getElementById('userName').textContent = newNickname;
+            
+            // 更新头像首字母（如果没有上传图片）
+            const avatarImg = document.getElementById('avatarImg');
+            if (!avatarImg.src || avatarImg.style.display === 'none') {
+                const avatarText = document.getElementById('avatarText');
+                const avatar = document.querySelector('.avatar');
+                const firstLetter = newNickname.charAt(0).toUpperCase();
+                avatarText.textContent = firstLetter;
+                if (avatar) avatar.textContent = firstLetter;
+            }
+            
+            // 保存到localStorage
+            localStorage.setItem('username', newNickname);
+            
+            showSuccess(window.i18n.getText('accountSettings.messages.nicknameSaved'));
+        }
+
+
+        // 重置密码表单
+        function resetPasswordForm() {
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.querySelectorAll('.strength-bar').forEach(bar => bar.className = 'strength-bar');
+        }
+
+
+        // 提交密码表单
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 检查验证方式
+            const verifyMethod = document.querySelector('input[name="verifyMethod"]:checked').value;
+            
+            if (verifyMethod === 'password') {
+                const currentPassword = document.getElementById('currentPassword').value;
+                if (!currentPassword) {
+                    showError(window.i18n.getText('accountSettings.passwordSettings.enterCurrentPassword'));
+                    return;
+                }
+            } else {
+                const resetCode = document.getElementById('resetCode').value;
+                if (!resetCode) {
+                    showError(window.i18n.getText('accountSettings.passwordSettings.enterVerificationCode'));
+                    return;
+                }
+            }
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!newPassword) {
+                showError(window.i18n.getText('accountSettings.passwordSettings.enterNewPassword'));
+                return;
+            }
+            
+            if (!confirmPassword) {
+                showError(window.i18n.getText('accountSettings.passwordSettings.confirmNewPassword'));
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showError(window.i18n.getText('accountSettings.passwordSettings.passwordMismatch'));
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                showError(window.i18n.getText('accountSettings.passwordSettings.passwordTooShort'));
+                return;
+            }
+            
+            // 模拟保存
+            showSuccess(window.i18n.getText('accountSettings.passwordSettings.passwordChangeSuccess'));
+            
+            // 清空表单
+            resetPasswordForm();
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置用户名
+            const username = localStorage.getItem('username') || 'demo';
+            document.getElementById('userName').textContent = username;
+            document.getElementById('nicknameInput').value = username;
+
+            // 设置头像首字母
+            const firstLetter = username.charAt(0).toUpperCase();
+            const avatarText = document.getElementById('avatarText');
+            if (avatarText) avatarText.textContent = firstLetter;
+            const avatar = document.querySelector('.avatar');
+            if (avatar) avatar.textContent = firstLetter;
+        });
+    </script>
+</body>
+</html>

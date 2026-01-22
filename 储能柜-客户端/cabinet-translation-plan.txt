@@ -1,0 +1,73 @@
+Cabinet Detail 页面翻译计划
+================================
+
+分类1: 顶部导航区域
+- cabinetBackBtn: 返回
+- cabinetCurrentAlarm: 当前告警
+
+分类2: 组件标签 (Component Tabs)
+- cabinetTabOverall: 整机
+- cabinetTabEMS: EMS
+- cabinetTabPCS: 逆变器
+- cabinetTabBMS: BMS
+- cabinetTabMeter: 电表
+- cabinetTabThermal: 温度
+- cabinetTabFire: 消防
+
+分类3: 数据标签 (Data Tabs)
+- cabinetDataTabRealtime: 实时数据
+- cabinetDataTabHistory: 历史数据
+- cabinetDataTabControl: 控制
+
+分类4: 组件标记标签 (Marker Labels)
+- cabinetMarkerEMS: EMS
+- cabinetMarkerPCS: 逆变器
+- cabinetMarkerBMS: BMS
+- cabinetMarkerMeter: 电表
+- cabinetMarkerThermal: 温度
+- cabinetMarkerFire: 消防
+
+分类5: 状态文本
+- cabinetStatusOnline: 在线
+- cabinetStatusOffline: 离线
+- cabinetStatusFault: 异常
+- cabinetStatusCharging: 充电中
+- cabinetStatusDischarging: 放电中
+- cabinetStatusStandby: 待机
+
+分类6: 实时数据面板标题
+- cabinetCoreParamsTitle: 核心运行参数
+- cabinetRunStatsTitle: 运行统计
+- cabinetStrategyParamsTitle: 策略调度参数
+- cabinetCommControlTitle: 通信控制参数
+
+分类7: 实时数据指标标签
+- cabinetLabelSOC: SOC
+- cabinetLabelSOH: SOH
+- cabinetLabelTemp: 温度
+- cabinetLabelPower: 充放电功率
+- cabinetLabelTodayCharge: 今日充电量
+- cabinetLabelTodayDischarge: 今日放电量
+- cabinetLabelChargeCost: 充电成本
+- cabinetLabelDischargeRevenue: 放电收益
+
+分类8: 控制面板
+- cabinetCurrentStrategy: 当前策略
+- cabinetScheduleCmd: 调度指令
+- cabinetTargetPower: 目标功率
+- cabinetTargetSOC: 目标SOC
+- cabinetMaxPower: 最大功率
+
+分类9: 按钮文本
+- cabinetBtnSettings: 设置
+- cabinetBtnSave: 保存
+- cabinetBtnCancel: 取消
+- cabinetBtnConfirm: 确认
+- cabinetBtnReset: 重置
+- cabinetBtnApply: 应用
+
+分类10: 字段设置模态框
+- cabinetFieldSettingsTitle: 字段显示设置
+- cabinetFieldSettingsSave: 保存设置
+- cabinetFieldSettingsReset: 重置为默认
+

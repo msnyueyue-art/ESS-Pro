@@ -1,0 +1,3914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能量流设置 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            padding: 0 !important;
+            margin: 0 !important;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* 能量流视图样式 - 电气单线图风格 */
+        #energy-flow-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background: var(--bg-secondary);
+            border-radius: 0;
+            overflow: auto;
+            display: block;
+            padding-top: 64px;
+            box-sizing: border-box;
+        }
+
+        .energy-flow-canvas {
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            padding: 40px;
+            background: var(--bg-primary);
+            overflow: auto;
+        }
+
+        /* 设备容器样式 */
+        #devicesContainer {
+            background: var(--bg-secondary);
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+            background-size: 100px 100px;
+        }
+
+        /* 深色主题适配 */
+        [data-theme="dark"] #devicesContainer {
+            background: #0f172a;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+            background-size: 100px 100px;
+        }
+
+        /* 层级容器 */
+        .flow-layer {
+            width: 100%;
+            min-height: 180px;
+            margin-bottom: 60px;
+            position: relative;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+        }
+
+        .flow-layer:hover {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .flow-layer-title {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 16px;
+            font-weight: 600;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 8px;
+        }
+
+        /* 设备节点样式 - 现代卡片风格 */
+        .flow-device {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: move;
+            position: relative;
+            z-index: 10;
+        }
+
+        .flow-device:hover {
+            background: var(--bg-primary);
+            border-color: #3562E3;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(53, 98, 227, 0.25);
+        }
+
+        /* 设备选中状态 */
+        .flow-device.selected {
+            border: 3px solid #3562E3 !important;
+            box-shadow:
+                0 0 0 4px rgba(53, 98, 227, 0.1),
+                0 10px 25px -5px rgba(53, 98, 227, 0.4) !important;
+            background: var(--bg-primary);
+        }
+
+        /* 深色主题适配 */
+        [data-theme="dark"] .flow-device {
+            background: #1e293b;
+            border-color: #374151;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .flow-device:hover {
+            border-color: #60a5fa;
+            box-shadow: 0 10px 25px -5px rgba(96, 165, 250, 0.3);
+        }
+
+        [data-theme="dark"] .flow-device.selected {
+            border-color: #60a5fa !important;
+            box-shadow:
+                0 0 0 4px rgba(96, 165, 250, 0.15),
+                0 10px 25px -5px rgba(96, 165, 250, 0.4) !important;
+        }
+
+        /* 连接点容器 */
+        .connection-points {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: block;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* 编辑模式下悬浮或选中时显示连接点 */
+        .flow-device:hover .connection-points,
+        .flow-device.selected .connection-points {
+            opacity: 1;
+        }
+
+        /* 单个连接点 */
+        .connection-point {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #3562E3;
+            border: 3px solid var(--bg-primary);
+            border-radius: 50%;
+            cursor: crosshair;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(53, 98, 227, 0.3);
+        }
+
+        .connection-point:hover {
+            width: 18px;
+            height: 18px;
+            background: #2952d3;
+            box-shadow:
+                0 0 0 4px rgba(53, 98, 227, 0.15),
+                0 4px 12px rgba(53, 98, 227, 0.4);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* 深色主题适配 */
+        [data-theme="dark"] .connection-point {
+            background: #60a5fa;
+            border-color: #1e293b;
+            box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+        }
+
+        [data-theme="dark"] .connection-point:hover {
+            background: #3b82f6;
+            box-shadow:
+                0 0 0 4px rgba(96, 165, 250, 0.15),
+                0 4px 12px rgba(96, 165, 250, 0.4);
+        }
+
+        /* 四个方向的连接点 */
+        .connection-point.top {
+            top: 0;
+            left: 50%;
+        }
+
+        .connection-point.bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 50%);
+        }
+
+        .connection-point.left {
+            top: 50%;
+            left: 0;
+        }
+
+        .connection-point.right {
+            top: 50%;
+            right: 0;
+            transform: translate(50%, -50%);
+        }
+
+        /* 设备图标 */
+        .flow-device-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 12px;
+            filter: none;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-device:hover .flow-device-icon {
+            transform: scale(1.05);
+        }
+
+        .flow-device-icon img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        /* 设备标签 */
+        .flow-device-label {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+            letter-spacing: 0.3px;
+            width: 100%;
+        }
+
+        /* 设备外部参数显示 */
+        .device-external-param {
+            position: absolute;
+            background: rgba(53, 98, 227, 0.1);
+            border: 1px solid var(--primary-color);
+            padding: 6px 12px 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--primary-color);
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+            cursor: move;
+            user-select: none;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 15;
+        }
+
+        .device-external-param:hover {
+            background: rgba(53, 98, 227, 0.2);
+            border-color: #2952d3;
+            box-shadow: 0 2px 8px rgba(53, 98, 227, 0.3);
+        }
+
+
+        [data-theme="dark"] .device-external-param {
+            background: rgba(96, 165, 250, 0.15);
+            border-color: #60a5fa;
+            color: #60a5fa;
+        }
+
+        [data-theme="dark"] .device-external-param:hover {
+            background: rgba(96, 165, 250, 0.25);
+            border-color: #3b82f6;
+        }
+
+        /* 参数删除按钮 */
+        .param-delete-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .param-delete-btn:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            transform: scale(1.1);
+        }
+
+        [data-theme="dark"] .param-delete-btn {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: rgba(248, 113, 113, 0.3);
+            color: #f87171;
+        }
+
+        [data-theme="dark"] .param-delete-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* 设备卡片删除按钮（仅编辑模式显示） */
+        .device-delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 20;
+        }
+
+        .device-delete-btn:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+        [data-theme="dark"] .device-delete-btn {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: rgba(248, 113, 113, 0.3);
+            color: #f87171;
+        }
+
+        [data-theme="dark"] .device-delete-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* 设备参数容器（内部，已废弃） */
+        .flow-device-params {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* 单个参数 */
+        .flow-device-param {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 2px 0;
+        }
+
+        .flow-device-param.power {
+            color: #3562E3;
+        }
+
+        .flow-device-param.positive {
+            color: #10b981;
+        }
+
+        .flow-device-param.negative {
+            color: #ef4444;
+        }
+
+        /* 汇流柜样式 */
+        .flow-busbar-device {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .flow-busbar-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .flow-busbar-icon i {
+            color: var(--primary-color);
+            font-size: 32px;
+        }
+
+        /* PCS和BMS节点样式 */
+        .flow-pcs-bms-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 30px;
+        }
+
+        .flow-pcs-device {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+        }
+
+        .flow-pcs-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 8px;
+            filter: grayscale(20%);
+        }
+
+        .flow-bms-device {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--success-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+
+        .flow-bms-icon {
+            width: 40px;
+            height: 60px;
+            background: var(--success-color);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            position: relative;
+            border: 2px solid var(--success-color);
+        }
+
+        .flow-bms-icon::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        /* SVG连接线容器 */
+        .energy-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 连接线基础样式 - 实线 */
+        .energy-connection-line,
+        .flow-busbar,
+        .flow-vline {
+            stroke: #3562E3;
+            stroke-width: 3px;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: all 0.3s ease;
+            /* 实线，不使用虚线 */
+        }
+
+        /* 悬浮状态 */
+        .energy-connection-line:hover {
+            stroke: #2952d3;
+            stroke-width: 4px;
+            filter: drop-shadow(0 0 8px rgba(53, 98, 227, 0.5));
+        }
+
+        /* 选中状态 */
+        .energy-connection-line.selected {
+            stroke: #10b981;
+            stroke-width: 4px;
+            filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.6));
+        }
+
+        /* 连接点标记 */
+        .flow-connection-point {
+            fill: #3562E3;
+            r: 4;
+        }
+
+        /* 能量流动方向箭头 */
+        .energy-flow-arrow {
+            fill: #3562E3;
+            filter: drop-shadow(0 2px 4px rgba(53, 98, 227, 0.3));
+        }
+
+        /* 流动粒子动画 */
+        @keyframes flowAnimation {
+            0% {
+                stroke-dashoffset: 20;
+                opacity: 1;
+            }
+            100% {
+                stroke-dashoffset: 0;
+                opacity: 0.8;
+            }
+        }
+
+        /* 流动动画 - 实线微动效（通过柔和的阴影变化） */
+        .flow-vline.animated,
+        .energy-connection-line.flowing {
+            animation: flowPulse 3s ease-in-out infinite;
+        }
+
+        /* 流入动画（正向） - 仅发光效果 */
+        .energy-connection-line.flow-in {
+            filter: drop-shadow(0 0 4px rgba(53, 98, 227, 0.6));
+        }
+
+        /* 流出动画（反向） - 仅发光效果 */
+        .energy-connection-line.flow-out {
+            filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+        }
+
+        /* 通用脉冲动画 */
+        @keyframes flowPulse {
+            0%, 100% {
+                filter: drop-shadow(0 0 2px rgba(53, 98, 227, 0.3));
+            }
+            50% {
+                filter: drop-shadow(0 0 5px rgba(53, 98, 227, 0.7));
+            }
+        }
+
+        /* 流动粒子效果 */
+        .flow-particle {
+            fill: #00d9ff;
+            animation: particleMove 2s linear infinite;
+        }
+
+        @keyframes particleMove {
+            0% {
+                offset-distance: 0%;
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                offset-distance: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* 深色主题适配 */
+        [data-theme="dark"] .energy-connection-line,
+        [data-theme="dark"] .flow-busbar,
+        [data-theme="dark"] .flow-vline {
+            stroke: #60a5fa;
+        }
+
+        [data-theme="dark"] .energy-connection-line:hover {
+            stroke: #3b82f6;
+        }
+
+        [data-theme="dark"] .flow-connection-point,
+        [data-theme="dark"] .energy-flow-arrow {
+            fill: #60a5fa;
+        }
+
+        /* 设备列表面板 */
+        .device-list-panel {
+            position: fixed;
+            top: 230px;
+            left: 276px;
+            width: 280px;
+            max-height: calc(100vh - 250px);
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            z-index: 150;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .device-list-title {
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-toggle-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .panel-toggle-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 面板收起状态 */
+        .device-list-panel.collapsed {
+            width: 48px;
+            padding: 12px;
+        }
+
+        .device-list-panel.collapsed .device-list-title span,
+        .device-list-panel.collapsed .device-category {
+            display: none;
+        }
+
+        /* 右侧设备设置面板 */
+        .device-settings-panel {
+            position: fixed;
+            top: 230px;
+            right: 20px;
+            width: 320px;
+            max-height: calc(100vh - 250px);
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            z-index: 150;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .device-settings-panel.collapsed {
+            width: 48px;
+            padding: 12px;
+        }
+
+        .device-settings-panel.collapsed .device-list-title span,
+        .device-settings-panel.collapsed #settingsPanelContent {
+            display: none;
+        }
+
+        /* 设置项样式 */
+        .settings-item {
+            margin-bottom: 16px;
+        }
+
+        .settings-item-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .settings-item-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .settings-item-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .settings-item-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .settings-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .settings-btn.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .settings-btn.primary:hover {
+            background: #2451cc;
+        }
+
+        .settings-btn.danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .settings-btn.danger:hover {
+            background: #dc2626;
+        }
+
+        .device-category {
+            margin-bottom: 20px;
+        }
+
+        .device-category-title {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-category-icon {
+            font-size: 18px;
+        }
+
+        .device-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .device-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .device-item:active {
+            cursor: grabbing;
+        }
+
+        .device-item-icon {
+            font-size: 24px;
+        }
+
+        .device-item-info {
+            flex: 1;
+        }
+
+        .device-item-name {
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .device-item-desc {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* 拖拽占位符 */
+        .drag-placeholder {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.7;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+            padding: 10px;
+            display: none;
+        }
+
+        /* 能量流页面头部 */
+        .energy-flow-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            z-index: 10;
+        }
+
+        .energy-flow-title {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .energy-flow-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 工具栏 (保留原有样式作为备用) */
+        .energy-flow-toolbar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toolbar-btn {
+            min-width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .toolbar-btn i {
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(53, 98, 227, 0.15);
+        }
+
+        .toolbar-btn.active,
+        .toolbar-btn.primary {
+            background: linear-gradient(135deg, #3562E3 0%, #2952d3 100%);
+            color: white;
+            border-color: #3562E3;
+        }
+
+        .toolbar-btn.active i,
+        .toolbar-btn.primary i {
+            color: white;
+        }
+
+        .toolbar-btn.active:hover,
+        .toolbar-btn.primary:hover {
+            background: #2952d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(53, 98, 227, 0.3);
+        }
+
+        /* 工具栏按钮悬停提示 */
+        .toolbar-btn::before {
+            content: attr(title);
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 300;
+        }
+
+        .toolbar-btn:hover::before {
+            opacity: 1;
+        }
+
+        /* 设备配置面板 */
+        .device-config-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            max-width: 300px;
+            z-index: 100;
+        }
+
+        .config-panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .device-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .device-type-btn {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .device-type-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-color);
+        }
+
+        .device-type-icon {
+            font-size: 20px;
+        }
+
+        .device-type-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* 能量流信息面板 */
+        .energy-info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            min-width: 250px;
+            z-index: 100;
+    </style>
+</head>
+<body data-page="energy-flow">
+    <div id="navbar-container"></div>
+
+    <div class="main-content">
+        <div id="energy-flow-container">
+            <!-- 页面头部 -->
+            <div class="energy-flow-header">
+                <div class="energy-flow-title">
+                    <i class="fas fa-project-diagram" style="margin-right: 12px; color: #3562E3;"></i>
+                    <span>能量流转图</span>
+                </div>
+
+                <div class="energy-flow-actions" style="display: flex; gap: 12px;">
+                    <!-- 编辑/预览切换按钮 -->
+                    <button class="toolbar-btn primary" id="editModeBtn" onclick="toggleEditMode()" title="切换编辑模式">
+                        <i class="fas fa-edit"></i>
+                        <span>编辑</span>
+                    </button>
+
+                    <!-- 保存按钮（只在编辑模式下显示） -->
+                    <button class="toolbar-btn" id="saveBtn" onclick="saveFlowConfig()" title="保存配置" style="display: none;">
+                        <i class="fas fa-save"></i>
+                        <span>保存</span>
+                    </button>
+
+                    <!-- 对齐按钮组（只在编辑模式下显示） -->
+                    <div id="alignmentBtns" style="display: none; gap: 8px;">
+                        <button class="toolbar-btn" onclick="alignDevicesHorizontal()" title="水平对齐选中的设备">
+                            <i class="fas fa-arrows-alt-h"></i>
+                            <span>水平对齐</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="alignDevicesVertical()" title="垂直对齐选中的设备">
+                            <i class="fas fa-arrows-alt-v"></i>
+                            <span>垂直对齐</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="straightenConnections()" title="将选中的连线拉直">
+                            <i class="fas fa-ruler"></i>
+                            <span>连线拉直</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="energy-flow-canvas" id="energyFlowCanvas">
+                <!-- SVG连接线容器 -->
+                <svg class="energy-connections" id="energyConnections" style="position: absolute; inset: 0; pointer-events: none; z-index: 5;">
+                </svg>
+
+                <!-- 设备容器（自由放置） -->
+                <div id="devicesContainer" ondrop="dropDevice(event)" ondragover="allowDrop(event)" style="position: absolute; inset: 0;">
+                    <!-- 设备将通过拖拽添加到此处，可自由放置在任意位置 -->
+                </div>
+            </div>
+
+            <!-- 设备列表面板 -->
+            <div class="device-list-panel" id="deviceListPanel">
+                <div class="device-list-title">
+                    <span>可用设备</span>
+                    <button class="panel-toggle-btn" id="panelToggleBtn" onclick="toggleDevicePanel()" title="收起面板">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </div>
+
+                <!-- 电源设备 -->
+                <div class="device-category">
+                    <div class="device-category-title">
+                        <span class="device-category-icon">⚡</span>
+                        <span>电源设备</span>
+                    </div>
+                    <div id="powerDevicesList">
+                        <!-- 将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 储能设备 -->
+                <div class="device-category">
+                    <div class="device-category-title">
+                        <span class="device-category-icon">🔋</span>
+                        <span>储能设备</span>
+                    </div>
+                    <div id="storageDevicesList">
+                        <!-- 将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 负载设备 -->
+                <div class="device-category">
+                    <div class="device-category-title">
+                        <span class="device-category-icon">🏭</span>
+                        <span>负载设备</span>
+                    </div>
+                    <div id="loadDevicesList">
+                        <!-- 将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 拖拽占位符 -->
+            <div id="dragPlaceholder" class="drag-placeholder"></div>
+
+            <!-- 右侧设备设置面板 -->
+            <div class="device-settings-panel" id="deviceSettingsPanel" style="display: none;">
+                <div class="device-list-title">
+                    <span id="settingsPanelTitle">设备设置</span>
+                    <button class="panel-toggle-btn" id="settingsPanelToggleBtn" onclick="toggleSettingsPanel()" title="收起面板">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div id="settingsPanelContent" style="margin-top: 16px;">
+                    <!-- 设置内容将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        let availableDevices = {
+            power: [
+                { id: 'grid-1', type: 'grid', label: '市电', icon: '电网.png', desc: '380V 3相' },
+                { id: 'gen-1', type: 'generator', label: '柴发', icon: '柜子打开.png', desc: '500KW' },
+                { id: 'solar-1', type: 'solar', label: '光伏', icon: '光伏.png', desc: '200KW' }
+            ],
+            storage: [
+                { id: 'pcs-1', type: 'pcs', label: '储能柜', icon: '储能柜.png', desc: '250KW/500KWh' }
+            ],
+            load: [
+                { id: 'load-1', type: 'load', label: '负载', icon: '负载.png', desc: '工业负载' }
+            ]
+        };
+
+        // 编辑模式状态
+        let isEditMode = true; // 默认为编辑模式
+
+        // 画布上已放置的设备（自由画布，不再分层）
+        let placedDevices = [];
+
+        // 设备连接线
+        let deviceConnections = [];
+
+        // 连接状态
+        let connectionStart = null; // {deviceId, direction, x, y}
+        let selectedDevice = null; // 当前选中的设备ID
+        let isDraggingConnection = false; // 是否正在拖拽连线
+        let tempConnectionLine = null; // 临时连线元素
+
+        // 连线自定义编辑状态
+        let selectedConnection = null; // 当前选中的连线索引
+        let isDraggingControlPoint = false; // 是否正在拖拽控制点
+        let draggingControlPointIndex = null; // 正在拖拽的控制点索引
+
+        // 拖拽相关
+        let draggedDeviceData = null;
+        let draggedPlacedDevice = null; // 正在拖拽的已放置设备 {deviceId}
+        let isDraggingPlacedDevice = false; // 标记是否正在拖拽已放置的设备
+
+        // 切换设备面板收起/展开
+        function toggleDevicePanel() {
+            const panel = document.getElementById('deviceListPanel');
+            const toggleBtn = document.getElementById('panelToggleBtn');
+            const isPanelCollapsed = panel.classList.contains('collapsed');
+
+            if (isPanelCollapsed) {
+                // 展开面板
+                panel.classList.remove('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                toggleBtn.title = '收起面板';
+            } else {
+                // 收起面板
+                panel.classList.add('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                toggleBtn.title = '展开面板';
+            }
+
+            // 面板是固定定位，画布不需要调整
+        }
+
+        // 切换右侧设置面板
+        function toggleSettingsPanel() {
+            const panel = document.getElementById('deviceSettingsPanel');
+            const toggleBtn = document.getElementById('settingsPanelToggleBtn');
+            const isPanelCollapsed = panel.classList.contains('collapsed');
+
+            if (isPanelCollapsed) {
+                // 展开面板
+                panel.classList.remove('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                toggleBtn.title = '收起面板';
+            } else {
+                // 收起面板
+                panel.classList.add('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                toggleBtn.title = '展开面板';
+            }
+        }
+
+        // 处理设备鼠标按下事件
+        let deviceClickTimer = null;
+        function handleDeviceMouseDown(event, deviceId) {
+            if (!isEditMode) return;
+
+            // 延迟显示设置面板，避免拖拽时误触
+            deviceClickTimer = setTimeout(() => {
+                showDeviceSettings(deviceId);
+            }, 200);
+        }
+
+        // 在拖拽开始时取消点击定时器
+        window.addEventListener('dragstart', () => {
+            if (deviceClickTimer) {
+                clearTimeout(deviceClickTimer);
+                deviceClickTimer = null;
+            }
+        });
+
+        // 切换设备参数显示（立即生效）
+        function toggleDeviceParam(deviceId, paramName, enabled) {
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            device.displayParams[paramName].enabled = enabled;
+            renderPlacedDevices();
+        }
+
+        // 实时更新设备属性
+        function updateDeviceProperty(deviceId, property, value) {
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            device[property] = value;
+            renderPlacedDevices();
+        }
+
+        // 删除设备参数
+        function removeDeviceParam(deviceId, paramName, event) {
+            event.stopPropagation();
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            device.displayParams[paramName].enabled = false;
+
+            // 更新设置面板中的checkbox
+            const checkbox = document.getElementById(`display${paramName.charAt(0).toUpperCase() + paramName.slice(1)}`);
+            if (checkbox) checkbox.checked = false;
+
+            renderPlacedDevices();
+        }
+
+        // 删除参数（点击×按钮）
+        function deleteDeviceParam(event, deviceId, paramType) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            // 检查是否在编辑模式
+            if (!isEditMode) {
+                showMiniToast('请先进入编辑模式', 'warning');
+                return;
+            }
+
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device || !device.displayParams) return;
+
+            // 禁用该参数
+            device.displayParams[paramType].enabled = false;
+
+            // 更新设置面板中的checkbox
+            const checkbox = document.getElementById(`display${paramType.charAt(0).toUpperCase() + paramType.slice(1)}`);
+            if (checkbox) checkbox.checked = false;
+
+            // 重新渲染
+            renderPlacedDevices();
+            showMiniToast(`已隐藏 ${paramType.toUpperCase()} 参数`, 'success');
+        }
+
+        // 删除设备（点击×按钮）
+        function deleteDevice(event, deviceId) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            // 检查是否在编辑模式
+            if (!isEditMode) {
+                showMiniToast('⚠️ 请先进入编辑模式', 'warning');
+                return;
+            }
+
+            // 删除相关连线
+            deviceConnections = deviceConnections.filter(conn =>
+                conn.from !== deviceId && conn.to !== deviceId
+            );
+
+            // 删除设备
+            const deviceName = placedDevices.find(d => d.id === deviceId)?.label || '设备';
+            placedDevices = placedDevices.filter(d => d.id !== deviceId);
+
+            // 重新渲染
+            renderPlacedDevices();
+            drawAllConnections();
+
+            // 保存到localStorage
+            saveToLocalStorage();
+
+            showMiniToast(`✅ 已删除 ${deviceName}`, 'success');
+        }
+
+        // 参数拖拽相关变量
+        let draggedParam = null;
+        let paramDragStartX = 0;
+        let paramDragStartY = 0;
+
+        // 开始拖拽参数
+        function startParamDrag(event, deviceId, paramName) {
+            if (!isEditMode) return;
+
+            // 阻止事件冒泡和默认行为，防止触发设备拖拽
+            event.stopPropagation();
+            event.preventDefault();
+
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            draggedParam = { deviceId, paramName };
+            paramDragStartX = event.clientX;
+            paramDragStartY = event.clientY;
+
+            // 临时禁用设备的 draggable 属性
+            const deviceElement = document.getElementById(`placed-${deviceId}`);
+            if (deviceElement) {
+                deviceElement.setAttribute('draggable', 'false');
+            }
+
+            document.addEventListener('mousemove', onParamDrag);
+            document.addEventListener('mouseup', endParamDrag);
+        }
+
+        // 拖拽参数中
+        function onParamDrag(event) {
+            if (!draggedParam) return;
+
+            const device = placedDevices.find(d => d.id === draggedParam.deviceId);
+            if (!device) return;
+
+            const deltaX = event.clientX - paramDragStartX;
+            const deltaY = event.clientY - paramDragStartY;
+
+            device.displayParams[draggedParam.paramName].x += deltaX;
+            device.displayParams[draggedParam.paramName].y += deltaY;
+
+            paramDragStartX = event.clientX;
+            paramDragStartY = event.clientY;
+
+            renderPlacedDevices();
+        }
+
+        // 结束拖拽参数
+        function endParamDrag() {
+            // 恢复设备的 draggable 属性
+            if (draggedParam && isEditMode) {
+                const deviceElement = document.getElementById(`placed-${draggedParam.deviceId}`);
+                if (deviceElement) {
+                    deviceElement.setAttribute('draggable', 'true');
+                }
+            }
+
+            draggedParam = null;
+            document.removeEventListener('mousemove', onParamDrag);
+            document.removeEventListener('mouseup', endParamDrag);
+        }
+
+        // 显示设备设置面板
+        function showDeviceSettings(deviceId) {
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            const panel = document.getElementById('deviceSettingsPanel');
+            const titleEl = document.getElementById('settingsPanelTitle');
+            const contentEl = document.getElementById('settingsPanelContent');
+
+            // 设置标题
+            titleEl.textContent = `${device.label} - 设置`;
+
+            // 初始化设备的显示参数和流向（如果不存在）
+            if (!device.displayParams) {
+                device.displayParams = {
+                    power: { enabled: true, x: 120, y: 0 },
+                    voltage: { enabled: false, x: 120, y: 30 },
+                    current: { enabled: false, x: 120, y: 60 },
+                    soc: { enabled: false, x: 120, y: 90 }
+                };
+            }
+            // 流向判断基于哪个属性和正负
+            if (!device.flowControl) {
+                device.flowControl = {
+                    inAttribute: 'power',      // 流入判断属性
+                    inDirection: 'positive',   // 流入方向（positive/negative）
+                    outAttribute: 'power',     // 流出判断属性
+                    outDirection: 'negative'   // 流出方向（positive/negative）
+                };
+            }
+
+            // 生成设置内容
+            let settingsHTML = `
+                <div class="settings-item">
+                    <label class="settings-item-label">设备名称</label>
+                    <input type="text" class="settings-item-input" id="deviceName" value="${device.label}"
+                           oninput="updateDeviceProperty('${deviceId}', 'label', this.value)" />
+                </div>
+
+                <div class="settings-item">
+                    <label class="settings-item-label">显示参数（可多选）</label>
+                    <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="displayPower" ${device.displayParams.power.enabled ? 'checked' : ''}
+                                   onchange="toggleDeviceParam('${deviceId}', 'power', this.checked)"
+                                   style="width: 16px; height: 16px; cursor: pointer;">
+                            <span style="font-size: 13px; color: var(--text-primary);">功率 (P)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="displayVoltage" ${device.displayParams.voltage.enabled ? 'checked' : ''}
+                                   onchange="toggleDeviceParam('${deviceId}', 'voltage', this.checked)"
+                                   style="width: 16px; height: 16px; cursor: pointer;">
+                            <span style="font-size: 13px; color: var(--text-primary);">电压 (U)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="displayCurrent" ${device.displayParams.current.enabled ? 'checked' : ''}
+                                   onchange="toggleDeviceParam('${deviceId}', 'current', this.checked)"
+                                   style="width: 16px; height: 16px; cursor: pointer;">
+                            <span style="font-size: 13px; color: var(--text-primary);">电流 (I)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="displaySOC" ${device.displayParams.soc.enabled ? 'checked' : ''}
+                                   onchange="toggleDeviceParam('${deviceId}', 'soc', this.checked)"
+                                   style="width: 16px; height: 16px; cursor: pointer;">
+                            <span style="font-size: 13px; color: var(--text-primary);">SOC (%)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <label class="settings-item-label">流向</label>
+                    <div style="margin-top: 8px;">
+                        <div style="margin-bottom: 16px; padding: 12px; background: rgba(53, 98, 227, 0.05); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                            <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary);">
+                                流入
+                            </label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <select class="settings-item-select" id="flowInAttribute" style="flex: 1;">
+                                    <option value="power" ${device.flowControl.inAttribute === 'power' ? 'selected' : ''}>功率 (P)</option>
+                                    <option value="voltage" ${device.flowControl.inAttribute === 'voltage' ? 'selected' : ''}>电压 (U)</option>
+                                    <option value="current" ${device.flowControl.inAttribute === 'current' ? 'selected' : ''}>电流 (I)</option>
+                                    <option value="soc" ${device.flowControl.inAttribute === 'soc' ? 'selected' : ''}>SOC</option>
+                                </select>
+                                <select class="settings-item-select" id="flowInDirection" style="flex: 0 0 100px;">
+                                    <option value="positive" ${device.flowControl.inDirection === 'positive' ? 'selected' : ''}>正数</option>
+                                    <option value="negative" ${device.flowControl.inDirection === 'negative' ? 'selected' : ''}>负数</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border-radius: 6px; border-left: 3px solid #ef4444;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary);">
+                                流出
+                            </label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <select class="settings-item-select" id="flowOutAttribute" style="flex: 1;">
+                                    <option value="power" ${device.flowControl.outAttribute === 'power' ? 'selected' : ''}>功率 (P)</option>
+                                    <option value="voltage" ${device.flowControl.outAttribute === 'voltage' ? 'selected' : ''}>电压 (U)</option>
+                                    <option value="current" ${device.flowControl.outAttribute === 'current' ? 'selected' : ''}>电流 (I)</option>
+                                    <option value="soc" ${device.flowControl.outAttribute === 'soc' ? 'selected' : ''}>SOC</option>
+                                </select>
+                                <select class="settings-item-select" id="flowOutDirection" style="flex: 0 0 100px;">
+                                    <option value="positive" ${device.flowControl.outDirection === 'positive' ? 'selected' : ''}>正数</option>
+                                    <option value="negative" ${device.flowControl.outDirection === 'negative' ? 'selected' : ''}>负数</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">
+                            示例：选择"功率 + 正数"表示功率为正时流入/流出
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 根据设备类型添加特定设置
+            if (device.type === '市电' || device.type === '柴发' || device.type === '光伏') {
+                settingsHTML += `
+                    <div class="settings-item">
+                        <label class="settings-item-label">额定功率 (KW)</label>
+                        <input type="number" class="settings-item-input" id="devicePower" value="${device.power || 500}" />
+                    </div>
+                    <div class="settings-item">
+                        <label class="settings-item-label">电压等级</label>
+                        <select class="settings-item-select" id="deviceVoltage">
+                            <option value="380V" ${device.voltage === '380V' ? 'selected' : ''}>380V</option>
+                            <option value="220V" ${device.voltage === '220V' ? 'selected' : ''}>220V</option>
+                            <option value="10KV" ${device.voltage === '10KV' ? 'selected' : ''}>10KV</option>
+                        </select>
+                    </div>
+                `;
+            } else if (device.type === '储能柜') {
+                settingsHTML += `
+                    <div class="settings-item">
+                        <label class="settings-item-label">容量 (KWh)</label>
+                        <input type="number" class="settings-item-input" id="deviceCapacity" value="${device.capacity || 1000}" />
+                    </div>
+                    <div class="settings-item">
+                        <label class="settings-item-label">充电功率 (KW)</label>
+                        <input type="number" class="settings-item-input" id="deviceChargePower" value="${device.chargePower || 500}" />
+                    </div>
+                    <div class="settings-item">
+                        <label class="settings-item-label">放电功率 (KW)</label>
+                        <input type="number" class="settings-item-input" id="deviceDischargePower" value="${device.dischargePower || 500}" />
+                    </div>
+                `;
+            } else if (device.type === '负载') {
+                settingsHTML += `
+                    <div class="settings-item">
+                        <label class="settings-item-label">负载功率 (KW)</label>
+                        <input type="number" class="settings-item-input" id="deviceLoadPower" value="${device.loadPower || 300}" />
+                    </div>
+                    <div class="settings-item">
+                        <label class="settings-item-label">负载类型</label>
+                        <select class="settings-item-select" id="deviceLoadType">
+                            <option value="恒定负载" ${device.loadType === '恒定负载' ? 'selected' : ''}>恒定负载</option>
+                            <option value="可调负载" ${device.loadType === '可调负载' ? 'selected' : ''}>可调负载</option>
+                            <option value="优先级负载" ${device.loadType === '优先级负载' ? 'selected' : ''}>优先级负载</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            // 不再添加操作按钮，所有修改即时生效，通过顶部保存按钮统一保存
+
+            contentEl.innerHTML = settingsHTML;
+
+            // 显示面板
+            panel.style.display = 'block';
+            panel.classList.remove('collapsed');
+        }
+
+        // 保存设备设置
+        function saveDeviceSettings(deviceId) {
+            const device = placedDevices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            // 更新基本信息
+            const nameInput = document.getElementById('deviceName');
+            if (nameInput) device.label = nameInput.value;
+
+            // 显示参数已通过checkbox立即更新，这里不需要再保存
+
+            // 更新流向设置
+            const flowInAttribute = document.getElementById('flowInAttribute');
+            const flowInDirection = document.getElementById('flowInDirection');
+            const flowOutAttribute = document.getElementById('flowOutAttribute');
+            const flowOutDirection = document.getElementById('flowOutDirection');
+
+            if (flowInAttribute && flowInDirection && flowOutAttribute && flowOutDirection) {
+                device.flowControl = {
+                    inAttribute: flowInAttribute.value,
+                    inDirection: flowInDirection.value,
+                    outAttribute: flowOutAttribute.value,
+                    outDirection: flowOutDirection.value
+                };
+            }
+
+            // 根据设备类型更新特定属性
+            if (device.type === '市电' || device.type === '柴发' || device.type === '光伏') {
+                const powerInput = document.getElementById('devicePower');
+                const voltageSelect = document.getElementById('deviceVoltage');
+                if (powerInput) device.power = parseFloat(powerInput.value);
+                if (voltageSelect) device.voltage = voltageSelect.value;
+            } else if (device.type === '储能柜') {
+                const capacityInput = document.getElementById('deviceCapacity');
+                const chargePowerInput = document.getElementById('deviceChargePower');
+                const dischargePowerInput = document.getElementById('deviceDischargePower');
+                if (capacityInput) device.capacity = parseFloat(capacityInput.value);
+                if (chargePowerInput) device.chargePower = parseFloat(chargePowerInput.value);
+                if (dischargePowerInput) device.dischargePower = parseFloat(dischargePowerInput.value);
+            } else if (device.type === '负载') {
+                const loadPowerInput = document.getElementById('deviceLoadPower');
+                const loadTypeSelect = document.getElementById('deviceLoadType');
+                if (loadPowerInput) device.loadPower = parseFloat(loadPowerInput.value);
+                if (loadTypeSelect) device.loadType = loadTypeSelect.value;
+            }
+
+            // 重新渲染设备
+            renderPlacedDevices();
+
+            // 显示保存成功提示
+            showMiniToast('✅ 设备设置已保存', 'success');
+        }
+
+        // 应用编辑模式UI（不切换状态，仅应用UI）
+        function applyEditModeUI() {
+            console.log('✏️ 应用编辑模式UI');
+            const editModeBtn = document.getElementById('editModeBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const deviceListPanel = document.getElementById('deviceListPanel');
+
+            editModeBtn.style.display = 'inline-flex';
+            editModeBtn.innerHTML = '<i class="fas fa-eye" style="color: white;"></i><span>预览</span>';
+            editModeBtn.className = 'toolbar-btn';
+            editModeBtn.style.background = '#6b7280';
+            editModeBtn.style.borderColor = '#6b7280';
+            editModeBtn.style.color = 'white';
+            editModeBtn.title = '切换到预览模式';
+            saveBtn.style.display = 'inline-flex';
+            document.getElementById('alignmentBtns').style.display = 'flex';
+            deviceListPanel.style.display = 'block';
+
+            // 重新渲染设备以显示删除按钮和连接点
+            renderPlacedDevices();
+
+            // 启用所有已放置设备的拖拽和连线功能
+            const placedDeviceElements = document.querySelectorAll('.placed-device');
+            placedDeviceElements.forEach(el => {
+                el.style.cursor = 'move';
+            });
+        }
+
+        // 切换编辑/预览模式
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            console.log('🔄 切换编辑模式，当前状态:', isEditMode ? '编辑模式' : '预览模式');
+
+            const editModeBtn = document.getElementById('editModeBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const deviceListPanel = document.getElementById('deviceListPanel');
+
+            if (isEditMode) {
+                // 进入编辑模式
+                console.log('✏️ 进入编辑模式');
+                editModeBtn.style.display = 'inline-flex'; // 显示编辑按钮
+                editModeBtn.innerHTML = '<i class="fas fa-eye" style="color: white;"></i><span>预览</span>';
+                editModeBtn.className = 'toolbar-btn';
+                editModeBtn.style.background = '#6b7280';
+                editModeBtn.style.borderColor = '#6b7280';
+                editModeBtn.style.color = 'white';
+                editModeBtn.title = '切换到预览模式';
+                saveBtn.style.display = 'inline-flex'; // 显示保存按钮
+                document.getElementById('alignmentBtns').style.display = 'flex'; // 显示对齐按钮组
+                deviceListPanel.style.display = 'block';
+
+                // 重新渲染设备以显示删除按钮和连接点
+                renderPlacedDevices();
+
+                // 启用所有已放置设备的拖拽和连线功能
+                const placedDeviceElements = document.querySelectorAll('.placed-device');
+                placedDeviceElements.forEach(el => {
+                    el.style.cursor = 'move';
+                });
+            } else {
+                // 进入预览模式
+                console.log('👁️ 进入预览模式');
+                editModeBtn.style.display = 'inline-flex'; // 显示按钮
+                editModeBtn.innerHTML = '<i class="fas fa-edit"></i><span>返回编辑</span>';
+                editModeBtn.className = 'toolbar-btn primary';
+                editModeBtn.style.background = '';
+                editModeBtn.style.borderColor = '';
+                editModeBtn.style.color = '';
+                editModeBtn.title = '返回编辑模式';
+                saveBtn.style.display = 'none'; // 隐藏保存按钮
+                document.getElementById('alignmentBtns').style.display = 'none'; // 隐藏对齐按钮组
+                deviceListPanel.style.display = 'none';
+
+                // 隐藏右侧设置面板
+                const settingsPanel = document.getElementById('deviceSettingsPanel');
+                if (settingsPanel) settingsPanel.style.display = 'none';
+
+                // 禁用所有已放置设备的拖拽和连线功能
+                const placedDeviceElements = document.querySelectorAll('.placed-device');
+                placedDeviceElements.forEach(el => {
+                    el.style.cursor = 'default';
+                });
+
+                // 取消所有选中状态
+                selectedDevice = null;
+                selectedConnection = null;
+                connectionStart = null;
+                isDraggingConnection = false;
+                renderPlacedDevices();
+
+                // 居中显示画布内容
+                console.log('⏱️ 延迟100ms后调用居中函数');
+                setTimeout(() => {
+                    centerCanvasContent();
+                }, 100);
+            }
+        }
+
+        // 自动修复市电到储能柜的连线路径
+        function fixUtilityToStorageConnection() {
+            console.log('🔧 检查并修复市电到储能柜的连线...');
+
+            // 查找市电到储能柜的连线（支持多种ID格式）
+            const connIndex = deviceConnections.findIndex(conn => {
+                const fromId = conn.from.toLowerCase();
+                const toId = conn.to.toLowerCase();
+
+                const isFromUtility = fromId.includes('grid-1') || fromId.includes('utility') || fromId.includes('市电');
+                const isToStorage = toId.includes('storage') || toId.includes('储能') || toId.includes('battery');
+
+                const isFromStorage = fromId.includes('storage') || fromId.includes('储能') || fromId.includes('battery');
+                const isToUtility = toId.includes('grid-1') || toId.includes('utility') || toId.includes('市电');
+
+                return (isFromUtility && isToStorage) || (isFromStorage && isToUtility);
+            });
+
+            if (connIndex === -1) {
+                console.log('⚠️ 未找到市电到储能柜的连线');
+                return;
+            }
+
+            const conn = deviceConnections[connIndex];
+            console.log('✅ 找到连线:', conn);
+
+            // 获取两个设备
+            const fromDevice = placedDevices.find(d => d.id === conn.from);
+            const toDevice = placedDevices.find(d => d.id === conn.to);
+
+            if (!fromDevice || !toDevice) {
+                console.log('⚠️ 设备未找到');
+                return;
+            }
+
+            console.log('📍 市电位置:', fromDevice.x, fromDevice.y);
+            console.log('📍 储能柜位置:', toDevice.x, toDevice.y);
+
+            // 如果已经有控制点，跳过
+            if (conn.controlPoints && conn.controlPoints.length > 0) {
+                console.log('ℹ️ 连线已有控制点，跳过修复');
+                return;
+            }
+
+            // 计算控制点位置（只要一个拐点）
+            const fromCenterX = fromDevice.x + 70; // 设备中心X（假设设备宽度140px）
+            const fromCenterY = fromDevice.y + 75; // 设备中心Y
+            const toCenterX = toDevice.x + 70;
+            const toCenterY = toDevice.y + 75;
+
+            // 计算拐点：从市电垂直向下到储能柜Y坐标的中点
+            const cornerY = (fromCenterY + toCenterY) / 2;
+
+            // 只添加一个控制点（从市电垂直向下后拐弯）
+            conn.controlPoints = [
+                { x: fromCenterX, y: cornerY }  // 拐点：市电下方，然后斜向储能柜
+            ];
+
+            // 调整连接方向
+            conn.fromDirection = 'bottom';
+            conn.toDirection = 'top';
+
+            console.log('✅ 已添加控制点:', conn.controlPoints);
+
+            // 重新绘制连线
+            drawAllConnections();
+
+            // 保存配置
+            saveToLocalStorage();
+
+            console.log('🎉 连线路径修复完成！');
+        }
+
+        // 初始化能量流视图
+        function initEnergyFlow() {
+            // 初始化为预览模式，隐藏设备列表和设置面板
+            const deviceListPanel = document.getElementById('deviceListPanel');
+            if (deviceListPanel) deviceListPanel.style.display = 'none';
+
+            const settingsPanel = document.getElementById('deviceSettingsPanel');
+            if (settingsPanel) settingsPanel.style.display = 'none';
+
+            loadAvailableDevices();
+            loadSavedConfig();
+
+            // 如果没有保存的配置（第一次访问），自动应用默认布局
+            if (placedDevices.length === 0) {
+                console.log('🎯 未找到保存的配置，自动应用默认能量流布局');
+                applyGridLayout();
+            } else {
+                renderPlacedDevices();
+            }
+
+            // 自动修复市电到储能柜的连线
+            setTimeout(() => {
+                fixUtilityToStorageConnection();
+            }, 300);
+
+            // 初始化后居中显示内容
+            setTimeout(() => {
+                centerCanvasContent();
+            }, 500);
+
+            // 添加全局鼠标事件监听器，用于连线拖拽
+            const canvas = document.getElementById('energyFlowCanvas');
+
+            // 鼠标移动时更新临时连线或控制点位置
+            canvas.addEventListener('mousemove', function(event) {
+                const canvasRect = canvas.getBoundingClientRect();
+                const x = event.clientX - canvasRect.left;
+                const y = event.clientY - canvasRect.top;
+
+                // 如果正在拖拽控制点
+                if (isDraggingControlPoint && selectedConnection !== null && draggingControlPointIndex !== null) {
+                    // 更新控制点位置
+                    if (deviceConnections[selectedConnection] && deviceConnections[selectedConnection].controlPoints) {
+                        deviceConnections[selectedConnection].controlPoints[draggingControlPointIndex] = { x, y };
+                        drawAllConnections();
+                    }
+                }
+                // 如果正在拖拽创建连线
+                else if (isDraggingConnection && connectionStart) {
+                    updateTempConnectionLine(x, y);
+
+                    // 检查是否悬停在连接点上，高亮显示
+                    const target = document.elementFromPoint(event.clientX, event.clientY);
+                    document.querySelectorAll('.connection-point').forEach(point => {
+                        point.style.transform = '';
+                        point.style.width = '';
+                        point.style.height = '';
+                    });
+                    if (target && target.classList.contains('connection-point')) {
+                        const targetDeviceId = target.getAttribute('data-device-id');
+                        if (targetDeviceId !== connectionStart.deviceId) {
+                            target.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                            target.style.width = '18px';
+                            target.style.height = '18px';
+                        }
+                    }
+                }
+            });
+
+            // 鼠标松开时完成连线或结束控制点拖拽
+            canvas.addEventListener('mouseup', function(event) {
+                // 结束控制点拖拽
+                if (isDraggingControlPoint) {
+                    isDraggingControlPoint = false;
+                    draggingControlPointIndex = null;
+                    document.body.style.cursor = '';
+                }
+                // 结束连线拖拽
+                else if (isDraggingConnection) {
+                    endConnectionDrag(event);
+                    // 重置所有连接点样式
+                    document.querySelectorAll('.connection-point').forEach(point => {
+                        point.style.transform = '';
+                        point.style.width = '';
+                        point.style.height = '';
+                    });
+                }
+            });
+
+            // 鼠标离开画布时也结束连线
+            canvas.addEventListener('mouseleave', function(event) {
+                if (isDraggingConnection) {
+                    endConnectionDrag(event);
+                    document.querySelectorAll('.connection-point').forEach(point => {
+                        point.style.transform = '';
+                        point.style.width = '';
+                        point.style.height = '';
+                    });
+                }
+            });
+
+            // 在全局 document 级别也监听 mouseup，以防 canvas 事件被阻止
+            document.addEventListener('mouseup', function(event) {
+                // 结束控制点拖拽
+                if (isDraggingControlPoint) {
+                    isDraggingControlPoint = false;
+                    draggingControlPointIndex = null;
+                    document.body.style.cursor = '';
+                }
+                // 结束连线拖拽
+                else if (isDraggingConnection) {
+                    endConnectionDrag(event);
+                    // 重置所有连接点样式
+                    document.querySelectorAll('.connection-point').forEach(point => {
+                        point.style.transform = '';
+                        point.style.width = '';
+                        point.style.height = '';
+                    });
+                }
+            });
+
+            // 点击画布空白处取消选中
+            canvas.addEventListener('click', function(event) {
+                // 如果点击的不是连线、控制点或设备，则取消选中
+                if (event.target === canvas || event.target.id === 'energyConnections') {
+                    if (selectedConnection !== null) {
+                        selectedConnection = null;
+                        drawAllConnections();
+                    }
+                }
+            });
+
+            // 暴露变量和函数到全局，方便调试和测试
+            window.placedDevices = placedDevices;
+            window.deviceConnections = deviceConnections;
+            window.selectedConnection = selectedConnection;
+            window.renderPlacedDevices = renderPlacedDevices;
+            window.drawAllConnections = drawAllConnections;
+            window.selectConnection = selectConnection;
+            window.availableDevices = availableDevices;
+        }
+
+        // 加载可用设备列表（过滤已放置的设备）
+        function loadAvailableDevices() {
+            // 获取已放置设备的ID列表
+            const placedDeviceIds = placedDevices.map(d => d.id);
+
+            // 渲染电源设备（过滤已放置的）
+            const powerList = document.getElementById('powerDevicesList');
+            const availablePower = availableDevices.power.filter(d => !placedDeviceIds.includes(d.id));
+            powerList.innerHTML = availablePower.map(device => `
+                <div class="device-item" draggable="true" ondragstart="startDragDevice(event, '${device.id}', 'power')">
+                    <div class="device-item-icon">
+                        <img src="${device.icon}" alt="${device.label}" style="width: 32px; height: 32px; object-fit: contain;" />
+                    </div>
+                    <div class="device-item-info">
+                        <div class="device-item-name">${device.label}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 渲染储能设备（过滤已放置的）
+            const storageList = document.getElementById('storageDevicesList');
+            const availableStorage = availableDevices.storage.filter(d => !placedDeviceIds.includes(d.id));
+            storageList.innerHTML = availableStorage.map(device => `
+                <div class="device-item" draggable="true" ondragstart="startDragDevice(event, '${device.id}', 'storage')">
+                    <div class="device-item-icon">
+                        <img src="${device.icon}" alt="${device.label}" style="width: 32px; height: 32px; object-fit: contain;" />
+                    </div>
+                    <div class="device-item-info">
+                        <div class="device-item-name">${device.label}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 渲染负载设备（过滤已放置的）
+            const loadList = document.getElementById('loadDevicesList');
+            const availableLoad = availableDevices.load.filter(d => !placedDeviceIds.includes(d.id));
+            loadList.innerHTML = availableLoad.map(device => `
+                <div class="device-item" draggable="true" ondragstart="startDragDevice(event, '${device.id}', 'load')">
+                    <div class="device-item-icon">
+                        <img src="${device.icon}" alt="${device.label}" style="width: 32px; height: 32px; object-fit: contain;" />
+                    </div>
+                    <div class="device-item-info">
+                        <div class="device-item-name">${device.label}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 开始拖拽设备
+        function startDragDevice(event, deviceId, category) {
+            // 仅在编辑模式下允许拖拽
+            if (!isEditMode) {
+                event.preventDefault();
+                return;
+            }
+            const device = availableDevices[category].find(d => d.id === deviceId);
+            draggedDeviceData = { ...device, category };
+            event.dataTransfer.effectAllowed = 'copy';
+            event.dataTransfer.setData('text/plain', deviceId);
+        }
+
+        // 允许放置
+        function allowDrop(event) {
+            event.preventDefault();
+            // 根据拖拽类型设置不同的 dropEffect
+            if (isDraggingPlacedDevice) {
+                event.dataTransfer.dropEffect = 'move';
+            } else {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+        }
+
+        // 放置设备（自由画布）
+        function dropDevice(event) {
+            event.preventDefault();
+
+            // 仅在编辑模式下允许放置
+            if (!isEditMode) {
+                return;
+            }
+
+            const canvas = document.getElementById('devicesContainer');
+            const canvasRect = canvas.getBoundingClientRect();
+
+            // 计算放置位置（相对于画布）
+            const x = event.clientX - canvasRect.left;
+            const y = event.clientY - canvasRect.top;
+
+            // 处理从设备列表拖来的新设备
+            if (draggedDeviceData && !isDraggingPlacedDevice) {
+                // 检查设备是否已经在画布上
+                const alreadyPlaced = placedDevices.some(d => d.id === draggedDeviceData.id);
+                if (alreadyPlaced) {
+                    showMiniToast('⚠️ 该设备已在画布上', 'warning');
+                    draggedDeviceData = null;
+                    return;
+                }
+
+                // 添加到画布
+                placedDevices.push({
+                    ...draggedDeviceData,
+                    x: Math.max(0, x - 60), // 居中放置，60是设备宽度的一半
+                    y: Math.max(0, y - 60),
+                    power: Math.random() * 100 + 50,
+                    voltage: 380 + Math.random() * 20,
+                    current: 100 + Math.random() * 50,
+                    soc: 50 + Math.random() * 40,
+                    displayParams: {
+                        power: { enabled: false, x: 120, y: 0 },
+                        voltage: { enabled: false, x: 120, y: 30 },
+                        current: { enabled: false, x: 120, y: 60 },
+                        soc: { enabled: false, x: 120, y: 90 }
+                    },
+                    flowControl: {
+                        inAttribute: 'power',   // 默认使用功率判断流入
+                        outAttribute: 'power'   // 默认使用功率判断流出
+                    }
+                });
+
+                draggedDeviceData = null;
+
+                // 重新渲染设备列表（移除已放置的设备）
+                loadAvailableDevices();
+            }
+            // 处理画布内已放置设备的移动
+            else if (draggedPlacedDevice && isDraggingPlacedDevice) {
+                const { deviceId } = draggedPlacedDevice;
+
+                // 查找设备并更新位置
+                const device = placedDevices.find(d => d.id === deviceId);
+                if (device) {
+                    device.x = Math.max(0, x - 60);
+                    device.y = Math.max(0, y - 60);
+                }
+            }
+
+            renderPlacedDevices();
+            drawAllConnections();
+        }
+
+        // 开始拖拽已放置的设备
+        function startDragPlacedDevice(event, deviceId) {
+            isDraggingPlacedDevice = true;
+            draggedPlacedDevice = { deviceId };
+            draggedDeviceData = null; // 确保清空新设备数据
+
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', deviceId);
+
+            // 设置拖拽时的透明度
+            const deviceElement = document.getElementById(`placed-${deviceId}`);
+            if (deviceElement) {
+                deviceElement.style.opacity = '0.5';
+            }
+        }
+
+        // 结束拖拽已放置的设备
+        function endDragPlacedDevice(event) {
+            // 恢复透明度
+            event.target.style.opacity = '1';
+
+            // 延迟清理，确保 drop 事件先执行
+            setTimeout(() => {
+                isDraggingPlacedDevice = false;
+                draggedPlacedDevice = null;
+            }, 100);
+        }
+
+        // 渲染已放置的设备（自由画布）
+        function renderPlacedDevices() {
+            const container = document.getElementById('devicesContainer');
+
+            container.innerHTML = placedDevices.map(device => {
+                // 设置设备位置
+                const left = device.x || 50;
+                const top = device.y || 50;
+
+                // 外部参数 - 每个参数独立可拖拽
+                let externalParams = '';
+                if (device.displayParams) {
+                    const paramsList = [];
+
+                    // 功率参数
+                    if (device.displayParams.power.enabled && device.power !== undefined) {
+                        const pos = device.displayParams.power;
+                        paramsList.push(`
+                            <div class="device-external-param"
+                                 draggable="false"
+                                 onmousedown="startParamDrag(event, '${device.id}', 'power')"
+                                 style="left: ${pos.x}px; top: ${pos.y}px;">
+                                <span>P: ${device.power.toFixed(1)} kW</span>
+                                ${isEditMode ? '<span class="param-delete-btn" onclick="deleteDeviceParam(event, \'' + device.id + '\', \'power\')">×</span>' : ''}
+                            </div>
+                        `);
+                    }
+
+                    // 电压参数
+                    if (device.displayParams.voltage.enabled && device.voltage !== undefined) {
+                        const pos = device.displayParams.voltage;
+                        paramsList.push(`
+                            <div class="device-external-param"
+                                 draggable="false"
+                                 onmousedown="startParamDrag(event, '${device.id}', 'voltage')"
+                                 style="left: ${pos.x}px; top: ${pos.y}px;">
+                                <span>U: ${device.voltage.toFixed(1)} V</span>
+                                ${isEditMode ? '<span class="param-delete-btn" onclick="deleteDeviceParam(event, \'' + device.id + '\', \'voltage\')">×</span>' : ''}
+                            </div>
+                        `);
+                    }
+
+                    // 电流参数
+                    if (device.displayParams.current.enabled && device.current !== undefined) {
+                        const pos = device.displayParams.current;
+                        paramsList.push(`
+                            <div class="device-external-param"
+                                 draggable="false"
+                                 onmousedown="startParamDrag(event, '${device.id}', 'current')"
+                                 style="left: ${pos.x}px; top: ${pos.y}px;">
+                                <span>I: ${device.current.toFixed(1)} A</span>
+                                ${isEditMode ? '<span class="param-delete-btn" onclick="deleteDeviceParam(event, \'' + device.id + '\', \'current\')">×</span>' : ''}
+                            </div>
+                        `);
+                    }
+
+                    // SOC参数
+                    if (device.displayParams.soc.enabled && device.soc !== undefined) {
+                        const pos = device.displayParams.soc;
+                        paramsList.push(`
+                            <div class="device-external-param"
+                                 draggable="false"
+                                 onmousedown="startParamDrag(event, '${device.id}', 'soc')"
+                                 style="left: ${pos.x}px; top: ${pos.y}px;">
+                                <span>SOC: ${device.soc.toFixed(1)} %</span>
+                                ${isEditMode ? '<span class="param-delete-btn" onclick="deleteDeviceParam(event, \'' + device.id + '\', \'soc\')">×</span>' : ''}
+                            </div>
+                        `);
+                    }
+
+                    externalParams = paramsList.join('');
+                }
+
+                let html = `
+                    <div class="flow-device"
+                         id="placed-${device.id}"
+                         draggable="${isEditMode}"
+                         ondragstart="startDragPlacedDevice(event, '${device.id}')"
+                         ondragend="endDragPlacedDevice(event)"
+                         onmousedown="handleDeviceMouseDown(event, '${device.id}')"
+                         data-device-id="${device.id}"
+                         style="position: absolute; left: ${left}px; top: ${top}px; cursor: ${isEditMode ? 'pointer' : 'default'};">
+
+                        <!-- 设备删除按钮（仅编辑模式显示） -->
+                        ${isEditMode ? '<span class="device-delete-btn" onclick="deleteDevice(event, \'' + device.id + '\')">×</span>' : ''}
+
+                        <!-- 连接点容器（仅编辑模式显示） -->
+                        <div class="connection-points" style="display: ${isEditMode ? 'block' : 'none'};">
+                            <div class="connection-point top" data-device-id="${device.id}" data-direction="top"
+                                 onmousedown="startConnectionDrag(event, '${device.id}', 'top')"
+                                 draggable="false"></div>
+                            <div class="connection-point bottom" data-device-id="${device.id}" data-direction="bottom"
+                                 onmousedown="startConnectionDrag(event, '${device.id}', 'bottom')"
+                                 draggable="false"></div>
+                            <div class="connection-point left" data-device-id="${device.id}" data-direction="left"
+                                 onmousedown="startConnectionDrag(event, '${device.id}', 'left')"
+                                 draggable="false"></div>
+                            <div class="connection-point right" data-device-id="${device.id}" data-direction="right"
+                                 onmousedown="startConnectionDrag(event, '${device.id}', 'right')"
+                                 draggable="false"></div>
+                        </div>
+
+                        <div class="flow-device-icon">
+                            <img src="${device.icon}" alt="${device.label}" draggable="false" />
+                        </div>
+                        <div class="flow-device-label" draggable="false">${device.label}</div>
+
+                        ${externalParams}
+                    </div>`;
+                return html;
+            }).join('');
+
+            // 重新绑定点击事件（仅在连线模式下生效）
+            attachDeviceClickListeners();
+
+            // 重新绘制连接线（应用流向动画）
+            drawAllConnections();
+        }
+
+        // 绑定设备点击事件监听器
+        function attachDeviceClickListeners() {
+            const devices = document.querySelectorAll('.flow-device');
+            devices.forEach(deviceEl => {
+                deviceEl.addEventListener('click', function(e) {
+                    // 如果点击的是移除按钮或连接点，不处理
+                    if (e.target.tagName === 'BUTTON' || e.target.classList.contains('connection-point')) {
+                        return;
+                    }
+
+                    // 如果刚刚完成拖拽，忽略点击
+                    if (isDraggingPlacedDevice) {
+                        return;
+                    }
+
+                    const deviceId = this.getAttribute('data-device-id');
+                    const event = window.event || e;
+
+                    // 在预览模式下打开设备详情面板
+                    if (!isEditMode) {
+                        openDevicePanel(deviceId);
+                        return;
+                    }
+
+                    // 在编辑模式下切换设备选中状态
+                    toggleDeviceSelection(deviceId, event);
+                });
+            });
+        }
+
+        // 切换设备选中状态（支持Shift多选）
+        function toggleDeviceSelection(deviceId, event) {
+            const element = document.getElementById(`placed-${deviceId}`);
+            if (!element) return;
+
+            // 检查是否按住了 Shift 键
+            const isMultiSelect = event && event.shiftKey;
+
+            if (isMultiSelect) {
+                // 多选模式：切换当前设备的选中状态
+                if (element.classList.contains('selected')) {
+                    element.classList.remove('selected');
+                } else {
+                    element.classList.add('selected');
+                }
+            } else {
+                // 单选模式：清除其他设备的选中，只选中当前设备
+                const allDevices = document.querySelectorAll('.flow-device');
+                allDevices.forEach(dev => {
+                    if (dev.id !== `placed-${deviceId}`) {
+                        dev.classList.remove('selected');
+                    }
+                });
+
+                // 切换当前设备
+                if (element.classList.contains('selected')) {
+                    element.classList.remove('selected');
+                    selectedDevice = null;
+                } else {
+                    element.classList.add('selected');
+                    selectedDevice = deviceId;
+                }
+            }
+
+            // 显示提示
+            const selectedCount = document.querySelectorAll('.flow-device.selected').length;
+            if (selectedCount > 1) {
+                showMiniToast(`✅ 已选中 ${selectedCount} 个设备`);
+            }
+        }
+
+        // 开始拖拽连线
+        function startConnectionDrag(event, deviceId, direction) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            // 仅在编辑模式下允许连线
+            if (!isEditMode) {
+                return;
+            }
+
+            isDraggingConnection = true;
+
+            // 获取连接点的绝对位置
+            const pointElement = event.target;
+            const pointRect = pointElement.getBoundingClientRect();
+            const canvas = document.getElementById('energyFlowCanvas');
+            const canvasRect = canvas.getBoundingClientRect();
+
+            const x = pointRect.left + pointRect.width / 2 - canvasRect.left;
+            const y = pointRect.top + pointRect.height / 2 - canvasRect.top;
+
+            connectionStart = { deviceId, direction, x, y };
+
+            // 选中起始设备
+            const element = document.getElementById(`placed-${deviceId}`);
+            if (element) {
+                element.classList.add('selected');
+                selectedDevice = deviceId;
+            }
+
+            // 创建临时连线
+            createTempConnectionLine(x, y, x, y);
+        }
+
+        // 创建临时连线
+        function createTempConnectionLine(x1, y1, x2, y2) {
+            const svg = document.getElementById('energyConnections');
+
+            // 移除旧的临时线
+            if (tempConnectionLine) {
+                tempConnectionLine.remove();
+            }
+
+            // 创建新的临时线
+            tempConnectionLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
+            tempConnectionLine.setAttribute('d', pathData);
+            tempConnectionLine.setAttribute('stroke', '#3562E3');
+            tempConnectionLine.setAttribute('stroke-width', '3');
+            tempConnectionLine.setAttribute('stroke-dasharray', '8 4');
+            tempConnectionLine.setAttribute('fill', 'none');
+            tempConnectionLine.style.opacity = '0.7';
+
+            svg.appendChild(tempConnectionLine);
+        }
+
+        // 更新临时连线
+        function updateTempConnectionLine(x2, y2) {
+            if (!tempConnectionLine || !connectionStart) return;
+
+            const pathData = `M ${connectionStart.x} ${connectionStart.y} L ${x2} ${y2}`;
+            tempConnectionLine.setAttribute('d', pathData);
+        }
+
+        // 完成连线拖拽
+        function endConnectionDrag(event) {
+            if (!isDraggingConnection || !connectionStart) {
+                return;
+            }
+
+            // 检查鼠标是否在某个连接点上
+            const target = document.elementFromPoint(event.clientX, event.clientY);
+
+            if (target && target.classList.contains('connection-point')) {
+                const toDeviceId = target.getAttribute('data-device-id');
+                const toDirection = target.getAttribute('data-direction');
+
+                // 不能连接到同一个设备
+                if (toDeviceId !== connectionStart.deviceId) {
+                    const fromDevice = placedDevices.find(d => d.id === connectionStart.deviceId);
+                    const toDevice = placedDevices.find(d => d.id === toDeviceId);
+
+                    // 添加连接（不自动创建控制点，使用智能路径）
+                    deviceConnections.push({
+                        from: connectionStart.deviceId,
+                        fromDirection: connectionStart.direction,
+                        to: toDeviceId,
+                        toDirection: toDirection,
+                        controlPoints: [], // 空数组，使用智能路径
+                        pathMode: 'orthogonal' // 默认使用正交模式
+                    });
+
+                    drawAllConnections();
+                    showMiniToast(`✅ 连接成功！<br>${fromDevice.label} ➡️ ${toDevice.label}`);
+                }
+            }
+
+            // 清理状态
+            isDraggingConnection = false;
+            connectionStart = null;
+
+            // 移除临时线
+            if (tempConnectionLine) {
+                tempConnectionLine.remove();
+                tempConnectionLine = null;
+            }
+
+            // 清除选中状态
+            if (selectedDevice) {
+                const element = document.getElementById(`placed-${selectedDevice}`);
+                if (element) {
+                    element.classList.remove('selected');
+                }
+                selectedDevice = null;
+            }
+        }
+
+        // 获取方向名称（中文）
+        function getDirectionName(direction) {
+            const names = {
+                'top': '上',
+                'bottom': '下',
+                'left': '左',
+                'right': '右'
+            };
+            return names[direction] || direction;
+        }
+
+        // 显示小型提示消息
+        function showMiniToast(message, type = 'info') {
+            // 移除旧提示
+            const oldToast = document.getElementById('miniToast');
+            if (oldToast) oldToast.remove();
+
+            // 根据类型选择样式
+            let bgColor, iconSymbol;
+            if (type === 'success') {
+                bgColor = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                iconSymbol = '✓';
+            } else if (type === 'warning') {
+                bgColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                iconSymbol = '⚠';
+            } else if (type === 'error') {
+                bgColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                iconSymbol = '✗';
+            } else {
+                bgColor = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
+                iconSymbol = 'ℹ';
+            }
+
+            const toast = document.createElement('div');
+            toast.id = 'miniToast';
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${bgColor};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                z-index: 99999;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                text-align: center;
+                pointer-events: none;
+                animation: slideDown 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            `;
+
+            toast.innerHTML = `
+                <span style="font-size: 18px; font-weight: bold;">${iconSymbol}</span>
+                <span>${message}</span>
+            `;
+
+            // 添加滑入动画
+            if (!document.getElementById('toastAnimationStyle')) {
+                const style = document.createElement('style');
+                style.id = 'toastAnimationStyle';
+                style.textContent = `
+                    @keyframes slideDown {
+                        from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // 添加到 body 而不是 canvas，确保可见
+            document.body.appendChild(toast);
+
+            // 2秒后自动消失
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(-50%) translateY(-20px)';
+                    setTimeout(() => {
+                        if (toast && toast.parentNode) toast.remove();
+                    }, 300);
+                }
+            }, 2000);
+        }
+
+        // 移除设备
+        function removeDevice(deviceId, event) {
+            event.stopPropagation();
+
+            if (!confirm('确定要移除该设备吗？')) {
+                return;
+            }
+
+            // 从画布移除设备
+            placedDevices = placedDevices.filter(d => d.id !== deviceId);
+
+            // 移除涉及该设备的所有连接
+            deviceConnections = deviceConnections.filter(
+                conn => conn.from !== deviceId && conn.to !== deviceId
+            );
+
+            renderPlacedDevices();
+            drawAllConnections();
+            loadAvailableDevices(); // 刷新设备列表，使移除的设备重新显示
+        }
+
+        // 绘制所有连接线（支持拐弯，自由画布）
+        function drawAllConnections() {
+            const svg = document.getElementById('energyConnections');
+            svg.innerHTML = '';
+
+            const canvasRect = document.getElementById('energyFlowCanvas').getBoundingClientRect();
+
+            // 在绘制前，检查并修复市电到储能柜的连线
+            deviceConnections.forEach((conn, index) => {
+                const fromId = conn.from.toLowerCase();
+                const toId = conn.to.toLowerCase();
+
+                const isUtilityToStorage =
+                    (fromId.includes('grid-1') || fromId.includes('utility') || fromId.includes('市电')) &&
+                    (toId.includes('storage') || toId.includes('储能') || toId.includes('battery'));
+
+                const isStorageToUtility =
+                    (fromId.includes('storage') || fromId.includes('储能') || fromId.includes('battery')) &&
+                    (toId.includes('grid-1') || toId.includes('utility') || toId.includes('市电'));
+
+                // 如果是市电和储能柜之间的连线，且没有控制点
+                if ((isUtilityToStorage || isStorageToUtility) && (!conn.controlPoints || conn.controlPoints.length === 0)) {
+                    const fromDevice = placedDevices.find(d => d.id === conn.from);
+                    const toDevice = placedDevices.find(d => d.id === conn.to);
+
+                    if (fromDevice && toDevice) {
+                        // 添加一个拐点
+                        const fromX = fromDevice.x + 70;
+                        const fromY = fromDevice.y + 75;
+                        const toX = toDevice.x + 70;
+                        const toY = toDevice.y + 75;
+
+                        const cornerY = (fromY + toY) / 2;
+
+                        conn.controlPoints = [{ x: fromX, y: cornerY }];
+                        conn.fromDirection = 'bottom';
+                        conn.toDirection = 'top';
+
+                        console.log('✅ 自动修复市电-储能柜连线，添加拐点:', conn.controlPoints);
+                    }
+                }
+            });
+
+            // 移除箭头标记定义 - 用户不需要箭头
+            // const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            // const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            // marker.id = 'arrowhead';
+            // marker.setAttribute('markerWidth', '10');
+            // marker.setAttribute('markerHeight', '10');
+            // marker.setAttribute('refX', '9');
+            // marker.setAttribute('refY', '3');
+            // marker.setAttribute('orient', 'auto');
+
+            // const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            // polygon.setAttribute('points', '0 0, 10 3, 0 6');
+            // polygon.setAttribute('fill', '#3562E3');
+            // marker.appendChild(polygon);
+            // defs.appendChild(marker);
+            // svg.appendChild(defs);
+
+            // 绘制每条连接
+            deviceConnections.forEach((conn, index) => {
+                const fromElement = document.getElementById(`placed-${conn.from}`);
+                const toElement = document.getElementById(`placed-${conn.to}`);
+
+                if (fromElement && toElement) {
+                    const fromRect = fromElement.getBoundingClientRect();
+                    const toRect = toElement.getBoundingClientRect();
+
+                    // 计算起点和终点连接点的位置
+                    const fromPoint = getConnectionPointPosition(fromRect, conn.fromDirection, canvasRect);
+                    const toPoint = getConnectionPointPosition(toRect, conn.toDirection, canvasRect);
+
+                    // 计算路径（使用控制点或自动计算）
+                    let pathData;
+                    // 默认使用正交模式，可以通过 conn.pathMode 修改
+                    const useOrthogonal = conn.pathMode !== 'straight'; // 默认为正交模式，除非明确设置为直线
+
+                    if (conn.controlPoints && conn.controlPoints.length > 0) {
+                        // 使用自定义控制点路径
+                        pathData = calculatePathWithControlPoints(fromPoint.x, fromPoint.y, toPoint.x, toPoint.y, conn.controlPoints, useOrthogonal);
+                    } else {
+                        // 使用智能拐弯路径
+                        pathData = calculateOrthogonalPath(fromPoint.x, fromPoint.y, toPoint.x, toPoint.y);
+                    }
+
+                    // 创建宽的透明路径作为点击区域（放在下层）
+                    const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    hitArea.setAttribute('d', pathData);
+                    hitArea.setAttribute('stroke', 'transparent');
+                    hitArea.setAttribute('stroke-width', '20'); // 更宽的点击区域
+                    hitArea.setAttribute('fill', 'none');
+                    hitArea.style.cursor = isEditMode ? 'pointer' : 'default'; // 编辑模式才显示手型
+                    hitArea.style.pointerEvents = 'stroke'; // 允许hitArea接收鼠标事件
+                    hitArea.setAttribute('data-connection-index', index);
+
+                    // 添加悬停效果（仅在编辑模式下）
+                    hitArea.addEventListener('mouseenter', () => {
+                        if (isEditMode && selectedConnection !== index) {
+                            path.setAttribute('stroke', '#00e5ff');
+                            path.setAttribute('stroke-width', '4');
+                        }
+                    });
+
+                    hitArea.addEventListener('mouseleave', () => {
+                        if (isEditMode && selectedConnection !== index) {
+                            path.setAttribute('stroke', '#3562E3');
+                            path.setAttribute('stroke-width', '3');
+                        }
+                    });
+
+                    // 添加点击选中功能（仅在编辑模式下）
+                    hitArea.addEventListener('click', (e) => {
+                        if (!isEditMode) return; // 预览模式下不响应点击
+                        e.stopPropagation();
+                        selectConnection(index);
+                    });
+
+                    // 添加右键菜单（仅在编辑模式下）
+                    hitArea.addEventListener('contextmenu', (e) => {
+                        if (!isEditMode) return; // 预览模式下不显示右键菜单
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showConnectionContextMenu(e, index);
+                    });
+
+                    svg.appendChild(hitArea);
+
+                    // 创建可见的路径元素（显示在上层）
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', pathData);
+
+                    // 根据模式设置颜色
+                    if (selectedConnection === index) {
+                        // 选中状态：橙色
+                        path.setAttribute('stroke', '#ffaa00');
+                        path.setAttribute('stroke-width', '4');
+                        path.style.filter = 'drop-shadow(0 0 8px rgba(255, 170, 0, 0.8))';
+                    } else if (isEditMode) {
+                        // 编辑模式：蓝色
+                        path.setAttribute('stroke', '#3562E3');
+                        path.setAttribute('stroke-width', '3');
+                        path.style.filter = 'drop-shadow(0 0 4px rgba(53, 98, 227, 0.6))';
+                    } else {
+                        // 预览模式：灰色
+                        path.setAttribute('stroke', '#CCCCCC');
+                        path.setAttribute('stroke-width', '4');
+                    }
+
+                    path.setAttribute('stroke-linecap', 'round');
+                    path.setAttribute('stroke-linejoin', 'round');
+                    path.setAttribute('fill', 'none');
+                    path.style.pointerEvents = 'none'; // 不接收事件，事件由hitArea处理
+
+                    svg.appendChild(path);
+
+                    // 在预览模式下添加流动线段效果（仿照首页）
+                    if (!isEditMode && selectedConnection !== index) {
+                        // 检查是否是市电到光伏/储能柜的连线
+                        const fromId = conn.from.toLowerCase();
+                        const toId = conn.to.toLowerCase();
+
+                        const isGridToSolar =
+                            (fromId.includes('grid') || fromId.includes('utility') || fromId.includes('市电')) &&
+                            (toId.includes('solar') || toId.includes('pv') || toId.includes('光伏'));
+
+                        const isSolarToGrid =
+                            (fromId.includes('solar') || fromId.includes('pv') || fromId.includes('光伏')) &&
+                            (toId.includes('grid') || toId.includes('utility') || toId.includes('市电'));
+
+                        const isGridToStorage =
+                            (fromId.includes('grid') || fromId.includes('utility') || fromId.includes('市电')) &&
+                            (toId.includes('storage') || toId.includes('储能') || toId.includes('battery') || toId.includes('pcs'));
+
+                        const isStorageToGrid =
+                            (fromId.includes('storage') || fromId.includes('储能') || fromId.includes('battery') || fromId.includes('pcs')) &&
+                            (toId.includes('grid') || toId.includes('utility') || toId.includes('市电'));
+
+                        // 如果是市电到光伏或储能柜的连线，跳过添加动画
+                        if (isGridToSolar || isSolarToGrid || isGridToStorage || isStorageToGrid) {
+                            // 不添加流动动画
+                        } else {
+                            // 创建隐藏的路径用于动画
+                            const animPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            const pathId = `flow-path-${index}`;
+                            animPath.setAttribute('id', pathId);
+                            animPath.setAttribute('d', pathData);
+                            animPath.style.display = 'none';
+                            svg.appendChild(animPath);
+
+                            // 创建流动的短线段（蓝色）
+                            const flowingLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                            flowingLine.setAttribute('x1', '-20');
+                            flowingLine.setAttribute('y1', '0');
+                            flowingLine.setAttribute('x2', '20');
+                            flowingLine.setAttribute('y2', '0');
+                            flowingLine.setAttribute('stroke', '#3562E3');
+                            flowingLine.setAttribute('stroke-width', '5');
+                            flowingLine.setAttribute('stroke-linecap', 'round');
+                            flowingLine.setAttribute('opacity', '1');
+                            flowingLine.style.pointerEvents = 'none';
+                            flowingLine.style.filter = 'drop-shadow(0 0 6px rgba(53, 98, 227, 0.8))';
+
+                            // 添加沿路径运动的动画（自动旋转跟随路径方向）
+                            const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+                            animateMotion.setAttribute('dur', '2s');
+                            animateMotion.setAttribute('repeatCount', 'indefinite');
+                            animateMotion.setAttribute('rotate', 'auto'); // 自动旋转，沿路径方向
+
+                            const mpath = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
+                            mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${pathId}`);
+
+                            animateMotion.appendChild(mpath);
+                            flowingLine.appendChild(animateMotion);
+                            svg.appendChild(flowingLine);
+                        }
+                    }
+
+                    // 如果连线被选中，绘制控制点
+                    if (selectedConnection === index) {
+                        drawControlPoints(conn, index, fromPoint, toPoint, canvasRect);
+                    }
+                }
+            });
+        }
+
+        // 根据连接点方向计算其在画布上的绝对位置
+        function getConnectionPointPosition(deviceRect, direction, canvasRect) {
+            const centerX = deviceRect.left + deviceRect.width / 2 - canvasRect.left;
+            const centerY = deviceRect.top + deviceRect.height / 2 - canvasRect.top;
+
+            switch (direction) {
+                case 'top':
+                    return { x: centerX, y: deviceRect.top - canvasRect.top };
+                case 'bottom':
+                    return { x: centerX, y: deviceRect.bottom - canvasRect.top };
+                case 'left':
+                    return { x: deviceRect.left - canvasRect.left, y: centerY };
+                case 'right':
+                    return { x: deviceRect.right - canvasRect.left, y: centerY };
+                default:
+                    return { x: centerX, y: centerY };
+            }
+        }
+
+        // 计算正交路径（支持直角拐弯）
+        function calculateOrthogonalPath(x1, y1, x2, y2) {
+            const gap = 30; // 拐弯间距
+
+            // 计算水平和垂直距离
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            // 如果两点很近，直接连线
+            if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                return `M ${x1} ${y1} L ${x2} ${y2}`;
+            }
+
+            // 如果水平距离足够，使用简单的三段式路径
+            if (Math.abs(dx) > gap * 2) {
+                const midX = (x1 + x2) / 2;
+                return `M ${x1} ${y1}
+                        L ${midX} ${y1}
+                        L ${midX} ${y2}
+                        L ${x2} ${y2}`;
+            }
+            // 如果垂直距离足够，使用简单的三段式路径
+            else if (Math.abs(dy) > gap * 2) {
+                const midY = (y1 + y2) / 2;
+                return `M ${x1} ${y1}
+                        L ${x1} ${midY}
+                        L ${x2} ${midY}
+                        L ${x2} ${y2}`;
+            }
+            // 否则使用五段式绕行路径
+            else {
+                const direction = dx > 0 ? 1 : -1;
+                const offsetX = gap;
+                const midY = (y1 + y2) / 2;
+
+                return `M ${x1} ${y1}
+                        L ${x1} ${y1 + gap}
+                        L ${x1 + direction * offsetX} ${y1 + gap}
+                        L ${x1 + direction * offsetX} ${y2 - gap}
+                        L ${x2} ${y2 - gap}
+                        L ${x2} ${y2}`;
+            }
+        }
+
+        // 计算贝塞尔曲线路径（可选的平滑拐弯）
+        function calculateSmoothPath(x1, y1, x2, y2) {
+            const midY = (y1 + y2) / 2;
+            const controlOffset = 40;
+
+            // 使用三次贝塞尔曲线创建平滑路径
+            return `M ${x1} ${y1}
+                    C ${x1} ${y1 + controlOffset},
+                      ${x1} ${midY - controlOffset},
+                      ${x1} ${midY}
+                    L ${x2} ${midY}
+                    C ${x2} ${midY + controlOffset},
+                      ${x2} ${y2 - controlOffset},
+                      ${x2} ${y2}`;
+        }
+
+        // 根据控制点计算路径（支持正交模式）
+        function calculatePathWithControlPoints(x1, y1, x2, y2, controlPoints, orthogonal = true) {
+            if (!controlPoints || controlPoints.length === 0) {
+                return calculateOrthogonalPath(x1, y1, x2, y2);
+            }
+
+            let path = `M ${x1} ${y1}`;
+
+            // 如果使用正交模式，在每两个点之间创建90度拐弯
+            if (orthogonal) {
+                let prevX = x1;
+                let prevY = y1;
+
+                controlPoints.forEach(point => {
+                    // 在两点之间创建L形路径（先水平后垂直，或先垂直后水平）
+                    const dx = Math.abs(point.x - prevX);
+                    const dy = Math.abs(point.y - prevY);
+
+                    // 根据距离决定是先走水平还是先走垂直
+                    if (dx > dy) {
+                        // 先水平后垂直
+                        path += ` L ${point.x} ${prevY}`;
+                        path += ` L ${point.x} ${point.y}`;
+                    } else {
+                        // 先垂直后水平
+                        path += ` L ${prevX} ${point.y}`;
+                        path += ` L ${point.x} ${point.y}`;
+                    }
+
+                    prevX = point.x;
+                    prevY = point.y;
+                });
+
+                // 从最后一个控制点到终点，也使用正交路径
+                const dx = Math.abs(x2 - prevX);
+                const dy = Math.abs(y2 - prevY);
+
+                if (dx > dy) {
+                    path += ` L ${x2} ${prevY}`;
+                    path += ` L ${x2} ${y2}`;
+                } else {
+                    path += ` L ${prevX} ${y2}`;
+                    path += ` L ${x2} ${y2}`;
+                }
+            } else {
+                // 直线模式：直接连接所有控制点
+                controlPoints.forEach(point => {
+                    path += ` L ${point.x} ${point.y}`;
+                });
+                path += ` L ${x2} ${y2}`;
+            }
+
+            return path;
+        }
+
+        // 选中连线
+        function selectConnection(index) {
+            selectedConnection = index;
+
+            // 不自动创建控制点，保持原有路径
+            // 用户可以通过右键菜单"添加控制点"来手动添加
+
+            drawAllConnections();
+
+            const hasControlPoints = deviceConnections[index].controlPoints &&
+                                    deviceConnections[index].controlPoints.length > 0;
+
+            if (hasControlPoints) {
+                showMiniToast('✏️ 连线已选中，拖拽控制点调整路径');
+            } else {
+                showMiniToast('✏️ 连线已选中，右键可添加控制点');
+            }
+        }
+
+        // 绘制控制点
+        function drawControlPoints(conn, connIndex, fromPoint, toPoint, canvasRect) {
+            const svg = document.getElementById('energyConnections');
+
+            if (!conn.controlPoints) return;
+
+            conn.controlPoints.forEach((point, pointIndex) => {
+                // 创建控制点圆圈
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', point.x);
+                circle.setAttribute('cy', point.y);
+                circle.setAttribute('r', '8');
+                circle.setAttribute('fill', '#ffaa00');
+                circle.setAttribute('stroke', '#fff');
+                circle.setAttribute('stroke-width', '2');
+                circle.style.cursor = 'move';
+                circle.style.pointerEvents = 'all'; // 允许控制点接收鼠标事件
+                circle.style.filter = 'drop-shadow(0 0 6px rgba(255, 170, 0, 0.8))';
+
+                // 添加控制点拖拽事件
+                circle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    startDraggingControlPoint(connIndex, pointIndex, e);
+                });
+
+                svg.appendChild(circle);
+
+                // 添加控制点文本提示
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', point.x);
+                text.setAttribute('y', point.y - 15);
+                text.setAttribute('fill', '#ffaa00');
+                text.setAttribute('font-size', '11');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('text-anchor', 'middle');
+                text.textContent = '●';
+                text.style.pointerEvents = 'none';
+                text.style.userSelect = 'none';
+
+                svg.appendChild(text);
+            });
+
+            // 添加新增控制点按钮（在连线中点）
+            if (conn.controlPoints.length < 5) {
+                const midX = (fromPoint.x + toPoint.x) / 2;
+                const midY = (fromPoint.y + toPoint.y) / 2;
+
+                const addButton = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                addButton.setAttribute('cx', midX);
+                addButton.setAttribute('cy', midY);
+                addButton.setAttribute('r', '6');
+                addButton.setAttribute('fill', '#22c55e');
+                addButton.setAttribute('stroke', '#fff');
+                addButton.setAttribute('stroke-width', '2');
+                addButton.style.cursor = 'pointer';
+                addButton.style.pointerEvents = 'all'; // 允许添加按钮接收鼠标事件
+                addButton.style.opacity = '0.7';
+
+                addButton.addEventListener('mouseenter', () => {
+                    addButton.style.opacity = '1';
+                });
+
+                addButton.addEventListener('mouseleave', () => {
+                    addButton.style.opacity = '0.7';
+                });
+
+                addButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addControlPoint(connIndex, midX, midY);
+                });
+
+                svg.appendChild(addButton);
+
+                const plusText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                plusText.setAttribute('x', midX);
+                plusText.setAttribute('y', midY + 1);
+                plusText.setAttribute('fill', '#fff');
+                plusText.setAttribute('font-size', '10');
+                plusText.setAttribute('font-weight', 'bold');
+                plusText.setAttribute('text-anchor', 'middle');
+                plusText.setAttribute('dominant-baseline', 'middle');
+                plusText.textContent = '+';
+                plusText.style.pointerEvents = 'none';
+
+                svg.appendChild(plusText);
+            }
+        }
+
+        // 开始拖拽控制点
+        function startDraggingControlPoint(connIndex, pointIndex, event) {
+            isDraggingControlPoint = true;
+            selectedConnection = connIndex;
+            draggingControlPointIndex = pointIndex;
+
+            document.body.style.cursor = 'move';
+        }
+
+        // 添加控制点
+        function addControlPoint(connIndex, x, y) {
+            if (!deviceConnections[connIndex].controlPoints) {
+                deviceConnections[connIndex].controlPoints = [];
+            }
+
+            deviceConnections[connIndex].controlPoints.push({ x, y });
+            drawAllConnections();
+            showMiniToast('➕ 已添加控制点');
+        }
+
+        // 显示连线右键菜单
+        function showConnectionContextMenu(event, connIndex) {
+            // 移除旧菜单
+            const oldMenu = document.getElementById('connectionContextMenu');
+            if (oldMenu) oldMenu.remove();
+
+            const menu = document.createElement('div');
+            menu.id = 'connectionContextMenu';
+            menu.style.cssText = `
+                position: fixed;
+                left: ${event.clientX}px;
+                top: ${event.clientY}px;
+                background: #2a2a2a;
+                border: 1px solid #3a3a3a;
+                border-radius: 8px;
+                padding: 8px 0;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                min-width: 160px;
+            `;
+
+            // 获取当前路径模式
+            const currentMode = deviceConnections[connIndex].pathMode || 'orthogonal';
+            const isOrthogonal = currentMode !== 'straight';
+
+            const menuItems = [
+                {
+                    icon: isOrthogonal ? '📐' : '📏',
+                    text: isOrthogonal ? '切换为直线模式' : '切换为正交模式',
+                    action: () => {
+                        // 切换路径模式
+                        deviceConnections[connIndex].pathMode = isOrthogonal ? 'straight' : 'orthogonal';
+                        drawAllConnections();
+                        showMiniToast(isOrthogonal ? '📏 已切换为直线模式' : '📐 已切换为正交模式（90度拐弯）');
+                        menu.remove();
+                    }
+                },
+                {
+                    icon: '🔄',
+                    text: '重置路径',
+                    action: () => {
+                        resetConnectionPath(connIndex);
+                        menu.remove();
+                    }
+                },
+                {
+                    icon: '➕',
+                    text: '添加控制点',
+                    action: () => {
+                        selectConnection(connIndex);
+                        menu.remove();
+                    }
+                },
+                {
+                    icon: '🗑️',
+                    text: '删除连线',
+                    action: () => {
+                        if (confirm('确定要删除这条连线吗？')) {
+                            deviceConnections.splice(connIndex, 1);
+                            selectedConnection = null;
+                            drawAllConnections();
+                            showMiniToast('✅ 已删除连线');
+                        }
+                        menu.remove();
+                    }
+                }
+            ];
+
+            menuItems.forEach(item => {
+                const menuItem = document.createElement('div');
+                menuItem.style.cssText = `
+                    padding: 10px 16px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    color: #e2e8f0;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                `;
+
+                menuItem.innerHTML = `<span>${item.icon}</span><span>${item.text}</span>`;
+
+                menuItem.addEventListener('mouseenter', () => {
+                    menuItem.style.background = '#3a3a3a';
+                });
+
+                menuItem.addEventListener('mouseleave', () => {
+                    menuItem.style.background = 'transparent';
+                });
+
+                menuItem.addEventListener('click', item.action);
+
+                menu.appendChild(menuItem);
+            });
+
+            document.body.appendChild(menu);
+
+            // 点击其他地方关闭菜单
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu() {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                });
+            }, 0);
+        }
+
+        // 重置连线路径
+        function resetConnectionPath(connIndex) {
+            deviceConnections[connIndex].controlPoints = [];
+            selectedConnection = null;
+            drawAllConnections();
+            showMiniToast('🔄 路径已重置');
+        }
+
+        // 显示连线编辑帮助
+        function showConnectionEditHelp() {
+            // 移除旧的帮助窗口
+            const oldHelp = document.getElementById('connectionEditHelp');
+            if (oldHelp) oldHelp.remove();
+
+            const helpModal = document.createElement('div');
+            helpModal.id = 'connectionEditHelp';
+            helpModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+
+            helpModal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+                    border: 2px solid #3562E3;
+                    border-radius: 16px;
+                    padding: 32px;
+                    max-width: 600px;
+                    box-shadow: 0 8px 32px rgba(53, 98, 227, 0.3);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="margin: 0; color: #3562E3; font-size: 24px;">
+                            <i class="fas fa-edit"></i> 连线编辑指南
+                        </h2>
+                        <button onclick="document.getElementById('connectionEditHelp').remove()" style="
+                            background: transparent;
+                            border: none;
+                            color: #3562E3;
+                            font-size: 24px;
+                            cursor: pointer;
+                            padding: 0;
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(53, 98, 227, 0.1)'" onmouseout="this.style.background='transparent'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div style="color: #e2e8f0; line-height: 1.8; font-size: 14px;">
+                        <div style="background: rgba(53, 98, 227, 0.1); border-left: 4px solid #3562E3; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0 0 12px 0; font-weight: 600; font-size: 16px; color: #3562E3;">
+                                💡 如何自定义连线路径
+                            </p>
+                            <ol style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 12px;">
+                                    <strong>鼠标悬停</strong>在连线上 → 连线会<span style="color: #00e5ff;">高亮变亮</span>
+                                </li>
+                                <li style="margin-bottom: 12px;">
+                                    <strong>点击连线</strong> → 连线变为<span style="color: #ffaa00;">橙色</span>，自动显示控制点
+                                </li>
+                                <li style="margin-bottom: 12px;">
+                                    <strong>拖拽橙色圆点</strong> → 实时调整连线路径
+                                </li>
+                                <li style="margin-bottom: 12px;">
+                                    <strong>点击绿色➕</strong> → 添加更多控制点（最多5个）
+                                </li>
+                                <li>
+                                    <strong>右键连线</strong> → 重置路径 / 删除连线
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                            <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid #ffaa00; padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 28px; margin-bottom: 8px;">🟠</div>
+                                <div style="font-weight: 600; color: #ffaa00; margin-bottom: 4px;">控制点</div>
+                                <div style="font-size: 12px; color: #cbd5e1;">拖拽调整路径</div>
+                            </div>
+                            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 28px; margin-bottom: 8px;">🟢</div>
+                                <div style="font-weight: 600; color: #22c55e; margin-bottom: 4px;">添加按钮</div>
+                                <div style="font-size: 12px; color: #cbd5e1;">点击添加控制点</div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 13px;">
+                                <strong>⚠️ 提示：</strong>点击画布空白处可取消选中连线
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button onclick="document.getElementById('connectionEditHelp').remove()" style="
+                            background: linear-gradient(135deg, #3562E3 0%, #2347C5 100%);
+                            border: none;
+                            color: #fff;
+                            padding: 12px 32px;
+                            border-radius: 8px;
+                            font-size: 14px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,217,255,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                            我知道了
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(helpModal);
+
+            // 点击背景关闭
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    helpModal.remove();
+                }
+            });
+        }
+
+        // 清除所有连线
+        function clearAllConnections() {
+            if (deviceConnections.length === 0) {
+                showMiniToast('⚠️ 当前没有连线');
+                return;
+            }
+
+            if (confirm('确定要清除所有连线吗？')) {
+                deviceConnections = [];
+                drawAllConnections();
+                showMiniToast('✅ 已清除所有连线');
+            }
+        }
+
+        // 显示连线使用提示
+        function showConnectionHint() {
+            // 移除旧提示
+            const oldHint = document.getElementById('connectionHint');
+            if (oldHint) oldHint.remove();
+
+            const hint = document.createElement('div');
+            hint.id = 'connectionHint';
+            hint.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 217, 255, 0.95);
+                color: #000;
+                padding: 24px 32px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                z-index: 200;
+                box-shadow: 0 8px 32px rgba(0, 217, 255, 0.5);
+                text-align: center;
+                pointer-events: none;
+                animation: fadeIn 0.3s ease;
+            `;
+            hint.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 12px;">🔗 连线模式已开启</div>
+                <div style="font-size: 14px; font-weight: normal; line-height: 1.6;">
+                    1️⃣ 点击第一个设备（起点）<br>
+                    2️⃣ 点击第二个设备（终点）<br>
+                    3️⃣ 自动创建连接线<br>
+                    <br>
+                    <span style="color: #1a1a1a;">💡 点击工具栏按钮关闭连线模式</span>
+                </div>
+            `;
+
+            // 添加淡入动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+                    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.getElementById('energyFlowCanvas').appendChild(hint);
+
+            // 3秒后自动淡出
+            setTimeout(() => {
+                if (hint && hint.parentNode) {
+                    hint.style.transition = 'opacity 0.5s ease';
+                    hint.style.opacity = '0';
+                    setTimeout(() => {
+                        if (hint && hint.parentNode) hint.remove();
+                    }, 500);
+                }
+            }, 3000);
+        }
+
+        // 隐藏连线提示
+        function hideConnectionHint() {
+            const hint = document.getElementById('connectionHint');
+            if (hint) {
+                hint.style.transition = 'opacity 0.3s ease';
+                hint.style.opacity = '0';
+                setTimeout(() => {
+                    if (hint && hint.parentNode) hint.remove();
+                }, 300);
+            }
+        }
+
+        // 清空所有设备
+        function clearAllDevices() {
+            if (!confirm('确定要清空所有设备和连接吗？此操作无法撤销！')) {
+                return;
+            }
+
+            placedDevices = [];
+            deviceConnections = [];
+            connectionStart = null;
+
+            renderPlacedDevices();
+            drawAllConnections();
+        }
+
+        // 水平对齐选中的设备
+        function alignDevicesHorizontal() {
+            if (!isEditMode) {
+                showMiniToast('⚠️ 请先进入编辑模式');
+                return;
+            }
+
+            const selectedDevices = document.querySelectorAll('.flow-device.selected');
+            if (selectedDevices.length < 2) {
+                showMiniToast('⚠️ 请先选中至少2个设备（按住Ctrl/Cmd点击多选）');
+                return;
+            }
+
+            // 获取所有选中设备的Y坐标，计算平均值
+            const deviceIds = Array.from(selectedDevices).map(el => el.dataset.deviceId);
+            const devices = placedDevices.filter(d => deviceIds.includes(d.id));
+
+            const avgY = devices.reduce((sum, d) => sum + (d.y || 0), 0) / devices.length;
+
+            // 将所有设备的Y坐标设置为平均值
+            devices.forEach(device => {
+                device.y = Math.round(avgY);
+            });
+
+            // 重新渲染
+            renderPlacedDevices();
+            drawAllConnections();
+
+            showMiniToast(`✅ 已水平对齐 ${devices.length} 个设备`);
+        }
+
+        // 垂直对齐选中的设备
+        function alignDevicesVertical() {
+            if (!isEditMode) {
+                showMiniToast('⚠️ 请先进入编辑模式');
+                return;
+            }
+
+            const selectedDevices = document.querySelectorAll('.flow-device.selected');
+            if (selectedDevices.length < 2) {
+                showMiniToast('⚠️ 请先选中至少2个设备（按住Ctrl/Cmd点击多选）');
+                return;
+            }
+
+            // 获取所有选中设备的X坐标，计算平均值
+            const deviceIds = Array.from(selectedDevices).map(el => el.dataset.deviceId);
+            const devices = placedDevices.filter(d => deviceIds.includes(d.id));
+
+            const avgX = devices.reduce((sum, d) => sum + (d.x || 0), 0) / devices.length;
+
+            // 将所有设备的X坐标设置为平均值
+            devices.forEach(device => {
+                device.x = Math.round(avgX);
+            });
+
+            // 重新渲染
+            renderPlacedDevices();
+            drawAllConnections();
+
+            showMiniToast(`✅ 已垂直对齐 ${devices.length} 个设备`);
+        }
+
+        // 连线拉直（转为直线模式）
+        function straightenConnections() {
+            if (!isEditMode) {
+                showMiniToast('⚠️ 请先进入编辑模式');
+                return;
+            }
+
+            if (deviceConnections.length === 0) {
+                showMiniToast('⚠️ 没有连线可以拉直');
+                return;
+            }
+
+            // 将所有连线转为直线模式
+            let changedCount = 0;
+            deviceConnections.forEach(conn => {
+                if (conn.pathMode !== 'straight' ||
+                    (conn.controlPoints && conn.controlPoints.length > 0)) {
+                    conn.pathMode = 'straight';
+                    conn.controlPoints = [];
+                    changedCount++;
+                }
+            });
+
+            if (changedCount === 0) {
+                showMiniToast('✅ 所有连线已经是直线');
+                return;
+            }
+
+            // 取消选中状态
+            selectedConnection = null;
+
+            // 重新绘制所有连线
+            drawAllConnections();
+
+            showMiniToast(`✅ 已拉直 ${changedCount} 条连线`);
+        }
+
+        // 居中显示画布内容
+        function centerCanvasContent() {
+            console.log('🎯 centerCanvasContent 被调用');
+
+            if (placedDevices.length === 0) {
+                console.log('⚠️ 没有设备，跳过居中');
+                return;
+            }
+
+            const canvas = document.getElementById('energyFlowCanvas');
+            const devicesContainer = document.getElementById('devicesContainer');
+
+            if (!canvas || !devicesContainer) {
+                console.log('❌ 画布元素未找到');
+                return;
+            }
+
+            // 计算所有设备的边界
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+
+            placedDevices.forEach(device => {
+                const x = device.x || 0;
+                const y = device.y || 0;
+                const width = 240; // 设备卡片宽度
+                const height = 200; // 设备卡片高度
+
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x + width);
+                maxY = Math.max(maxY, y + height);
+            });
+
+            console.log('📐 内容边界:', { minX, minY, maxX, maxY });
+
+            // 计算内容的宽高
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+
+            // 获取画布可视区域
+            const canvasWidth = canvas.clientWidth - 80; // 减去 padding
+            const canvasHeight = canvas.clientHeight - 80;
+
+            console.log('📏 画布尺寸:', { canvasWidth, canvasHeight });
+            console.log('📦 内容尺寸:', { contentWidth, contentHeight });
+
+            // 计算居中所需的偏移量
+            const offsetX = Math.max(0, (canvasWidth - contentWidth) / 2 - minX);
+            const offsetY = Math.max(0, (canvasHeight - contentHeight) / 2 - minY);
+
+            console.log('➡️ 偏移量:', { offsetX, offsetY });
+
+            // 应用偏移
+            if (offsetX > 0 || offsetY > 0) {
+                placedDevices.forEach(device => {
+                    if (offsetX > 0) device.x = (device.x || 0) + offsetX;
+                    if (offsetY > 0) device.y = (device.y || 0) + offsetY;
+                });
+
+                // 重新渲染
+                renderPlacedDevices();
+                drawAllConnections();
+
+                console.log('✅ 内容已居中');
+            } else {
+                console.log('ℹ️ 内容已经居中，无需调整');
+            }
+        }
+
+        // 应用网格布局（市电-光伏-储能柜）
+        function applyGridLayout() {
+            console.log('📐 应用网格布局');
+
+            // 获取画布尺寸
+            const container = document.getElementById('devicesContainer');
+            const canvasWidth = container.offsetWidth;
+            const canvasHeight = container.offsetHeight;
+
+            // 计算网格位置（左右两列布局）
+            const marginTop = 150; // 顶部边距
+            const marginLeft = 280; // 左边距
+            const marginRight = 280; // 右边距
+            const verticalSpacing = 280; // 垂直间距
+
+            const positions = {
+                utility: { x: marginLeft, y: marginTop }, // 左上：市电
+                solar: { x: canvasWidth - marginRight - 140, y: marginTop }, // 右上：光伏
+                storage: { x: canvasWidth - marginRight - 140, y: marginTop + verticalSpacing } // 右下：储能柜
+            };
+
+            // 清空现有设备和连线
+            placedDevices = [];
+            deviceConnections = [];
+
+            // 创建3个典型设备
+            const devices = [
+                {
+                    id: 'grid-utility',
+                    label: '市电',
+                    icon: '电网.png',
+                    desc: '380V 3相',
+                    category: 'power',
+                    x: positions.utility.x,
+                    y: positions.utility.y,
+                    voltage: 380.0,
+                    power: 0,
+                    current: 0,
+                    flowControl: 'bidirectional', // 市电双向
+                    displayParams: {
+                        power: { enabled: false, x: -80, y: -30 },
+                        voltage: { enabled: false, x: -80, y: 0 },
+                        current: { enabled: false, x: -80, y: 30 },
+                        soc: { enabled: false, x: -80, y: 60 }
+                    }
+                },
+                {
+                    id: 'grid-solar',
+                    label: '光伏',
+                    icon: '光伏.png',
+                    desc: '500KW',
+                    category: 'power',
+                    x: positions.solar.x,
+                    y: positions.solar.y,
+                    voltage: 380.0,
+                    power: 108.6,
+                    current: 285.8,
+                    flowControl: 'in', // 光伏输入
+                    displayParams: {
+                        power: { enabled: true, x: 160, y: -10 },
+                        voltage: { enabled: false, x: 160, y: 20 },
+                        current: { enabled: false, x: 160, y: 50 },
+                        soc: { enabled: false, x: 160, y: 80 }
+                    }
+                },
+                {
+                    id: 'grid-storage',
+                    label: '储能柜',
+                    icon: '储能柜.png',
+                    desc: '500KWh',
+                    category: 'storage',
+                    x: positions.storage.x,
+                    y: positions.storage.y,
+                    voltage: 380.0,
+                    power: 104.4,
+                    current: 274.7,
+                    soc: 85.0,
+                    flowControl: 'bidirectional', // 储能双向
+                    displayParams: {
+                        power: { enabled: true, x: 160, y: -10 },
+                        voltage: { enabled: false, x: 160, y: 20 },
+                        current: { enabled: false, x: 160, y: 50 },
+                        soc: { enabled: false, x: 160, y: 80 }
+                    }
+                }
+            ];
+
+            // 添加设备到画布
+            devices.forEach(device => {
+                placedDevices.push(device);
+            });
+
+            // 创建连线（能量流拓扑）
+            const connections = [
+                // 光伏 → 储能柜 (垂直)
+                { from: 'grid-solar', fromDirection: 'bottom', to: 'grid-storage', toDirection: 'top', controlPoints: [] },
+                // 市电 → 储能柜 (斜线)
+                { from: 'grid-utility', fromDirection: 'right', to: 'grid-storage', toDirection: 'left', controlPoints: [] }
+            ];
+
+            connections.forEach(conn => {
+                deviceConnections.push(conn);
+            });
+
+            // 渲染设备和连线
+            renderPlacedDevices();
+            drawAllConnections();
+
+            // 保存配置
+            saveToLocalStorage();
+
+            console.log('✅ 网格布局已应用');
+            console.log('设备数量:', placedDevices.length);
+            console.log('连线数量:', deviceConnections.length);
+
+            // 显示成功提示
+            showSuccessMessage('✅ 已应用能量流布局：市电 ⇄ 储能柜 ⇄ 光伏');
+        }
+
+        // 显示成功消息
+        function showSuccessMessage(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: #22c55e;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // 保存配置到localStorage
+        function saveFlowConfig() {
+            console.log('💾 saveFlowConfig 被调用');
+
+            // 按钮视觉反馈
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn) {
+                saveBtn.style.background = '#0099cc';
+                saveBtn.disabled = true;
+            }
+
+            if (!isEditMode) {
+                showMiniToast('请先进入编辑模式', 'warning');
+                if (saveBtn) {
+                    saveBtn.style.background = '';
+                    saveBtn.disabled = false;
+                }
+                return;
+            }
+
+            const config = {
+                placedDevices: placedDevices,
+                connections: deviceConnections,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const configStr = JSON.stringify(config);
+                console.log('📦 准备保存配置');
+                console.log('   - 数据大小:', configStr.length, '字节');
+                console.log('   - 设备数量:', placedDevices.length);
+                console.log('   - 连线数量:', deviceConnections.length);
+
+                localStorage.setItem('energyFlowConfig', configStr);
+
+                // 显示成功提示
+                showMiniToast(`保存成功 (${placedDevices.length} 个设备, ${deviceConnections.length} 条连线)`, 'success');
+                console.log('✅ 配置保存成功');
+
+                // 保存成功后跳转回仪表盘
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 800);
+
+            } catch (e) {
+                console.error('❌ 保存配置失败:', e);
+                showMiniToast('保存失败：' + e.message, 'error');
+                if (saveBtn) {
+                    saveBtn.style.background = '';
+                    saveBtn.disabled = false;
+                }
+            }
+        }
+
+        // 从localStorage加载配置
+        function loadFlowConfig() {
+            console.log('loadFlowConfig 被调用');
+
+            try {
+                const saved = localStorage.getItem('energyFlowConfig');
+                console.log('从 localStorage 读取数据:', saved ? '有数据' : '无数据');
+
+                if (saved) {
+                    const config = JSON.parse(saved);
+                    console.log('解析配置成功:', config);
+
+                    placedDevices = config.placedDevices || [];
+                    deviceConnections = config.connections || [];
+
+                    console.log('设备数量:', placedDevices.length);
+                    console.log('连线数量:', deviceConnections.length);
+
+                    renderPlacedDevices();
+                    drawAllConnections();
+
+                    const saveTime = new Date(config.timestamp).toLocaleString('zh-CN');
+                    showMiniToast(`✅ 配置加载成功！\n${placedDevices.length}个设备, ${deviceConnections.length}条连线\n保存时间: ${saveTime}`);
+                } else {
+                    showMiniToast('⚠️ 没有找到保存的配置');
+                }
+            } catch (e) {
+                console.error('加载配置失败:', e);
+                showMiniToast('❌ 加载失败：' + e.message);
+            }
+        }
+
+        // 初始化时加载保存的配置
+        function loadSavedConfig() {
+            try {
+                const saved = localStorage.getItem('energyFlowConfig');
+                if (saved) {
+                    const config = JSON.parse(saved);
+                    placedDevices = config.placedDevices || [];
+                    deviceConnections = config.connections || [];
+                }
+            } catch (e) {
+                console.error('自动加载配置失败:', e);
+            }
+        }
+
+        // 绘制连接线
+        function drawConnections() {
+            const svg = document.getElementById('energyConnections');
+            svg.innerHTML = '';
+
+            const layer1 = document.getElementById('layer1');
+            const layer2 = document.getElementById('layer2');
+            const layer3 = document.getElementById('layer3');
+
+            // 获取各层位置
+            const layer1Rect = layer1.getBoundingClientRect();
+            const layer2Rect = layer2.getBoundingClientRect();
+            const layer3Rect = layer3.getBoundingClientRect();
+            const containerRect = document.getElementById('energyFlowCanvas').getBoundingClientRect();
+
+            // 第一层设备到母线
+            const sources = layer1.querySelectorAll('.flow-device');
+            sources.forEach(source => {
+                const rect = source.getBoundingClientRect();
+                const x = rect.left + rect.width / 2 - containerRect.left;
+                const y1 = rect.bottom - containerRect.top;
+                const y2 = layer2Rect.top - containerRect.top;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x);
+                line.setAttribute('y2', y2);
+                line.setAttribute('class', 'flow-vline animated');
+                svg.appendChild(line);
+            });
+
+            // 第一条母线（连接电源层和汇流柜）
+            const busbar1Y = layer2Rect.top - containerRect.top;
+            const busbar1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            busbar1.setAttribute('x1', 100);
+            busbar1.setAttribute('y1', busbar1Y);
+            busbar1.setAttribute('x2', containerRect.width - 100);
+            busbar1.setAttribute('y2', busbar1Y);
+            busbar1.setAttribute('class', 'flow-busbar');
+            svg.appendChild(busbar1);
+
+            // 汇流柜到第二条母线
+            const busbarDevice = layer2.querySelector('.flow-busbar-device');
+            if (busbarDevice) {
+                const rect = busbarDevice.getBoundingClientRect();
+                const x = rect.left + rect.width / 2 - containerRect.left;
+                const y1 = rect.bottom - containerRect.top;
+                const y2 = layer3Rect.top - containerRect.top - 20;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x);
+                line.setAttribute('y2', y2);
+                line.setAttribute('class', 'flow-vline animated');
+                svg.appendChild(line);
+            }
+
+            // 第二条母线（连接汇流柜和PCS）
+            const busbar2Y = layer3Rect.top - containerRect.top - 20;
+            const busbar2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            busbar2.setAttribute('x1', 100);
+            busbar2.setAttribute('y1', busbar2Y);
+            busbar2.setAttribute('x2', containerRect.width - 100);
+            busbar2.setAttribute('y2', busbar2Y);
+            busbar2.setAttribute('class', 'flow-busbar');
+            svg.appendChild(busbar2);
+
+            // 母线到各个PCS/BMS组
+            const groups = layer3.querySelectorAll('.flow-pcs-bms-group');
+            groups.forEach(group => {
+                const pcs = group.querySelector('.flow-pcs-device');
+                const bms = group.querySelector('.flow-bms-device');
+
+                if (pcs && bms) {
+                    const pcsRect = pcs.getBoundingClientRect();
+                    const bmsRect = bms.getBoundingClientRect();
+                    const x = pcsRect.left + pcsRect.width / 2 - containerRect.left;
+
+                    // 母线到PCS
+                    const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line1.setAttribute('x1', x);
+                    line1.setAttribute('y1', busbar2Y);
+                    line1.setAttribute('x2', x);
+                    line1.setAttribute('y2', pcsRect.top - containerRect.top);
+                    line1.setAttribute('class', 'flow-vline animated');
+                    svg.appendChild(line1);
+
+                    // PCS到BMS
+                    const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line2.setAttribute('x1', x);
+                    line2.setAttribute('y1', pcsRect.bottom - containerRect.top);
+                    line2.setAttribute('x2', x);
+                    line2.setAttribute('y2', bmsRect.top - containerRect.top);
+                    line2.setAttribute('class', 'flow-vline animated');
+                    svg.appendChild(line2);
+                }
+            });
+        }
+
+        // 启动实时数据更新
+        function startEnergyFlowUpdates() {
+            setInterval(() => {
+                if (window.energyFlowInitialized && document.getElementById('energy-flow-container').style.display !== 'none') {
+                    // 更新电源功率
+                    flowData.sources.forEach(source => {
+                        if (source.power) {
+                            source.power = Math.max(50, source.power + (Math.random() - 0.5) * 10);
+                        }
+                    });
+
+                    // 更新BMS数据
+                    flowData.bms.forEach(bms => {
+                        bms.voltage = Math.max(370, Math.min(395, bms.voltage + (Math.random() - 0.5) * 2));
+                        bms.current = Math.max(80, Math.min(150, bms.current + (Math.random() - 0.5) * 5));
+                        bms.soc = Math.max(10, Math.min(100, bms.soc + (Math.random() - 0.5) * 1));
+                    });
+
+                    // 重新渲染（不重绘连接线以保持性能）
+                    renderLayer1();
+                    renderLayer4();
+                }
+            }, 3000);
+        }
+
+        // ==================== 能量流视图功能结束 ====================
+
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            initNavbar('energy-flow');
+            // 自动显示并初始化能量流
+            const container = document.getElementById('energy-flow-container');
+            if (container) {
+                container.style.display = 'block';
+                initEnergyFlow();
+                window.energyFlowInitialized = true;
+
+                // 应用编辑模式UI（因为isEditMode默认为true）
+                setTimeout(function() {
+                    applyEditModeUI();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

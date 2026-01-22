@@ -1,0 +1,643 @@
+/**
+ * 触摸屏系统国际化翻译文件
+ * 统一管理所有页面的中英文翻译
+ */
+
+const touchscreenTranslations = {
+    zh: {
+        // ========== 通用 ==========
+        systemTitle: '储能柜管理系统',
+        systemName: '储能柜管理系统',
+        confirmBtn: '确认',
+        cancelBtn: '取消',
+        closeBtn: '关闭',
+        saveBtn: '保存',
+        deleteBtn: '删除',
+        editBtn: '编辑',
+        addBtn: '添加',
+        searchBtn: '搜索',
+        resetBtn: '重置',
+        submitBtn: '提交',
+        backBtn: '返回',
+        nextBtn: '下一步',
+        prevBtn: '上一步',
+        loading: '加载中...',
+        noData: '暂无数据',
+        error: '错误',
+        success: '成功',
+        warning: '警告',
+        info: '提示',
+
+        // ========== 导航菜单 ==========
+        navHome: '首页',
+        navData: '数据',
+        navHistory: '历史',
+        navControl: '控制',
+        navAlarm: '告警',
+        navLog: '日志',
+        navSettings: '设置',
+
+        // ========== 登录页 ==========
+        loginTitle: '储能柜管理系统',
+        loginSubtitle: '请登录您的账户',
+        username: '用户名',
+        password: '密码',
+        login: '登录',
+        logout: '退出登录',
+        usernamePlaceholder: '请输入用户名',
+        passwordPlaceholder: '请输入密码',
+        rememberMe: '记住我',
+        forgotPassword: '忘记密码？',
+
+        // ========== 退出登录 ==========
+        logoutTitle: '确认退出',
+        logoutMessage: '您确定要退出登录吗？',
+        logoutCancel: '取消',
+        logoutConfirm: '确认退出',
+
+        // ========== 首页 ==========
+        homeTitle: '系统概览',
+        realTimeData: '实时数据',
+        energyFlow: '能量流向',
+        systemStatus: '系统状态',
+        todayStats: '今日统计',
+        homeRunningDays: '运行天数',
+        homeSystemPower: '系统功率',
+        homeTodayCharge: '今日充电',
+        homeTodayDischarge: '今日放电',
+        homeTotalCharge: '累计充电',
+        homeTotalDischarge: '累计放电',
+
+        // 实时数据卡片
+        totalPower: '总功率',
+        totalEnergy: '总电量',
+        gridPower: '电网功率',
+        pvPower: '光伏功率',
+        batteryPower: '电池功率',
+        loadPower: '负载功率',
+        soc: 'SOC',
+        voltage: '电压',
+        current: '电流',
+        temperature: '温度',
+        meter: '电表',
+        fire_protection: '消防',
+
+        // 状态
+        statusOnline: '在线',
+        statusOffline: '离线',
+        statusCharging: '充电中',
+        statusDischarging: '放电中',
+        statusStandby: '待机',
+        statusFault: '故障',
+        statusNormal: '正常',
+        statusError: '异常',
+
+        // 单位
+        unitKW: 'kW',
+        unitKWh: 'kWh',
+        unitV: 'V',
+        unitA: 'A',
+        unitC: '℃',
+        unitPercent: '%',
+        unitDay: '天',
+
+        // ========== 数据页 ==========
+        dataTitle: '数据监控',
+        realtimeData: '实时数据',
+        historicalData: '历史数据',
+        dataChart: '数据图表',
+        dataTable: '数据表格',
+        dataExport: '数据导出',
+        otaUpgrade: 'OTA升级',
+        timeRange: '时间范围',
+        selectTimeRange: '选择时间范围',
+        today: '今日',
+        yesterday: '昨日',
+        lastWeek: '近一周',
+        lastMonth: '近一月',
+        custom: '自定义',
+        startTime: '开始时间',
+        endTime: '结束时间',
+
+        // 数据项
+        powerData: '功率数据',
+        energyData: '电量数据',
+        voltageData: '电压数据',
+        currentData: '电流数据',
+        temperatureData: '温度数据',
+        socData: 'SOC数据',
+
+        // ========== 历史页 ==========
+        historyTitle: '历史记录',
+        historyData: '历史数据',
+        selectDate: '选择日期',
+        historyAlarm: '历史告警',
+        historyOperation: '操作记录',
+        historyExport: '导出历史',
+        filterByDate: '按日期筛选',
+        filterByType: '按类型筛选',
+        allTypes: '全部类型',
+
+        // ========== 控制页 ==========
+        controlTitle: '设备控制',
+        manualControl: '手动控制',
+        autoControl: '自动控制',
+        controlMode: '控制模式',
+        operationMode: '运行模式',
+        chargeMode: '充电模式',
+        dischargeMode: '放电模式',
+        standbyMode: '待机模式',
+        startCharge: '开始充电',
+        startDischarge: '开始放电',
+        stopOperation: '停止运行',
+        setPower: '设置功率',
+        setTarget: '设置目标',
+        powerLimit: '功率限制',
+        energyTarget: '电量目标',
+        controlConfirm: '确认执行此操作？',
+        controlSuccess: '控制指令已发送',
+        controlFailed: '控制指令发送失败',
+
+        // 控制模式
+        modeManual: '手动模式',
+        modeAuto: '自动模式',
+        modeSchedule: '定时模式',
+        modePeak: '削峰填谷',
+        modeEconomy: '经济模式',
+
+        // ========== 告警页 ==========
+        alarmTitle: '告警信息',
+        currentAlarm: '当前告警',
+        alarmHistory: '告警历史',
+        alarmLevel: '告警级别',
+        alarmType: '告警类型',
+        alarmTime: '告警时间',
+        alarmSource: '告警源',
+        alarmMessage: '告警信息',
+        alarmStatus: '告警状态',
+        alarmHandle: '处理告警',
+        alarmConfirm: '确认告警',
+        alarmIgnore: '忽略告警',
+        alarmResolved: '已解决',
+        alarmPending: '待处理',
+
+        // 告警级别
+        levelCritical: '严重',
+        levelMajor: '重要',
+        levelMinor: '次要',
+        levelWarning: '警告',
+        levelInfo: '信息',
+
+        // 告警类型
+        alarmTypeOverVoltage: '过压',
+        alarmTypeUnderVoltage: '欠压',
+        alarmTypeOverCurrent: '过流',
+        alarmTypeOverTemp: '过温',
+        alarmTypeCommunication: '通信故障',
+        alarmTypeBattery: '电池故障',
+        alarmTypeSystem: '系统故障',
+
+        // ========== 日志页 ==========
+        logTitle: '系统日志',
+        operationLog: '操作日志',
+        systemLog: '系统日志',
+        alarmLog: '告警日志',
+        eventLog: '事件日志',
+        logTime: '时间',
+        logType: '类型',
+        logUser: '用户',
+        logOperation: '操作',
+        logResult: '结果',
+        logDetail: '详情',
+        logExport: '导出日志',
+        logClear: '清空日志',
+
+        // 日志类型
+        logTypeLogin: '登录',
+        logTypeLogout: '退出',
+        logTypeControl: '控制',
+        logTypeSetting: '设置',
+        logTypeAlarm: '告警',
+        logTypeSystem: '系统',
+
+        // ========== 设置页 ==========
+        settingsTitle: '系统设置',
+        basicSettings: '基本设置',
+        systemSettings: '系统配置',
+        networkSettings: '网络设置',
+        alarmSettings: '告警设置',
+        displaySettings: '显示设置',
+        timeSettings: '时间设置',
+
+        // 基本设置
+        deviceName: '设备名称',
+        deviceLocation: '设备位置',
+        deviceCapacity: '设备容量',
+        installedDate: '安装日期',
+
+        // 系统配置
+        language: '语言',
+        theme: '主题',
+        timezone: '时区',
+        dateFormat: '日期格式',
+        timeFormat: '时间格式',
+
+        // 网络设置
+        ipAddress: 'IP地址',
+        subnetMask: '子网掩码',
+        gateway: '网关',
+        dnsServer: 'DNS服务器',
+
+        // 告警设置
+        enableAlarm: '启用告警',
+        alarmSound: '告警声音',
+        alarmEmail: '告警邮件',
+        alarmThreshold: '告警阈值',
+
+        // 显示设置
+        brightness: '亮度',
+        screenTimeout: '屏幕超时',
+        showAnimation: '显示动画',
+        autoRefresh: '自动刷新',
+        refreshInterval: '刷新间隔',
+
+        // ========== 其他 ==========
+        selectAll: '全选',
+        deselectAll: '取消全选',
+        delete: '删除',
+        deleteSelected: '删除选中',
+        deleteConfirm: '确认删除？',
+        operationSuccess: '操作成功',
+        operationFailed: '操作失败',
+        saveSuccess: '保存成功',
+        saveFailed: '保存失败',
+        networkError: '网络错误',
+        serverError: '服务器错误',
+        permissionDenied: '权限不足',
+        invalidInput: '输入无效',
+        requiredField: '必填项',
+    },
+
+    en: {
+        // ========== Common ==========
+        systemName: 'Energy Storage Cabinet System',
+        systemTitle: 'Energy Storage System',
+        confirmBtn: 'Confirm',
+        cancelBtn: 'Cancel',
+        closeBtn: 'Close',
+        saveBtn: 'Save',
+        deleteBtn: 'Delete',
+        editBtn: 'Edit',
+        addBtn: 'Add',
+        searchBtn: 'Search',
+        resetBtn: 'Reset',
+        submitBtn: 'Submit',
+        backBtn: 'Back',
+        nextBtn: 'Next',
+        prevBtn: 'Previous',
+        loading: 'Loading...',
+        noData: 'No Data',
+        error: 'Error',
+        success: 'Success',
+        warning: 'Warning',
+        info: 'Info',
+
+        // ========== Navigation ==========
+        navHome: 'Home',
+        navData: 'Data',
+        navHistory: 'History',
+        navControl: 'Control',
+        navAlarm: 'Alarm',
+        navLog: 'Log',
+        navSettings: 'Settings',
+
+        // ========== Login ==========
+        loginTitle: 'Energy Storage Cabinet System',
+        loginSubtitle: 'Please login to your account',
+        username: 'Username',
+        password: 'Password',
+        login: 'Login',
+        logout: 'Logout',
+        usernamePlaceholder: 'Enter your username',
+        passwordPlaceholder: 'Enter your password',
+        rememberMe: 'Remember me',
+        forgotPassword: 'Forgot password?',
+
+        // ========== Logout ==========
+        logoutTitle: 'Confirm Logout',
+        logoutMessage: 'Are you sure you want to logout?',
+        logoutCancel: 'Cancel',
+        logoutConfirm: 'Confirm Logout',
+
+        // ========== Home ==========
+        homeTitle: 'System Overview',
+        realTimeData: 'Real-time Data',
+        energyFlow: 'Energy Flow',
+        systemStatus: 'System Status',
+        todayStats: 'Today Statistics',
+        homeRunningDays: 'Running Days',
+        homeSystemPower: 'System Power',
+        homeTodayCharge: 'Today Charge',
+        homeTodayDischarge: 'Today Discharge',
+        homeTotalCharge: 'Total Charge',
+        homeTotalDischarge: 'Total Discharge',
+
+        // Real-time data cards
+        totalPower: 'Total Power',
+        totalEnergy: 'Total Energy',
+        gridPower: 'Grid Power',
+        pvPower: 'PV Power',
+        batteryPower: 'Battery Power',
+        loadPower: 'Load Power',
+        soc: 'SOC',
+        voltage: 'Voltage',
+        current: 'Current',
+        temperature: 'Temperature',
+        meter: 'Meter',
+        fire_protection: 'Fire Protection',
+
+        // Status
+        statusOnline: 'Online',
+        statusOffline: 'Offline',
+        statusCharging: 'Charging',
+        statusDischarging: 'Discharging',
+        statusStandby: 'Standby',
+        statusFault: 'Fault',
+        statusNormal: 'Normal',
+        statusError: 'Error',
+
+        // Units
+        unitKW: 'kW',
+        unitKWh: 'kWh',
+        unitV: 'V',
+        unitA: 'A',
+        unitC: '℃',
+        unitPercent: '%',
+        unitDay: 'Day',
+
+        // ========== Data ==========
+        dataTitle: 'Data Monitoring',
+        realtimeData: 'Real-time Data',
+        historicalData: 'Historical Data',
+        dataChart: 'Data Chart',
+        dataTable: 'Data Table',
+        dataExport: 'Export Data',
+        otaUpgrade: 'OTA Upgrade',
+        timeRange: 'Time Range',
+        selectTimeRange: 'Select Time Range',
+        today: 'Today',
+        yesterday: 'Yesterday',
+        lastWeek: 'Last Week',
+        lastMonth: 'Last Month',
+        custom: 'Custom',
+        startTime: 'Start Time',
+        endTime: 'End Time',
+
+        // Data items
+        powerData: 'Power Data',
+        energyData: 'Energy Data',
+        voltageData: 'Voltage Data',
+        currentData: 'Current Data',
+        temperatureData: 'Temperature Data',
+        socData: 'SOC Data',
+
+        // ========== History ==========
+        historyTitle: 'History',
+        historyData: 'Historical Data',
+        selectDate: 'Select Date',
+        historyAlarm: 'Alarm History',
+        historyOperation: 'Operation History',
+        historyExport: 'Export History',
+        filterByDate: 'Filter by Date',
+        filterByType: 'Filter by Type',
+        allTypes: 'All Types',
+
+        // ========== Control ==========
+        controlTitle: 'Device Control',
+        manualControl: 'Manual Control',
+        autoControl: 'Auto Control',
+        controlMode: 'Control Mode',
+        operationMode: 'Operation Mode',
+        chargeMode: 'Charge Mode',
+        dischargeMode: 'Discharge Mode',
+        standbyMode: 'Standby Mode',
+        startCharge: 'Start Charge',
+        startDischarge: 'Start Discharge',
+        stopOperation: 'Stop Operation',
+        setPower: 'Set Power',
+        setTarget: 'Set Target',
+        powerLimit: 'Power Limit',
+        energyTarget: 'Energy Target',
+        controlConfirm: 'Confirm this operation?',
+        controlSuccess: 'Control command sent',
+        controlFailed: 'Control command failed',
+
+        // Control modes
+        modeManual: 'Manual Mode',
+        modeAuto: 'Auto Mode',
+        modeSchedule: 'Schedule Mode',
+        modePeak: 'Peak Shaving',
+        modeEconomy: 'Economy Mode',
+
+        // ========== Alarm ==========
+        alarmTitle: 'Alarm Information',
+        currentAlarm: 'Current Alarms',
+        alarmHistory: 'Alarm History',
+        alarmLevel: 'Alarm Level',
+        alarmType: 'Alarm Type',
+        alarmTime: 'Alarm Time',
+        alarmSource: 'Alarm Source',
+        alarmMessage: 'Alarm Message',
+        alarmStatus: 'Alarm Status',
+        alarmHandle: 'Handle Alarm',
+        alarmConfirm: 'Confirm Alarm',
+        alarmIgnore: 'Ignore Alarm',
+        alarmResolved: 'Resolved',
+        alarmPending: 'Pending',
+
+        // Alarm levels
+        levelCritical: 'Critical',
+        levelMajor: 'Major',
+        levelMinor: 'Minor',
+        levelWarning: 'Warning',
+        levelInfo: 'Info',
+
+        // Alarm types
+        alarmTypeOverVoltage: 'Over Voltage',
+        alarmTypeUnderVoltage: 'Under Voltage',
+        alarmTypeOverCurrent: 'Over Current',
+        alarmTypeOverTemp: 'Over Temperature',
+        alarmTypeCommunication: 'Communication Fault',
+        alarmTypeBattery: 'Battery Fault',
+        alarmTypeSystem: 'System Fault',
+
+        // ========== Log ==========
+        logTitle: 'System Log',
+        operationLog: 'Operation Log',
+        systemLog: 'System Log',
+        alarmLog: 'Alarm Log',
+        eventLog: 'Event Log',
+        logTime: 'Time',
+        logType: 'Type',
+        logUser: 'User',
+        logOperation: 'Operation',
+        logResult: 'Result',
+        logDetail: 'Detail',
+        logExport: 'Export Log',
+        logClear: 'Clear Log',
+
+        // Log types
+        logTypeLogin: 'Login',
+        logTypeLogout: 'Logout',
+        logTypeControl: 'Control',
+        logTypeSetting: 'Setting',
+        logTypeAlarm: 'Alarm',
+        logTypeSystem: 'System',
+
+        // ========== Settings ==========
+        settingsTitle: 'System Settings',
+        basicSettings: 'Basic Settings',
+        systemSettings: 'System Configuration',
+        networkSettings: 'Network Settings',
+        alarmSettings: 'Alarm Settings',
+        displaySettings: 'Display Settings',
+        timeSettings: 'Time Settings',
+
+        // Basic settings
+        deviceName: 'Device Name',
+        deviceLocation: 'Device Location',
+        deviceCapacity: 'Device Capacity',
+        installedDate: 'Installed Date',
+
+        // System configuration
+        language: 'Language',
+        theme: 'Theme',
+        timezone: 'Timezone',
+        dateFormat: 'Date Format',
+        timeFormat: 'Time Format',
+
+        // Network settings
+        ipAddress: 'IP Address',
+        subnetMask: 'Subnet Mask',
+        gateway: 'Gateway',
+        dnsServer: 'DNS Server',
+
+        // Alarm settings
+        enableAlarm: 'Enable Alarm',
+        alarmSound: 'Alarm Sound',
+        alarmEmail: 'Alarm Email',
+        alarmThreshold: 'Alarm Threshold',
+
+        // Display settings
+        brightness: 'Brightness',
+        screenTimeout: 'Screen Timeout',
+        showAnimation: 'Show Animation',
+        autoRefresh: 'Auto Refresh',
+        refreshInterval: 'Refresh Interval',
+
+        // ========== Others ==========
+        selectAll: 'Select All',
+        deselectAll: 'Deselect All',
+        delete: 'Delete',
+        deleteSelected: 'Delete Selected',
+        deleteConfirm: 'Confirm delete?',
+        operationSuccess: 'Operation successful',
+        operationFailed: 'Operation failed',
+        saveSuccess: 'Save successful',
+        saveFailed: 'Save failed',
+        networkError: 'Network error',
+        serverError: 'Server error',
+        permissionDenied: 'Permission denied',
+        invalidInput: 'Invalid input',
+        requiredField: 'Required field',
+    }
+};
+
+// 获取当前语言
+function getTouchscreenLang() {
+    return localStorage.getItem('touchscreen_language') || 'en';
+}
+
+// 设置语言
+function setTouchscreenLang(lang) {
+    localStorage.setItem('touchscreen_language', lang);
+}
+
+// 获取翻译文本
+function t(key) {
+    const lang = getTouchscreenLang();
+    return touchscreenTranslations[lang][key] || key;
+}
+
+// 应用翻译到页面
+function applyTouchscreenTranslations() {
+    const lang = getTouchscreenLang();
+
+    // 更新所有带有 data-i18n 属性的元素
+    document.querySelectorAll('[data-i18n]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        const translation = touchscreenTranslations[lang][key];
+        if (translation) {
+            elem.textContent = translation;
+        }
+    });
+
+    // 更新所有带有 data-i18n-placeholder 属性的输入框
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n-placeholder');
+        const translation = touchscreenTranslations[lang][key];
+        if (translation) {
+            elem.placeholder = translation;
+        }
+    });
+
+    // 更新所有带有 data-i18n-title 属性的元素
+    document.querySelectorAll('[data-i18n-title]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n-title');
+        const translation = touchscreenTranslations[lang][key];
+        if (translation) {
+            elem.title = translation;
+        }
+    });
+
+    // 更新页面标题
+    const titleKey = document.body.getAttribute('data-page-title');
+    if (titleKey) {
+        document.title = touchscreenTranslations[lang][titleKey] || document.title;
+    }
+
+    // 更新HTML lang属性
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+}
+
+// 切换语言
+function switchTouchscreenLanguage(lang) {
+    setTouchscreenLang(lang);
+    applyTouchscreenTranslations();
+
+    // 更新语言切换器的激活状态
+    document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+    });
+
+    // 触发自定义事件，通知其他组件语言已切换
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    const currentLang = getTouchscreenLang();
+
+    // HTML默认是英文，只有当前语言是中文时才需要翻译
+    // 英文环境下不需要翻译，避免闪动
+    if (currentLang === 'zh') {
+        // 需要切换到中文
+        applyTouchscreenTranslations();
+    }
+    // 如果是英文，HTML已经是英文，无需操作
+
+    // 初始化语言切换器状态
+    document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+    });
+});

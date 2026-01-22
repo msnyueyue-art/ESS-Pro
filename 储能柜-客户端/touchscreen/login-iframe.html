@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>储能柜管理系统 - 登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+
+        /* 背景动画效果 */
+        .bg-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(30, 144, 255, 0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+            top: -50%;
+            left: -50%;
+        }
+
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 登录容器 */
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 480px;
+            padding: 60px 50px;
+            position: relative;
+            z-index: 1;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        /* Logo和标题 */
+        .login-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: white;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(30, 144, 255, 0.3);
+            padding: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .login-title {
+            font-size: 28px;
+            color: #1a1a1a;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        /* 表单样式 */
+        .login-form {
+            margin-top: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1e90ff;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(30, 144, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #aaa;
+        }
+
+        /* 输入框图标 */
+        .input-icon {
+            position: absolute;
+            right: 20px;
+            top: 50px;
+            color: #999;
+            pointer-events: none;
+        }
+
+        /* 登录按钮 */
+        .login-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #1e90ff 0%, #00bfff 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(30, 144, 255, 0.3);
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(30, 144, 255, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        /* 错误消息 */
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .login-button.loading .button-text {
+            display: none;
+        }
+
+        .login-button.loading .loading {
+            display: inline-block;
+        }
+
+        /* 粒子效果 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #00d4ff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 10s infinite, particleShake 3s ease-in-out infinite;
+            box-shadow: 0 0 6px #00d4ff;
+            filter: blur(0.5px);
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0.5);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.3;
+                transform: translateY(95vh) translateX(10px) scale(0.8);
+            }
+            10% {
+                opacity: 0.6;
+                transform: translateY(90vh) translateX(-5px) scale(1);
+            }
+            15% {
+                transform: translateY(85vh) translateX(15px) scale(1.1);
+            }
+            25% {
+                transform: translateY(75vh) translateX(-10px) scale(0.9);
+                opacity: 0.8;
+            }
+            35% {
+                transform: translateY(65vh) translateX(20px) scale(1.2);
+            }
+            45% {
+                transform: translateY(55vh) translateX(-15px) scale(0.8);
+                opacity: 0.7;
+            }
+            55% {
+                transform: translateY(45vh) translateX(25px) scale(1.1);
+            }
+            65% {
+                transform: translateY(35vh) translateX(-20px) scale(0.9);
+                opacity: 0.6;
+            }
+            75% {
+                transform: translateY(25vh) translateX(30px) scale(1.3);
+            }
+            85% {
+                transform: translateY(15vh) translateX(-25px) scale(0.7);
+                opacity: 0.4;
+            }
+            95% {
+                transform: translateY(5vh) translateX(35px) scale(0.5);
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(40px) scale(0.3);
+                opacity: 0;
+            }
+        }
+
+        /* 粒子微震动效果 */
+        @keyframes particleShake {
+            0%, 100% {
+                transform: translateX(0px) translateY(0px);
+            }
+            10% {
+                transform: translateX(-1px) translateY(1px);
+            }
+            20% {
+                transform: translateX(1px) translateY(-1px);
+            }
+            30% {
+                transform: translateX(-1px) translateY(-1px);
+            }
+            40% {
+                transform: translateX(1px) translateY(1px);
+            }
+            50% {
+                transform: translateX(-1px) translateY(0px);
+            }
+            60% {
+                transform: translateX(1px) translateY(-1px);
+            }
+            70% {
+                transform: translateX(0px) translateY(1px);
+            }
+            80% {
+                transform: translateX(-1px) translateY(1px);
+            }
+            90% {
+                transform: translateX(1px) translateY(0px);
+            }
+        }
+
+        /* 粒子闪烁效果 */
+        @keyframes particleTwinkle {
+            0%, 100% {
+                box-shadow: 0 0 6px #00d4ff;
+                filter: blur(0.5px);
+            }
+            25% {
+                box-shadow: 0 0 10px #00d4ff, 0 0 20px #00d4ff;
+                filter: blur(0.2px);
+            }
+            50% {
+                box-shadow: 0 0 4px #00d4ff;
+                filter: blur(0.8px);
+            }
+            75% {
+                box-shadow: 0 0 12px #00d4ff, 0 0 15px #00d4ff;
+                filter: blur(0.3px);
+            }
+        }
+
+        /* 粒子旋转微动 */
+        @keyframes particleRotate {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            75% { transform: rotate(270deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        /* 粒子呼吸效果 */
+        @keyframes particlePulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: scale(1.5);
+                opacity: 0.9;
+            }
+        }
+
+
+        /* 语言切换 */
+        .language-switch {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 10;
+        }
+
+        .lang-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            font-size: 20px;
+        }
+
+        .lang-icon:hover {
+            background: white;
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            min-width: 160px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .lang-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .lang-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .lang-option:hover {
+            background: #f0f7ff;
+            color: #1e90ff;
+        }
+
+        .lang-option.active {
+            background: #e8f4ff;
+            color: #1e90ff;
+            font-weight: 600;
+        }
+
+        .lang-flag {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景动画 -->
+    <div class="bg-animation"></div>
+
+    <!-- 粒子效果 -->
+    <div class="particles" id="particles"></div>
+
+    <!-- 语言切换 -->
+    <div class="language-switch">
+        <div class="lang-icon" onclick="toggleLanguageDropdown()">🌐</div>
+        <div class="lang-dropdown" id="langDropdown">
+            <div class="lang-option active" onclick="switchLanguage('zh')">
+                <span class="lang-flag">🇨🇳</span>
+                <span>中文</span>
+            </div>
+            <div class="lang-option" onclick="switchLanguage('en')">
+                <span class="lang-flag">🇺🇸</span>
+                <span>English</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录容器 -->
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">
+                <img src="logo.png" alt="储能柜管理系统" onerror="this.style.display='none'">
+            </div>
+            <h1 class="login-title" data-lang="title">储能柜管理系统</h1>
+            <p class="login-subtitle" data-lang="subtitle">请登录您的账户</p>
+        </div>
+
+        <form class="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label" data-lang="username">用户名</label>
+                <input type="text" class="form-input" id="username" placeholder="请输入用户名">
+                <span class="input-icon">👤</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" data-lang="password">密码</label>
+                <input type="password" class="form-input" id="password" placeholder="请输入密码">
+                <span class="input-icon">🔐</span>
+            </div>
+
+            <button type="submit" class="login-button">
+                <span class="button-text" data-lang="login">登录</span>
+                <span class="loading"></span>
+            </button>
+
+            <div class="error-message" id="errorMessage"></div>
+        </form>
+    </div>
+
+    <script>
+        // 创建粒子效果
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 25;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // 随机起始位置
+                particle.style.left = Math.random() * 100 + '%';
+                
+                // 随机延迟
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                
+                // 随机持续时间
+                particle.style.animationDuration = (12 + Math.random() * 8) + 's';
+                
+                // 随机大小
+                const size = 2 + Math.random() * 3;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // 随机发光强度
+                const glowIntensity = 4 + Math.random() * 8;
+                particle.style.boxShadow = `0 0 ${glowIntensity}px #00d4ff`;
+                
+                // 随机颜色变化
+                const blueVariations = ['#00d4ff', '#00bfff', '#1e90ff', '#00ffff', '#87ceeb'];
+                particle.style.background = blueVariations[Math.floor(Math.random() * blueVariations.length)];
+                
+                // 随机动画组合
+                const animations = ['particleFloat'];
+                
+                // 随机添加微震动
+                if (Math.random() > 0.6) {
+                    animations.push('particleShake');
+                }
+                
+                // 随机添加闪烁效果
+                if (Math.random() > 0.7) {
+                    animations.push('particleTwinkle');
+                }
+                
+                // 随机添加旋转效果
+                if (Math.random() > 0.8) {
+                    animations.push('particleRotate');
+                }
+                
+                // 随机添加呼吸效果
+                if (Math.random() > 0.6) {
+                    animations.push('particlePulse');
+                }
+                
+                particle.style.animationName = animations.join(', ');
+                
+                // 为每个动画设置随机时长
+                const durations = [particle.style.animationDuration];
+                const delays = [particle.style.animationDelay];
+                
+                if (animations.includes('particleShake')) {
+                    durations.push((2 + Math.random() * 4) + 's');
+                    delays.push(Math.random() * 3 + 's');
+                }
+                if (animations.includes('particleTwinkle')) {
+                    durations.push((3 + Math.random() * 5) + 's');
+                    delays.push(Math.random() * 4 + 's');
+                }
+                if (animations.includes('particleRotate')) {
+                    durations.push((8 + Math.random() * 10) + 's');
+                    delays.push(Math.random() * 6 + 's');
+                }
+                if (animations.includes('particlePulse')) {
+                    durations.push((4 + Math.random() * 6) + 's');
+                    delays.push(Math.random() * 5 + 's');
+                }
+                
+                particle.style.animationDuration = durations.join(', ');
+                particle.style.animationDelay = delays.join(', ');
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 初始化粒子效果
+        createParticles();
+
+        // 语言配置
+        const translations = {
+            zh: {
+                title: '储能柜管理系统',
+                subtitle: '请登录您的账户',
+                username: '用户名',
+                password: '密码',
+                login: '登录',
+                usernamePlaceholder: '请输入用户名',
+                passwordPlaceholder: '请输入密码',
+                errorEmpty: '请输入用户名和密码',
+                errorInvalid: '用户名或密码错误',
+                errorNetwork: '网络连接失败，请重试'
+            },
+            en: {
+                title: 'Energy Storage Cabinet System',
+                subtitle: 'Please login to your account',
+                username: 'Username',
+                password: 'Password',
+                login: 'Login',
+                usernamePlaceholder: 'Enter your username',
+                passwordPlaceholder: 'Enter your password',
+                errorEmpty: 'Please enter username and password',
+                errorInvalid: 'Invalid username or password',
+                errorNetwork: 'Network connection failed, please retry'
+            }
+        };
+
+        let currentLang = 'zh';
+
+        // 显示/隐藏语言下拉菜单
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            const languageSwitch = document.querySelector('.language-switch');
+            if (!languageSwitch.contains(e.target)) {
+                document.getElementById('langDropdown').classList.remove('show');
+            }
+        });
+
+        // 切换语言
+        function switchLanguage(lang) {
+            currentLang = lang;
+            
+            // 更新选中状态
+            document.querySelectorAll('.lang-option').forEach(option => {
+                const isZh = option.textContent.includes('中文');
+                option.classList.toggle('active', (lang === 'zh' && isZh) || (lang === 'en' && !isZh));
+            });
+
+            // 更新文本
+            document.querySelectorAll('[data-lang]').forEach(elem => {
+                const key = elem.getAttribute('data-lang');
+                elem.textContent = translations[lang][key];
+            });
+
+            // 更新输入框占位符
+            document.getElementById('username').placeholder = translations[lang].usernamePlaceholder;
+            document.getElementById('password').placeholder = translations[lang].passwordPlaceholder;
+
+            // 关闭下拉菜单
+            document.getElementById('langDropdown').classList.remove('show');
+        }
+
+        // 处理登录
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const button = event.target.querySelector('.login-button');
+
+            // 显示加载状态
+            button.classList.add('loading');
+            button.disabled = true;
+
+            // 直接登录，不进行校验
+            setTimeout(() => {
+                // 保存登录状态到sessionStorage
+                sessionStorage.setItem('touchscreen_user', username || 'guest');
+                
+                // 通知父窗口登录成功
+                if (window.parent !== window) {
+                    window.parent.postMessage({type: 'login_success', user: username || 'guest'}, '*');
+                } else {
+                    // 如果不在iframe中，跳转到index页面
+                    window.location.href = 'index.html';
+                }
+            }, 500);
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

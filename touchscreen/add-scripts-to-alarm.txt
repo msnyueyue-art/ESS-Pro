@@ -1,0 +1,7 @@
+需要在 alarm.html 的 </body> 标签前添加:
+
+    <!-- 页面过渡效果 -->
+    <link rel="stylesheet" href="page-transition.css">
+    <script src="page-transition.js"></script>
+    <script src="touchscreen-i18n.js"></script>
+    <script src="common-header-scripts.js"></script>

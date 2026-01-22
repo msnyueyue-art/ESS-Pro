@@ -1,0 +1,421 @@
+// 需要添加到 common.js 的翻译键
+
+// 中文翻译 (添加到 translations.zh 中)
+const zhTranslations = {
+    // ===== 组名翻译 (32个) =====
+    exportGroupDCParams: '直流侧参数',
+    exportGroupACParams: '交流侧参数',
+    exportGroupThreePhaseVoltage: '三相电压',
+    exportGroupThreePhaseCurrent: '三相电流',
+    exportGroupElectricalParams: '整体电气参数',
+    exportGroupElectricalQuality: '电能质量',
+    exportGroupElectricalData: '电能数据',
+    exportGroupCellVoltage: '单体电压',
+    exportGroupBatteryTemp: '电池温度',
+    exportGroupPackInfo: 'Pack簇信息',
+    exportGroupProtectionStatus: '保护状态',
+    exportGroupAlarmThresholds: '告警阈值',
+    exportGroupDispatchCmd: '调度指令',
+    exportGroupRunningStrategy: '运行策略',
+    exportGroupPowerControl: '功率控制',
+    exportGroupEconomicData: '经济数据',
+    exportGroupEnvironmentTemp: '环境温度',
+    exportGroupAmbientTemp: '室内温度',
+    exportGroupTempMonitoring: '温度监测',
+    exportGroupThermalMgmt: '热管理',
+    exportGroupAirConditioning: '空调系统',
+    exportGroupSmokeDetection: '烟感探测',
+    exportGroupTempDetection: '温感探测',
+    exportGroupGasMonitoring: '气体监测',
+    exportGroupAlarmInfo: '告警信息',
+    exportGroupFireSuppression: '灭火系统',
+    exportGroupInterlock: '联动控制',
+
+    // ===== 标签翻译 (161个，分类组织) =====
+
+    // 基础信息类
+    exportLabelEMSId: 'EMS设备ID',
+    exportLabelEMSStatus: 'EMS运行状态',
+    exportLabelPCSId: 'PCS设备ID',
+    exportLabelPCSStatus: 'PCS运行状态',
+    exportLabelBMSId: 'BMS设备ID',
+    exportLabelBMSStatus: 'BMS运行状态',
+    exportLabelMeterId: '电表设备ID',
+    exportLabelMeterType: '电表类型',
+    exportLabelThermalSystemId: '温控系统ID',
+    exportLabelFireSystemId: '消防系统ID',
+    exportLabelFaultCode: '故障代码',
+    exportLabelFaultLevel: '故障等级',
+    exportLabelCommStatus: '通信状态',
+    exportLabelSensorCount: '传感器数量',
+    exportLabelSelfCheckStatus: '自检状态',
+
+    // 直流侧参数
+    exportLabelDCVoltage: 'DC电压 (V)',
+    exportLabelDCCurrent: 'DC电流 (A)',
+    exportLabelDCPower: 'DC功率 (kW)',
+
+    // 交流侧参数
+    exportLabelACVoltageA: 'AC电压-A相 (V)',
+    exportLabelACVoltageB: 'AC电压-B相 (V)',
+    exportLabelACVoltageC: 'AC电压-C相 (V)',
+    exportLabelACCurrentA: 'AC电流-A相 (A)',
+    exportLabelACCurrentB: 'AC电流-B相 (A)',
+    exportLabelACCurrentC: 'AC电流-C相 (A)',
+    exportLabelFrequency: '频率 (Hz)',
+
+    // 三相电压/电流
+    exportLabelPhaseAVoltage: 'A相电压 (V)',
+    exportLabelPhaseBVoltage: 'B相电压 (V)',
+    exportLabelPhaseCVoltage: 'C相电压 (V)',
+    exportLabelPhaseACurrent: 'A相电流 (A)',
+    exportLabelPhaseBCurrent: 'B相电流 (A)',
+    exportLabelPhaseCCurrent: 'C相电流 (A)',
+    exportLabelLineVoltageAB: 'AB线电压 (V)',
+    exportLabelLineVoltageBC: 'BC线电压 (V)',
+    exportLabelLineVoltageCA: 'CA线电压 (V)',
+    exportLabelNeutralCurrent: '零线电流 (A)',
+
+    // 功率数据
+    exportLabelTotalActivePower: '总有功功率 (kW)',
+    exportLabelTotalReactivePower: '总无功功率 (kVar)',
+    exportLabelTotalApparentPower: '总视在功率 (kVA)',
+    exportLabelTotalPowerFactor: '总功率因数',
+    exportLabelPhaseAPowerFactor: 'A相功率因数',
+    exportLabelPhaseBPowerFactor: 'B相功率因数',
+    exportLabelPhaseCPowerFactor: 'C相功率因数',
+    exportLabelPhaseActivePowerA: 'A相有功功率 (kW)',
+    exportLabelPhaseActivePowerB: 'B相有功功率 (kW)',
+    exportLabelPhaseActivePowerC: 'C相有功功率 (kW)',
+    exportLabelChargePower: '充电功率 (kW)',
+    exportLabelDischargePower: '放电功率 (kW)',
+    exportLabelGridPower: '电网功率 (kW)',
+    exportLabelLoadPower: '负载功率 (kW)',
+    exportLabelPVPower: '光伏功率 (kW)',
+
+    // 电能统计
+    exportLabelForwardActiveEnergy: '正向有功总电能 (kWh)',
+    exportLabelReverseActiveEnergy: '反向有功总电能 (kWh)',
+    exportLabelForwardReactiveEnergy: '正向无功总电能 (kVarh)',
+    exportLabelReverseReactiveEnergy: '反向无功总电能 (kVarh)',
+    exportLabelCumulativeRevenue: '累计收益 (元)',
+    exportLabelTodayRevenue: '今日收益 (元)',
+    exportLabelCurrentPrice: '当前电价 (元/kWh)',
+
+    // 电池参数
+    exportLabelTotalVoltage: '总电压 (V)',
+    exportLabelTotalCurrent: '总电流 (A)',
+    exportLabelAverageVoltage: '平均单体电压 (V)',
+    exportLabelMaxCellVoltage: '最高单体电压 (V)',
+    exportLabelMinCellVoltage: '最低单体电压 (V)',
+    exportLabelMaxCellNum: '最高电压单体号',
+    exportLabelMinCellNum: '最低电压单体号',
+    exportLabelVoltageDiff: '压差 (mV)',
+    exportLabelAverageTemp: '平均温度 (°C)',
+    exportLabelMaxTemp: '最高温度 (°C)',
+    exportLabelMinTemp: '最低温度 (°C)',
+    exportLabelMaxTempProbe: '最高温度探头号',
+    exportLabelMinTempProbe: '最低温度探头号',
+    exportLabelTempDiff: '温差 (°C)',
+    exportLabelBatteryAvgTemp: '电池平均温度 (°C)',
+    exportLabelBatteryMaxTemp: '电池最高温度 (°C)',
+    exportLabelBatteryMinTemp: '电池最低温度 (°C)',
+    exportLabelBatteryTempDiff: '电池温差 (°C)',
+    exportLabelRemainingCapacity: '剩余容量 (Ah)',
+    exportLabelCycleCount: '循环次数',
+
+    // Pack簇信息
+    exportLabelPackCount: 'Pack簇数量',
+    exportLabelPack1Voltage: 'Pack1电压 (V)',
+    exportLabelPack1Current: 'Pack1电流 (A)',
+    exportLabelPack1SOC: 'Pack1 SOC (%)',
+    exportLabelPack1MaxTemp: 'Pack1最高温度 (°C)',
+
+    // 保护状态
+    exportLabelChargeOVProtection: '充电过压保护',
+    exportLabelChargeOCProtection: '充电过流保护',
+    exportLabelDischargeUVProtection: '放电欠压保护',
+    exportLabelDischargeOCProtection: '放电过流保护',
+    exportLabelHighTempProtection: '过温保护',
+    exportLabelLowTempProtection: '低温保护',
+
+    // 告警阈值
+    exportLabelHighTempThreshold: '高温告警阈值 (°C)',
+    exportLabelLowTempThreshold: '低温告警阈值 (°C)',
+    exportLabelTempDiffThreshold: '温差告警阈值 (°C)',
+
+    // 调度指令
+    exportLabelDispatchMode: '调度模式',
+    exportLabelTargetPower: '目标功率 (kW)',
+    exportLabelTargetSOC: '目标SOC (%)',
+    exportLabelControlStrategy: '控制策略',
+    exportLabelPowerLimit: '功率限制 (kW)',
+
+    // 运行策略
+    exportLabelPeakShaving: '削峰填谷状态',
+    exportLabelFrequencyRegulation: '调频服务',
+    exportLabelDemandResponse: '需求响应',
+
+    // 温控系统
+    exportLabelIndoorTemp: '室内温度 (°C)',
+    exportLabelOutdoorTemp: '室外温度 (°C)',
+    exportLabelInletTemp: '柜体进风温度 (°C)',
+    exportLabelOutletTemp: '柜体出风温度 (°C)',
+    exportLabelACPower: '空调功率 (kW)',
+    exportLabelACStatus: '空调运行状态',
+    exportLabelACSetTemp: '空调设定温度 (°C)',
+    exportLabelFanSpeed: '风机转速 (rpm)',
+    exportLabelCoolingStatus: '制冷状态',
+    exportLabelHeatingStatus: '加热状态',
+    exportLabelHeatDissipationPower: '散热功率 (kW)',
+
+    // 消防系统
+    exportLabelSmokeDetector1: '1号烟感探测器',
+    exportLabelSmokeDetector2: '2号烟感探测器',
+    exportLabelSmokeDetector3: '3号烟感探测器',
+    exportLabelSmokeConcentration: '烟雾浓度 (ppm)',
+    exportLabelTempDetector1: '1号温感探测器 (°C)',
+    exportLabelTempDetector2: '2号温感探测器 (°C)',
+    exportLabelTempDetector3: '3号温感探测器 (°C)',
+    exportLabelTempRiseRate: '温升速率 (°C/min)',
+    exportLabelH2Concentration: 'H₂浓度 (ppm)',
+    exportLabelCOConcentration: 'CO浓度 (ppm)',
+    exportLabelCO2Concentration: 'CO₂浓度 (ppm)',
+    exportLabelGasAlarmLevel: '气体告警等级',
+    exportLabelFireAlarmStatus: '火灾报警状态',
+    exportLabelAlarmLevel: '告警级别',
+    exportLabelAlarmType: '告警类型',
+    exportLabelAlarmPosition: '告警位置',
+    exportLabelExtinguishingMode: '灭火模式',
+    exportLabelSprayStatus: '喷淋状态',
+    exportLabelGasExtinguisherStatus: '气体灭火状态',
+    exportLabelExtinguisherPressure: '灭火剂压力 (MPa)',
+    exportLabelExtinguisherWeight: '灭火剂重量 (kg)',
+    exportLabelNozzleStatus: '喷头状态',
+    exportLabelEmergencyStop: '紧急停机',
+    exportLabelPowerCutoff: '电源切断',
+    exportLabelVentilationStatus: '通风系统状态',
+    exportLabelDoorLockStatus: '门禁状态',
+
+    // 性能与保护
+    exportLabelConversionEfficiency: '转换效率 (%)',
+    exportLabelIGBTTemp: 'IGBT温度 (°C)',
+    exportLabelInductorTemp: '电感温度 (°C)',
+    exportLabelAmbientTemp: '环境温度 (°C)',
+    exportLabelVoltageUnbalance: '电压不平衡度 (%)',
+    exportLabelCurrentUnbalance: '电流不平衡度 (%)',
+};
+
+// 英文翻译 (添加到 translations.en 中)
+const enTranslations = {
+    // ===== 组名翻译 =====
+    exportGroupDCParams: 'DC Side Parameters',
+    exportGroupACParams: 'AC Side Parameters',
+    exportGroupThreePhaseVoltage: 'Three-Phase Voltage',
+    exportGroupThreePhaseCurrent: 'Three-Phase Current',
+    exportGroupElectricalParams: 'Overall Electrical Parameters',
+    exportGroupElectricalQuality: 'Power Quality',
+    exportGroupElectricalData: 'Energy Data',
+    exportGroupCellVoltage: 'Cell Voltage',
+    exportGroupBatteryTemp: 'Battery Temperature',
+    exportGroupPackInfo: 'Pack Information',
+    exportGroupProtectionStatus: 'Protection Status',
+    exportGroupAlarmThresholds: 'Alarm Thresholds',
+    exportGroupDispatchCmd: 'Dispatch Commands',
+    exportGroupRunningStrategy: 'Operating Strategy',
+    exportGroupPowerControl: 'Power Control',
+    exportGroupEconomicData: 'Economic Data',
+    exportGroupEnvironmentTemp: 'Environment Temperature',
+    exportGroupAmbientTemp: 'Ambient Temperature',
+    exportGroupTempMonitoring: 'Temperature Monitoring',
+    exportGroupThermalMgmt: 'Thermal Management',
+    exportGroupAirConditioning: 'Air Conditioning System',
+    exportGroupSmokeDetection: 'Smoke Detection',
+    exportGroupTempDetection: 'Temperature Detection',
+    exportGroupGasMonitoring: 'Gas Monitoring',
+    exportGroupAlarmInfo: 'Alarm Information',
+    exportGroupFireSuppression: 'Fire Suppression System',
+    exportGroupInterlock: 'Interlock Control',
+
+    // ===== 标签翻译 =====
+
+    // 基础信息类
+    exportLabelEMSId: 'EMS Device ID',
+    exportLabelEMSStatus: 'EMS Status',
+    exportLabelPCSId: 'PCS Device ID',
+    exportLabelPCSStatus: 'PCS Status',
+    exportLabelBMSId: 'BMS Device ID',
+    exportLabelBMSStatus: 'BMS Status',
+    exportLabelMeterId: 'Meter Device ID',
+    exportLabelMeterType: 'Meter Type',
+    exportLabelThermalSystemId: 'Thermal System ID',
+    exportLabelFireSystemId: 'Fire System ID',
+    exportLabelFaultCode: 'Fault Code',
+    exportLabelFaultLevel: 'Fault Level',
+    exportLabelCommStatus: 'Communication Status',
+    exportLabelSensorCount: 'Sensor Count',
+    exportLabelSelfCheckStatus: 'Self-Check Status',
+
+    // 直流侧参数
+    exportLabelDCVoltage: 'DC Voltage (V)',
+    exportLabelDCCurrent: 'DC Current (A)',
+    exportLabelDCPower: 'DC Power (kW)',
+
+    // 交流侧参数
+    exportLabelACVoltageA: 'AC Voltage Phase A (V)',
+    exportLabelACVoltageB: 'AC Voltage Phase B (V)',
+    exportLabelACVoltageC: 'AC Voltage Phase C (V)',
+    exportLabelACCurrentA: 'AC Current Phase A (A)',
+    exportLabelACCurrentB: 'AC Current Phase B (A)',
+    exportLabelACCurrentC: 'AC Current Phase C (A)',
+    exportLabelFrequency: 'Frequency (Hz)',
+
+    // 三相电压/电流
+    exportLabelPhaseAVoltage: 'Phase A Voltage (V)',
+    exportLabelPhaseBVoltage: 'Phase B Voltage (V)',
+    exportLabelPhaseCVoltage: 'Phase C Voltage (V)',
+    exportLabelPhaseACurrent: 'Phase A Current (A)',
+    exportLabelPhaseBCurrent: 'Phase B Current (A)',
+    exportLabelPhaseCCurrent: 'Phase C Current (A)',
+    exportLabelLineVoltageAB: 'Line Voltage AB (V)',
+    exportLabelLineVoltageBC: 'Line Voltage BC (V)',
+    exportLabelLineVoltageCA: 'Line Voltage CA (V)',
+    exportLabelNeutralCurrent: 'Neutral Current (A)',
+
+    // 功率数据
+    exportLabelTotalActivePower: 'Total Active Power (kW)',
+    exportLabelTotalReactivePower: 'Total Reactive Power (kVar)',
+    exportLabelTotalApparentPower: 'Total Apparent Power (kVA)',
+    exportLabelTotalPowerFactor: 'Total Power Factor',
+    exportLabelPhaseAPowerFactor: 'Phase A Power Factor',
+    exportLabelPhaseBPowerFactor: 'Phase B Power Factor',
+    exportLabelPhaseCPowerFactor: 'Phase C Power Factor',
+    exportLabelPhaseActivePowerA: 'Phase A Active Power (kW)',
+    exportLabelPhaseActivePowerB: 'Phase B Active Power (kW)',
+    exportLabelPhaseActivePowerC: 'Phase C Active Power (kW)',
+    exportLabelChargePower: 'Charge Power (kW)',
+    exportLabelDischargePower: 'Discharge Power (kW)',
+    exportLabelGridPower: 'Grid Power (kW)',
+    exportLabelLoadPower: 'Load Power (kW)',
+    exportLabelPVPower: 'PV Power (kW)',
+
+    // 电能统计
+    exportLabelForwardActiveEnergy: 'Forward Active Energy (kWh)',
+    exportLabelReverseActiveEnergy: 'Reverse Active Energy (kWh)',
+    exportLabelForwardReactiveEnergy: 'Forward Reactive Energy (kVarh)',
+    exportLabelReverseReactiveEnergy: 'Reverse Reactive Energy (kVarh)',
+    exportLabelCumulativeRevenue: 'Cumulative Revenue (CNY)',
+    exportLabelTodayRevenue: 'Today Revenue (CNY)',
+    exportLabelCurrentPrice: 'Current Price (CNY/kWh)',
+
+    // 电池参数
+    exportLabelTotalVoltage: 'Total Voltage (V)',
+    exportLabelTotalCurrent: 'Total Current (A)',
+    exportLabelAverageVoltage: 'Average Cell Voltage (V)',
+    exportLabelMaxCellVoltage: 'Max Cell Voltage (V)',
+    exportLabelMinCellVoltage: 'Min Cell Voltage (V)',
+    exportLabelMaxCellNum: 'Max Voltage Cell No.',
+    exportLabelMinCellNum: 'Min Voltage Cell No.',
+    exportLabelVoltageDiff: 'Voltage Difference (mV)',
+    exportLabelAverageTemp: 'Average Temperature (°C)',
+    exportLabelMaxTemp: 'Max Temperature (°C)',
+    exportLabelMinTemp: 'Min Temperature (°C)',
+    exportLabelMaxTempProbe: 'Max Temp Probe No.',
+    exportLabelMinTempProbe: 'Min Temp Probe No.',
+    exportLabelTempDiff: 'Temperature Difference (°C)',
+    exportLabelBatteryAvgTemp: 'Battery Avg Temp (°C)',
+    exportLabelBatteryMaxTemp: 'Battery Max Temp (°C)',
+    exportLabelBatteryMinTemp: 'Battery Min Temp (°C)',
+    exportLabelBatteryTempDiff: 'Battery Temp Diff (°C)',
+    exportLabelRemainingCapacity: 'Remaining Capacity (Ah)',
+    exportLabelCycleCount: 'Cycle Count',
+
+    // Pack簇信息
+    exportLabelPackCount: 'Pack Count',
+    exportLabelPack1Voltage: 'Pack1 Voltage (V)',
+    exportLabelPack1Current: 'Pack1 Current (A)',
+    exportLabelPack1SOC: 'Pack1 SOC (%)',
+    exportLabelPack1MaxTemp: 'Pack1 Max Temp (°C)',
+
+    // 保护状态
+    exportLabelChargeOVProtection: 'Charge Overvoltage Protection',
+    exportLabelChargeOCProtection: 'Charge Overcurrent Protection',
+    exportLabelDischargeUVProtection: 'Discharge Undervoltage Protection',
+    exportLabelDischargeOCProtection: 'Discharge Overcurrent Protection',
+    exportLabelHighTempProtection: 'High Temperature Protection',
+    exportLabelLowTempProtection: 'Low Temperature Protection',
+
+    // 告警阈值
+    exportLabelHighTempThreshold: 'High Temp Alarm Threshold (°C)',
+    exportLabelLowTempThreshold: 'Low Temp Alarm Threshold (°C)',
+    exportLabelTempDiffThreshold: 'Temp Diff Alarm Threshold (°C)',
+
+    // 调度指令
+    exportLabelDispatchMode: 'Dispatch Mode',
+    exportLabelTargetPower: 'Target Power (kW)',
+    exportLabelTargetSOC: 'Target SOC (%)',
+    exportLabelControlStrategy: 'Control Strategy',
+    exportLabelPowerLimit: 'Power Limit (kW)',
+
+    // 运行策略
+    exportLabelPeakShaving: 'Peak Shaving Status',
+    exportLabelFrequencyRegulation: 'Frequency Regulation',
+    exportLabelDemandResponse: 'Demand Response',
+
+    // 温控系统
+    exportLabelIndoorTemp: 'Indoor Temperature (°C)',
+    exportLabelOutdoorTemp: 'Outdoor Temperature (°C)',
+    exportLabelInletTemp: 'Inlet Temperature (°C)',
+    exportLabelOutletTemp: 'Outlet Temperature (°C)',
+    exportLabelACPower: 'Air Conditioning Power (kW)',
+    exportLabelACStatus: 'Air Conditioning Status',
+    exportLabelACSetTemp: 'Air Conditioning Setpoint (°C)',
+    exportLabelFanSpeed: 'Fan Speed (rpm)',
+    exportLabelCoolingStatus: 'Cooling Status',
+    exportLabelHeatingStatus: 'Heating Status',
+    exportLabelHeatDissipationPower: 'Heat Dissipation Power (kW)',
+
+    // 消防系统
+    exportLabelSmokeDetector1: 'Smoke Detector #1',
+    exportLabelSmokeDetector2: 'Smoke Detector #2',
+    exportLabelSmokeDetector3: 'Smoke Detector #3',
+    exportLabelSmokeConcentration: 'Smoke Concentration (ppm)',
+    exportLabelTempDetector1: 'Temperature Detector #1 (°C)',
+    exportLabelTempDetector2: 'Temperature Detector #2 (°C)',
+    exportLabelTempDetector3: 'Temperature Detector #3 (°C)',
+    exportLabelTempRiseRate: 'Temperature Rise Rate (°C/min)',
+    exportLabelH2Concentration: 'H₂ Concentration (ppm)',
+    exportLabelCOConcentration: 'CO Concentration (ppm)',
+    exportLabelCO2Concentration: 'CO₂ Concentration (ppm)',
+    exportLabelGasAlarmLevel: 'Gas Alarm Level',
+    exportLabelFireAlarmStatus: 'Fire Alarm Status',
+    exportLabelAlarmLevel: 'Alarm Level',
+    exportLabelAlarmType: 'Alarm Type',
+    exportLabelAlarmPosition: 'Alarm Position',
+    exportLabelExtinguishingMode: 'Extinguishing Mode',
+    exportLabelSprayStatus: 'Spray Status',
+    exportLabelGasExtinguisherStatus: 'Gas Extinguisher Status',
+    exportLabelExtinguisherPressure: 'Extinguisher Pressure (MPa)',
+    exportLabelExtinguisherWeight: 'Extinguisher Weight (kg)',
+    exportLabelNozzleStatus: 'Nozzle Status',
+    exportLabelEmergencyStop: 'Emergency Stop',
+    exportLabelPowerCutoff: 'Power Cutoff',
+    exportLabelVentilationStatus: 'Ventilation Status',
+    exportLabelDoorLockStatus: 'Door Lock Status',
+
+    // 性能与保护
+    exportLabelConversionEfficiency: 'Conversion Efficiency (%)',
+    exportLabelIGBTTemp: 'IGBT Temperature (°C)',
+    exportLabelInductorTemp: 'Inductor Temperature (°C)',
+    exportLabelAmbientTemp: 'Ambient Temperature (°C)',
+    exportLabelVoltageUnbalance: 'Voltage Unbalance (%)',
+    exportLabelCurrentUnbalance: 'Current Unbalance (%)',
+};
+
+console.log('=== 中文翻译 ===');
+console.log('共计:', Object.keys(zhTranslations).length, '个翻译键');
+console.log(JSON.stringify(zhTranslations, null, 4));
+
+console.log('\n=== 英文翻译 ===');
+console.log('共计:', Object.keys(enTranslations).length, '个翻译键');
+console.log(JSON.stringify(enTranslations, null, 4));

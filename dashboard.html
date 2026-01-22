@@ -1,0 +1,3917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表盘 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="responsive-1024.css">
+    <script src="navbar.js"></script>
+    <!-- Leaflet 地图库 (免费，无需API密钥) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* 能量流图卡片样式 */
+        .energy-flow-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* 按钮容器 */
+        .energy-buttons-container {
+            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* 主按钮样式 - 编辑能量流 */
+        #energy-flow-settings-btn {
+            padding: 10px 18px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            height: 38px;
+            box-shadow: 0 1px 2px rgba(59, 130, 246, 0.15);
+        }
+
+        #energy-flow-settings-btn:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+            transform: translateY(-1px);
+        }
+
+        #energy-flow-settings-btn:active {
+            background: #1d4ed8;
+            transform: scale(0.98);
+            box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        #energy-flow-settings-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* 次要按钮样式 - 设置 */
+        #energy-settings-btn {
+            padding: 10px 18px;
+            background: transparent;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            height: 38px;
+        }
+
+        #energy-settings-btn:hover {
+            background: var(--bg-secondary);
+            border-color: #d1d5db;
+            color: #4b5563;
+        }
+
+        #energy-settings-btn:active {
+            background: #f1f5f9;
+            transform: scale(0.98);
+        }
+
+        #energy-settings-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+        }
+
+        /* 按钮图标样式优化 */
+        #energy-flow-settings-btn svg,
+        #energy-settings-btn svg {
+            flex-shrink: 0;
+        }
+
+        /* 暗色主题适配 */
+        [data-theme="dark"] #energy-flow-settings-btn {
+            box-shadow: 0 1px 2px rgba(96, 165, 250, 0.2);
+        }
+
+        [data-theme="dark"] #energy-flow-settings-btn:hover {
+            box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+        }
+
+        [data-theme="dark"] #energy-settings-btn {
+            color: #9ca3af;
+        }
+
+        [data-theme="dark"] #energy-settings-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #d1d5db;
+        }
+
+        /* 设置面板样式 */
+        #energy-settings-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-primary);
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+            padding: 18px;
+            min-width: 240px;
+            z-index: 1000;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 暗色主题下的设置面板 */
+        [data-theme="dark"] #energy-settings-panel {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 能量潮流图样式 */
+        .energy-metrics-container {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 40px;
+            align-items: stretch;
+            height: 600px;
+        }
+
+        .energy-flow-diagram-new {
+            position: relative;
+            height: 100%;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 右侧统计数据容器 */
+        .energy-stats-new {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+
+        /* 能量统计区块样式 */
+        .energy-section-new {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+        }
+        
+        .energy-section-new:first-child {
+            height: 389px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .energy-section-new:last-child {
+            height: 195px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .energy-section-new.expanded {
+            height: 534px !important;
+        }
+        
+        .energy-section-new.collapsed {
+            height: 50px !important;
+        }
+
+        .energy-section-new h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .energy-metrics-new {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .energy-metric-row-new {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .energy-metric-label-new {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .energy-metric-value-new {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .energy-metric-value-new.revenue {
+            color: #10b981;
+        }
+
+
+        /* 组件样式 */
+        .flow-component {
+            position: absolute;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .flow-component img {
+            width: 96px;
+            height: 96px;
+            object-fit: contain;
+        }
+
+        .component-label {
+            margin-top: 8px;
+            padding: 6px 16px;
+            background: #3562E3;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        /* 组件位置 */
+        .flow-component.pv {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .flow-component.pv img {
+            margin-right: -30px;
+            margin-left: -20px;
+        }
+
+        .flow-component.load {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .flow-component.load img {
+            margin-right: -30px;
+            margin-left: -20px;
+            margin-top: -10px;
+        }
+
+        .flow-component.storage {
+            bottom: 20px;
+            left: calc(15% - 80px);
+        }
+
+        .flow-component.grid {
+            bottom: 70px;
+            right: calc(15% - 90px);
+        }
+
+        /* 电池电量指示器 */
+        .battery-indicator {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .battery-icon {
+            width: 60px;
+            height: 30px;
+            border: 2px solid #334155;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 12px;
+            background: #334155;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .battery-level {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: #10b981;
+            transition: width 0.5s ease, background 0.5s ease;
+        }
+
+        .battery-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        /* 能量流动线 */
+        .energy-flow-svg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        /* 深色主题样式 */
+        [data-theme="dark"] .energy-flow-card {
+            background: #1e293b;
+        }
+
+        [data-theme="dark"] .energy-flow-diagram-new {
+            background: #0f172a;
+        }
+
+        [data-theme="dark"] .energy-section-new {
+            background: #0f172a;
+        }
+
+        [data-theme="dark"] #energy-settings-btn {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] #energy-settings-btn:hover {
+            background: #475569;
+        }
+
+        [data-theme="dark"] #energy-settings-panel {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .battery-icon {
+            border-color: #64748b;
+        }
+
+        [data-theme="dark"] .battery-icon::after {
+            background: #64748b;
+        }
+
+        [data-theme="dark"] .battery-text {
+            color: #e2e8f0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .energy-metrics-container {
+                grid-template-columns: 1fr;
+            }
+
+            .energy-flow-diagram-new {
+                height: 500px;
+            }
+
+            .energy-stats-new {
+                margin-top: 20px;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+            .flow-component img {
+                width: 80px;
+                height: 80px;
+            }
+
+            .energy-flow-diagram-new {
+                height: 400px;
+            }
+        }
+        
+        /* 悬停效果 */
+        .clickable-stat {
+            transition: all 0.3s ease;
+        }
+        
+        .clickable-stat:hover {
+            transform: translateY(-2px);
+        }
+        
+        .clickable-stat:hover > div:first-child {
+            transform: scale(1.05);
+        }
+
+        /* 地图视图样式 */
+        #map-container {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 200px);
+            min-height: 600px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            position: relative;
+            background: #fafafa;
+            margin-bottom: 24px;
+            flex-direction: column;
+        }
+
+        /* 顶部站点管理面板 */
+        .station-header-panel {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px 24px;
+        }
+
+        .station-header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+        }
+
+        .station-title {
+            flex-shrink: 0;
+        }
+
+        .station-title h3 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .station-title p {
+            margin: 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* 统计卡片 - 横向排列 */
+        .stats-cards-row {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            padding: 14px 20px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+            min-width: 140px;
+        }
+
+        .stat-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1;
+        }
+
+        .stat-unit {
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+            margin-left: 3px;
+        }
+
+        #amap-container {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        /* 地图图例 */
+        .map-legend {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-icon-fa {
+            font-size: 14px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .legend-icon-svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .legend-icon-offline {
+            color: #6b7280;
+        }
+
+        .legend-icon-alarm {
+            color: #ef4444;
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .view-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            margin-left: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .view-toggle-btn:first-child {
+            margin-left: 0;
+        }
+
+        .view-toggle-btn.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .view-toggle-btn:hover:not(.active) {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .view-toggle-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 12px 20px;
+            background: transparent;
+        }
+
+        /* 地图标记信息窗口样式 */
+        .station-info-window {
+            padding: 12px;
+            min-width: 250px;
+        }
+
+        /* Leaflet弹出窗口自定义样式 */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f3f4f6;
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            min-width: 250px;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+        /* 隐藏Leaflet默认的attribution */
+        .leaflet-control-attribution {
+            display: none;
+        }
+
+        /* 自定义缩放控件样式 - 极简版 */
+        .leaflet-control-zoom {
+            border: none !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+            overflow: hidden !important;
+        }
+
+        .leaflet-control-zoom a {
+            width: 32px !important;
+            height: 32px !important;
+            line-height: 32px !important;
+            font-size: 18px !important;
+            color: #6b7280 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: none !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+            background: #f9fafb !important;
+            color: #3b82f6 !important;
+        }
+
+        .leaflet-control-zoom-in {
+            border-radius: 8px 8px 0 0 !important;
+            border-bottom: 1px solid #f3f4f6 !important;
+        }
+
+        .leaflet-control-zoom-out {
+            border-radius: 0 0 8px 8px !important;
+        }
+
+        .station-info-window h4 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .station-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .station-info-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .station-info-value {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .station-info-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .station-info-status.online {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .station-info-status.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .station-info-divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 12px 0;
+        }
+
+        .station-info-section {
+            margin-top: 8px;
+        }
+
+        .station-info-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .station-devices-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .device-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .device-stat-clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .device-stat-clickable:hover {
+            background: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .device-stat-clickable:active {
+            transform: translateY(0);
+        }
+
+        .device-stat-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .device-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .fade-out {
+            animation: fadeOut 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        /* 故障分析表格样式 */
+        .station-table-wrapper {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 故障分析时间维度选择器 */
+        #faultTimeDimension:hover {
+            border-color: #3b82f6;
+        }
+
+        #faultTimeDimension:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .station-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .station-table thead tr {
+            background: #f9fafb;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .station-table th {
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .station-table th:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .station-table th.sortable {
+            padding-right: 30px;
+        }
+
+        .station-table th .sort-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.3;
+            font-size: 12px;
+            transition: opacity 0.2s;
+        }
+
+        .station-table th:hover .sort-icon {
+            opacity: 0.6;
+        }
+
+        .station-table th.sort-asc .sort-icon,
+        .station-table th.sort-desc .sort-icon {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        .station-table th.sort-asc .sort-icon::before {
+            content: '\f0de';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        .station-table th.sort-desc .sort-icon::before {
+            content: '\f0dd';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        .station-table th:not(.sort-asc):not(.sort-desc) .sort-icon::before {
+            content: '\f0dc';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        .station-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .station-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .station-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .station-table td {
+            padding: 16px;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .station-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .clickable-station {
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 4px 8px;
+            margin: -4px -8px;
+            border-radius: 6px;
+        }
+
+        .clickable-station:hover {
+            background: rgba(59, 130, 246, 0.08);
+            color: #3b82f6;
+        }
+
+        .clickable-station:active {
+            transform: scale(0.98);
+        }
+
+        .station-table-number {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .station-table-unit {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-left: 2px;
+        }
+
+        .station-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .station-status.status-normal {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .station-status.status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .station-status.status-critical {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body data-page="dashboard">
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <!-- 移除页面标题 -->
+
+        <!-- 视图切换按钮 -->
+        <div class="view-toggle-container">
+            <button class="view-toggle-btn active" onclick="switchView('data')" id="data-view-btn">
+                <i class="fas fa-chart-line"></i>
+                <span data-translate="dashboardDataView">数据视图</span>
+            </button>
+            <button class="view-toggle-btn" onclick="switchView('map')" id="map-view-btn">
+                <i class="fas fa-map-marked-alt"></i>
+                <span data-translate="dashboardMapView">地图视图</span>
+            </button>
+        </div>
+
+        <!-- 地图容器 -->
+        <div id="map-container">
+            <!-- 站点管理面板 - 顶部 -->
+            <div class="station-header-panel">
+                <div class="station-header-content">
+                    <div class="station-title">
+                        <h3 data-translate="dashboardStationManagement">站点管理</h3>
+                    </div>
+
+                    <!-- 统计卡片 - 横向排列 -->
+                    <div class="stats-cards-row">
+                        <div class="stat-card">
+                            <div class="stat-label" data-translate="dashboardStationCount">站点数量</div>
+                            <div class="stat-value">
+                                <span id="station-count">5</span>
+                                <span class="stat-unit" data-translate="dashboardStationUnit">个</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label" data-translate="dashboardDeviceCount">设备数量</div>
+                            <div class="stat-value">
+                                <span id="device-count">36</span>
+                                <span class="stat-unit" data-translate="dashboardDeviceUnit">台</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label" data-translate="dashboardInstalledCapacity">装机容量</div>
+                            <div class="stat-value">
+                                <span id="installed-capacity">9000</span>
+                                <span class="stat-unit">kWh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 地图 -->
+            <div id="amap-container">
+                <!-- 地图图例 -->
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <svg class="legend-icon-svg legend-icon-offline" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 24C8 15.1634 15.1634 8 24 8C32.8366 8 40 15.1634 40 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M33 24C33 19.0294 28.9706 15 24 15C19.0294 15 15 19.0294 15 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M24 30C26.2091 30 28 28.2091 28 26C28 23.7909 26.2091 22 24 22C21.7909 22 20 23.7909 20 26" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 42L42 6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                        <span class="legend-text" data-translate="dashboardLegendOffline">离线</span>
+                    </div>
+                    <div class="legend-item">
+                        <i class="fas fa-tools legend-icon-fa legend-icon-alarm"></i>
+                        <span class="legend-text" data-translate="dashboardLegendAlarm">告警</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据视图容器 -->
+        <div id="data-view-container">
+
+        <!-- 运行情况和电站排行榜 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- 运行情况 -->
+            <div style="background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden;">
+                <div style="padding: 24px 24px 16px 24px; border-bottom: 1px solid #f1f5f9;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #1a202c; margin: 0; letter-spacing: -0.025em;" id="dashboardOperationOverview" data-translate="dashboardOperationOverview">运行概览</h3>
+                </div>
+                <div style="padding: 16px;">
+                    <!-- 主要数据展示 -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; align-items: start;">
+                        <div class="clickable-stat" style="cursor: pointer; text-align: center; padding: 20px 16px; border-radius: 12px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; height: 120px; justify-content: space-between;" onclick="window.location.href='site1.html'">
+                            <div style="font-size: 28px; font-weight: 700; color: #1e293b; line-height: 1; display: flex; align-items: baseline; height: 34px;" id="dashboard-total-stations">
+                                5
+                            </div>
+                            <div style="font-size: 12px; color: #64748b; font-weight: 500; letter-spacing: 0.025em; display: flex; align-items: center; height: 16px;" data-translate="dashboardTotalStations">
+                                总电站
+                            </div>
+                            <div style="font-size: 10px; color: #10b981; font-weight: 500; display: flex; align-items: center; height: 14px;" data-translate="dashboardVsYesterdayStations">
+                                比昨日 +0
+                            </div>
+                        </div>
+                        <div class="clickable-stat" style="cursor: pointer; text-align: center; padding: 20px 16px; border-radius: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1px solid #bbf7d0; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; height: 120px; justify-content: space-between;" onclick="window.location.href='devices.html'">
+                            <div style="font-size: 28px; font-weight: 700; color: #166534; line-height: 1; display: flex; align-items: baseline; height: 34px;" id="dashboard-total-cabinets">
+                                38
+                            </div>
+                            <div style="font-size: 12px; color: #16a34a; font-weight: 500; letter-spacing: 0.025em; display: flex; align-items: center; height: 16px;" data-translate="dashboardEnergyCabinets">
+                                储能柜
+                            </div>
+                            <div style="font-size: 10px; color: #10b981; font-weight: 500; display: flex; align-items: center; height: 14px;" data-translate="dashboardVsYesterdayCabinets">
+                                比昨日 +0
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding: 20px 16px; border-radius: 12px; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fbbf24; display: flex; flex-direction: column; align-items: center; height: 120px; justify-content: space-between;">
+                            <div style="font-size: 22px; font-weight: 700; color: #92400e; line-height: 1; display: flex; align-items: baseline; height: 34px;" id="dashboard-total-capacity">
+                                9,180 <span style="font-size: 14px; font-weight: 500; color: #92400e;">kWh</span>
+                            </div>
+                            <div style="font-size: 12px; color: #d97706; font-weight: 500; letter-spacing: 0.025em; display: flex; align-items: center; height: 16px;" data-translate="dashboardInstalledCapacity">
+                                装机容量
+                            </div>
+                            <div style="font-size: 10px; color: #10b981; font-weight: 500; display: flex; align-items: center; height: 14px;">
+                                &nbsp;
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 运行数据 -->
+                    <div>
+                        <!-- 昨日数据 -->
+                        <div id="op-yesterday-view" style="display: none;">
+                            <div style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 32px 20px; position: relative; min-height: 120px;">
+                                <!-- 切换按钮组 -->
+                                <div style="position: absolute; top: 16px; left: 16px; display: flex; gap: 16px;">
+                                    <button onclick="switchOperationView('yesterday')" id="op-yesterday-btn-0" style="border: none; background: transparent; color: #3b82f6; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s;" data-translate="dashboardYesterday">昨日</button>
+                                    <button onclick="switchOperationView('today')" id="op-today-btn-0" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardToday">今日</button>
+                                    <button onclick="switchOperationView('month')" id="op-month-btn-0" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardThisMonth">本月</button>
+                                    <button onclick="switchOperationView('total')" id="op-total-btn-0" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardTotal">累计</button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardCharging">充电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">463.8 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardDischarging">放电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">358.7 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardRevenue">收益</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #ea580c;" data-revenue="1,467">¥1,467</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 今日数据 -->
+                        <div id="op-today-view" style="display: block;">
+                            <div style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 32px 20px; position: relative; min-height: 120px;">
+                                <!-- 切换按钮组 -->
+                                <div style="position: absolute; top: 16px; left: 16px; display: flex; gap: 16px;">
+                                    <button onclick="switchOperationView('yesterday')" id="op-yesterday-btn" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardYesterday">昨日</button>
+                                    <button onclick="switchOperationView('today')" id="op-today-btn" style="border: none; background: transparent; color: #3b82f6; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s;" data-translate="dashboardToday">今日</button>
+                                    <button onclick="switchOperationView('month')" id="op-month-btn" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardThisMonth">本月</button>
+                                    <button onclick="switchOperationView('total')" id="op-total-btn" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardTotal">累计</button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardCharging">充电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">486.3 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardDischarging">放电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">372.5 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardRevenue">收益</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #ea580c;" data-revenue="1,580">¥1,580</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 本月数据 -->
+                        <div id="op-month-view" style="display: none;">
+                            <div style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 32px 20px; position: relative; min-height: 120px;">
+                                <!-- 切换按钮组 -->
+                                <div style="position: absolute; top: 16px; left: 16px; display: flex; gap: 16px;">
+                                    <button onclick="switchOperationView('yesterday')" id="op-yesterday-btn-2" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardYesterday">昨日</button>
+                                    <button onclick="switchOperationView('today')" id="op-today-btn-2" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardToday">今日</button>
+                                    <button onclick="switchOperationView('month')" id="op-month-btn-2" style="border: none; background: transparent; color: #3b82f6; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s;" data-translate="dashboardThisMonth">本月</button>
+                                    <button onclick="switchOperationView('total')" id="op-total-btn-2" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardTotal">累计</button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardCharging">充电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">14,293 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardDischarging">放电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">11,876 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardRevenue">收益</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #ea580c;" data-revenue="36,842">¥36,842</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 累计数据 -->
+                        <div id="op-total-view" style="display: none;">
+                            <div style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 32px 20px; position: relative; min-height: 120px;">
+                                <!-- 切换按钮组 -->
+                                <div style="position: absolute; top: 16px; left: 16px; display: flex; gap: 16px;">
+                                    <button onclick="switchOperationView('yesterday')" id="op-yesterday-btn-3" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardYesterday">昨日</button>
+                                    <button onclick="switchOperationView('today')" id="op-today-btn-3" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardToday">今日</button>
+                                    <button onclick="switchOperationView('month')" id="op-month-btn-3" style="border: none; background: transparent; color: #64748b; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s;" data-translate="dashboardThisMonth">本月</button>
+                                    <button onclick="switchOperationView('total')" id="op-total-btn-3" style="border: none; background: transparent; color: #3b82f6; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s;" data-translate="dashboardTotal">累计</button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardCharging">充电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">286,549 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardDischarging">放电量</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">234,782 <span style="font-size: 12px; font-weight: 500; color: #64748b;">kWh</span></div>
+                                    </div>
+                                    <div style="width: 1px; height: 50px; background: #e2e8f0; margin: 0 24px;"></div>
+                                    <div style="text-align: center; flex: 1;">
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 12px; font-weight: 500;" data-translate="dashboardRevenue">收益</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: #ea580c;" data-revenue="368,542">¥368,542</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 电站排行榜 -->
+            <div class="card">
+                <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 16px 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0;" id="dashboardStationRanking" data-translate="dashboardStationRanking">电站排行榜</h3>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <!-- 时间下拉列表 -->
+                            <select id="rankingTimeSelect" style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; cursor: pointer; min-width: 100px; background: white;">
+                                <option value="yesterday" data-translate="dashboardRankingYesterday">昨日</option>
+                                <option value="today" data-translate="dashboardRankingToday">今日</option>
+                                <option value="lastMonth" data-translate="dashboardRankingLastMonth">上月</option>
+                                <option value="month" data-translate="dashboardRankingMonth">本月</option>
+                                <option value="total" data-translate="dashboardRankingTotal">累计</option>
+                            </select>
+                            <!-- Tab切换 -->
+                            <div style="display: flex; gap: 4px; background: #f5f5f5; border-radius: 6px; padding: 2px;">
+                                <button class="ranking-tab active" data-type="charge" data-translate="dashboardRankingChargeTab" style="padding: 6px 12px; border: none; background: white; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">充电量</button>
+                                <button class="ranking-tab" data-type="discharge" data-translate="dashboardRankingDischargeTab" style="padding: 6px 12px; border: none; background: transparent; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">放电量</button>
+                                <button class="ranking-tab" data-type="revenue" data-translate="dashboardRankingRevenueTab" style="padding: 6px 12px; border: none; background: transparent; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">收益</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 24px;">
+                    <div id="rankingContent" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- 排行榜内容将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 能量潮流图 -->
+        <div class="energy-flow-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin: 0;" data-translate="energyFlowTitle">能量图</h3>
+                    <!-- 电站选择下拉列表 -->
+                    <select id="stationSelect" style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; cursor: pointer; min-width: 150px;">
+                        <option value="all" data-translate="dashboardAllStations">全部电站</option>
+                        <option value="station1" selected data-translate="dashboardStation1">科技园区站</option>
+                        <option value="station2" data-translate="dashboardStation2">工业园区站</option>
+                        <option value="station3" data-translate="dashboardStation3">商业中心站</option>
+                        <option value="station4" data-translate="dashboardStation4">物流园区站</option>
+                        <option value="station5" data-translate="dashboardStation5">产业园区站</option>
+                    </select>
+                    <!-- 自定义icon提示 -->
+                    <a href="personalization.html" style="font-size: 12px; color: #64748b; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#64748b'">
+                        <span data-translate="dashboardCustomizeDeviceIcon">可根据自己品牌自定义设备icon，</span>
+                        <span style="color: #3b82f6; font-weight: 500;" data-translate="dashboardGoNow">立即前往</span>
+                        <i class="fas fa-arrow-right" style="font-size: 10px; color: #3b82f6;"></i>
+                    </a>
+                </div>
+                <div class="energy-buttons-container">
+                    <!-- 编辑能量流按钮 -->
+                    <button id="energy-flow-settings-btn" onclick="window.location.href='energy-flow.html'">
+                        <span data-translate="dashboardEnergyFlowSettings">编辑能量流</span>
+                    </button>
+                    <button id="energy-settings-btn" onclick="toggleEnergySettingsPanel()">
+                        <svg width="16" height="16" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="10" cy="10" r="4"/>
+                            <path d="M14 10h20"/>
+                            <circle cx="38" cy="24" r="4"/>
+                            <path d="M10 24h24"/>
+                            <circle cx="10" cy="38" r="4"/>
+                            <path d="M14 38h20"/>
+                        </svg>
+                        <span data-translate="dashboardEnergySettings">设置</span>
+                    </button>
+                    <div id="energy-settings-panel">
+                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #333;" data-translate="dashboardMetricSelection">显示指标选择</div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <!-- 储能柜指标 -->
+                            <div style="font-size: 13px; font-weight: 600; color: #333; margin-top: 8px;" data-translate="dashboardCabinetMetrics">储能柜</div>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-total" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTotal">总数</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-capacity" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTotalCapacity">总容量</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-offline" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricOffline">离线</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-fault" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricFault">故障</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-daily-charge" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTodayCharge">今日充电量</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-daily-discharge" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTodayDischarge">今日放电量</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-monthly-charge" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricMonthCharge">本月充电量</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="cabinet-monthly-discharge" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricMonthDischarge">本月放电量</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" data-metric-item="cabinet-total-charge" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTotalCharge">累计充电量</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" data-metric-item="cabinet-total-discharge" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTotalDischarge">累计放电量</span>
+                            </label>
+
+                            <!-- 收益指标 -->
+                            <div style="font-size: 13px; font-weight: 600; color: #333; margin-top: 8px;" data-translate="dashboardRevenueMetrics">收益</div>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="revenue-yesterday" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricYesterdayRevenue">昨日收益</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="revenue-today" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTodayRevenue">今日收益</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="revenue-month" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricMonthRevenue">当月收益</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-left: 12px;">
+                                <input type="checkbox" checked data-metric-item="revenue-total" style="margin: 0;">
+                                <span style="font-size: 13px; color: #666;" data-translate="dashboardMetricTotalRevenue">累计收益</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 能量图和数据指标容器 -->
+            <div class="energy-metrics-container">
+                    <!-- 能量流向图 - 占3/4宽度 -->
+                    <div class="energy-flow-diagram-new">
+                        <!-- SVG 能量流向连线 -->
+                        <svg class="energy-flow-svg" id="energy-flow-svg-new">
+                            <!-- 连线将通过JavaScript动态创建 -->
+                        </svg>
+
+                        <!-- 光伏 -->
+                        <div class="flow-component pv">
+                            <img src="光伏.png" alt="光伏面板">
+                        </div>
+
+                        <!-- 负载（居中） -->
+                        <div class="flow-component load">
+                            <img src="负载.png" alt="负载">
+                        </div>
+
+                        <!-- 储能柜（左下） -->
+                        <div class="flow-component storage" onclick="window.location.href='devices.html'" style="cursor: pointer;">
+                            <img src="储能柜.png" alt="储能系统">
+                            <div class="battery-indicator">
+                                <div class="battery-icon">
+                                    <div class="battery-level" id="battery-level-new" style="width: 82%"></div>
+                                </div>
+                                <span class="battery-text" id="soc-display-new">82%</span>
+                            </div>
+                        </div>
+
+                        <!-- 电网（右下） -->
+                        <div class="flow-component grid">
+                            <img src="电网.png" alt="电网">
+                        </div>
+
+                    </div>
+                    
+                    <!-- 右侧数据统计 -->
+                    <div class="energy-stats-new">
+                        <!-- 储能柜数据 -->
+                        <div class="energy-section-new" id="cabinet-section">
+                            <h3 data-translate="dashboardCabinetMetrics">储能柜</h3>
+                            <div class="energy-metrics-new" id="cabinet-metrics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1;">
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-total" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTotal">总数</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">8</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-capacity" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTotalCapacity">总容量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">2500 kWh</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-offline" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricOffline">离线</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600; color: #ef4444;">1</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-fault" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricFault">故障</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600; color: #f59e0b;">0</div>
+                                </div>
+                                <div style="grid-column: 1 / -1; height: 1px; background: var(--border-color); margin: 10px 0;"></div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-daily-charge" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTodayCharge">今日充电量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">486.3 kWh</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-daily-discharge" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTodayDischarge">今日放电量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">372.5 kWh</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-monthly-charge" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricMonthCharge">本月充电量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">14293 kWh</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-monthly-discharge" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricMonthDischarge">本月放电量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">11876 kWh</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-total-charge" style="text-align: center; display: none;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTotalCharge">累计充电量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">286549 kWh</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="cabinet-total-discharge" style="text-align: center; display: none;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTotalDischarge">累计放电量</div>
+                                    <div class="energy-metric-value-new" style="font-size: 16px; font-weight: 600;">234782 kWh</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 收益数据 -->
+                        <div class="energy-section-new" id="revenue-section">
+                            <h3 data-translate="dashboardRevenueMetrics">收益</h3>
+                            <div class="energy-metrics-new" id="revenue-metrics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1;">
+                                <div class="energy-metric-item-new" data-metric-item="revenue-yesterday" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricYesterdayRevenue">昨日收益</div>
+                                    <div class="energy-metric-value-new revenue" style="font-size: 16px; font-weight: 600; color: #10b981;" data-revenue="141.72">¥141.72</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="revenue-today" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTodayRevenue">今日收益</div>
+                                    <div class="energy-metric-value-new revenue" style="font-size: 16px; font-weight: 600; color: #10b981;" data-revenue="81.12">¥81.12</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="revenue-month" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricMonthRevenue">当月收益</div>
+                                    <div class="energy-metric-value-new revenue" style="font-size: 16px; font-weight: 600; color: #10b981;" data-revenue="2518.65">¥2518.65</div>
+                                </div>
+                                <div class="energy-metric-item-new" data-metric-item="revenue-total" style="text-align: center;">
+                                    <div class="energy-metric-label-new" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;" data-translate="dashboardMetricTotalRevenue">累计收益</div>
+                                    <div class="energy-metric-value-new revenue" style="font-size: 16px; font-weight: 600; color: #10b981;" data-revenue="40772.62">¥40772.62</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+        <!-- 收益趋势图 - 全宽 -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0;" data-translate="dashboardRevenueTrend">收益趋势</h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <!-- 站点选择 -->
+                    <select id="revenueSiteFilter" style="padding: 6px 12px; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 14px; background: white; cursor: pointer; min-width: 140px;">
+                        <option value="all" data-translate="filterAllSites">全部站点</option>
+                        <option value="site1" data-translate="siteNameTech">科技园区站</option>
+                        <option value="site2" data-translate="siteNameIndustrial">工业园区站</option>
+                        <option value="site3" data-translate="siteNameCommerce">商业中心站</option>
+                        <option value="site4" data-translate="siteNameLogistics">物流园区站</option>
+                        <option value="site5" data-translate="siteNameRD">研发中心站</option>
+                        <option value="site6" data-translate="siteNameDataCenter">数据中心站</option>
+                    </select>
+                    <!-- 时间周期选择 -->
+                    <div style="display: flex; gap: 4px; background: #f5f5f5; border-radius: 6px; padding: 2px;">
+                        <button class="period-btn active" data-period="day" data-translate="dashboardPeriodDay" style="padding: 6px 12px; border: none; background: white; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">日</button>
+                        <button class="period-btn" data-period="month" data-translate="dashboardPeriodMonth" style="padding: 6px 12px; border: none; background: transparent; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">月</button>
+                        <button class="period-btn" data-period="year" data-translate="dashboardPeriodYear" style="padding: 6px 12px; border: none; background: transparent; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">年</button>
+                        <button class="period-btn" data-period="total" data-translate="dashboardPeriodTotal" style="padding: 6px 12px; border: none; background: transparent; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s;">总</button>
+                    </div>
+                    <!-- 时间选择器 -->
+                    <input type="date" id="datePicker" style="padding: 6px 12px; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 14px;">
+                    <!-- 月份选择器：隐藏原生输入框，使用自定义显示 -->
+                    <div id="monthPickerWrapper" style="display: none; position: relative;">
+                        <input type="text" id="monthDisplay" readonly style="padding: 6px 12px; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 14px; cursor: pointer; background: white; width: 100px;" placeholder="2025/10">
+                        <input type="month" id="monthPicker" style="position: absolute; opacity: 0; pointer-events: none;">
+                    </div>
+                    <input type="number" id="yearPicker" data-translate-placeholder="dashboardYearPlaceholder" placeholder="年份" min="2020" max="2030" style="display: none; padding: 6px 12px; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 14px; width: 100px;">
+                </div>
+            </div>
+            <div style="padding: 24px;">
+                <canvas id="revenueTrendChart" style="width: 100%; height: 350px;"></canvas>
+            </div>
+        </div>
+
+        <!-- 故障分析 -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0;" data-translate="dashboardFaultAnalysis">故障分析</h3>
+                <select id="faultTimeDimension" style="
+                    min-width: 120px;
+                    padding: 8px 12px;
+                    font-size: 14px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    background: white;
+                    color: var(--text-primary);
+                    cursor: pointer;
+                    outline: none;
+                    transition: all 0.2s;
+                " onchange="updateFaultTable()">
+                    <option value="yesterday" data-translate="dashboardYesterday">昨日</option>
+                    <option value="today" selected data-translate="todayBtn">今日</option>
+                    <option value="lastMonth" data-translate="dashboardLastMonth">上月</option>
+                    <option value="thisMonth" data-translate="monthBtn">本月</option>
+                    <option value="total" data-translate="totalBtn">合计</option>
+                </select>
+            </div>
+            <div style="padding: 24px;">
+                <div class="station-table-wrapper">
+                    <table class="station-table" id="stationTable">
+                        <thead>
+                            <tr>
+                                <th data-translate="dashboardSiteNameLabel">站点名称</th>
+                                <th class="sortable" data-column="faultCount" data-type="number">
+                                    <span data-translate="dashboardFaultCountLabel">故障数量</span>
+                                    <span class="sort-icon"></span>
+                                </th>
+                                <th class="sortable" data-column="repairRate" data-type="number">
+                                    <span data-translate="dashboardRepairRateLabel">修复率</span>
+                                    <span class="sort-icon"></span>
+                                </th>
+                                <th class="sortable" data-column="unfixed" data-type="number">
+                                    <span data-translate="dashboardUnfixedLabel">未修复</span>
+                                    <span class="sort-icon"></span>
+                                </th>
+                                <th class="sortable" data-column="repairTime" data-type="number">
+                                    <span data-translate="dashboardRepairTimeLabel">修复时长</span>
+                                    <span class="sort-icon"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="station-name-cell clickable-station" data-site="site1" onclick="navigateToDevicesWithFilter('site1')">
+                                        <i class="fas fa-building" style="color: #3b82f6;"></i>
+                                        <span data-translate="siteNameTech">科技园区站</span>
+                                    </div>
+                                </td>
+                                <td class="station-table-number" data-value="28">28<span class="station-table-unit" data-translate="unitTimes">次</span></td>
+                                <td class="station-table-number" data-value="65">65<span class="station-table-unit">%</span></td>
+                                <td class="station-table-number" data-value="10">10<span class="station-table-unit" data-translate="unitTimes">次</span></td>
+                                <td class="station-table-number" data-value="6.2">6.2<span class="station-table-unit" data-translate="unitHours">小时</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="station-name-cell clickable-station" data-site="site2" onclick="navigateToDevicesWithFilter('site2')">
+                                        <i class="fas fa-building" style="color: #3b82f6;"></i>
+                                        <span data-translate="siteNameIndustrial">工业园区站</span>
+                                    </div>
+                                </td>
+                                <td class="station-table-number" data-value="12">12<span class="station-table-unit" data-translate="unitTimes">次</span></td>
+                                <td class="station-table-number" data-value="83">83<span class="station-table-unit">%</span></td>
+                                <td class="station-table-number" data-value="2">2<span class="station-table-unit" data-translate="unitTimes">次</span></td>
+                                <td class="station-table-number" data-value="4.5">4.5<span class="station-table-unit" data-translate="unitHours">小时</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="station-name-cell clickable-station" data-site="site3" onclick="navigateToDevicesWithFilter('site3')">
+                                        <i class="fas fa-building" style="color: #3b82f6;"></i>
+                                        <span data-translate="siteNameCommerce">商业中心站</span>
+                                    </div>
+                                </td>
+                                <td class="station-table-number" data-value="45">45<span class="station-table-unit" data-translate="unitTimes">次</span></td>
+                                <td class="station-table-number" data-value="56">56<span class="station-table-unit">%</span></td>
+                                <td class="station-table-number" data-value="20">20<span class="station-table-unit" data-translate="unitTimes">次</span></td>
+                                <td class="station-table-number" data-value="8.7">8.7<span class="station-table-unit" data-translate="unitHours">小时</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        </div> <!-- 结束 data-view-container -->
+    </main>
+
+    <!-- 移动端遮罩 -->
+    <div id="mobileOverlay" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 998;" onclick="closeMobileSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="common.js"></script>
+    
+    <!-- 用户下拉菜单样式 -->
+    <style>
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        
+        .user-menu {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-divider {
+            border-top: 1px solid var(--border-color);
+            margin: 4px 0;
+        }
+    </style>
+
+    <!-- 退出登录确认弹窗 -->
+    <div id="logoutModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 24px; max-width: 400px; text-align: center;">
+            <div style="width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <i class="fas fa-sign-out-alt" style="font-size: 24px; color: #ef4444;"></i>
+            </div>
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #1e293b;" id="logoutModalTitle" data-translate="logoutModalTitle">确认退出</h3>
+            <p style="margin: 0 0 24px 0; font-size: 14px; color: #64748b;" id="logoutModalText" data-translate="logoutModalText">您确定要退出登录吗？</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn" onclick="closeLogoutModal()" style="flex: 1; height: 40px;"><span id="logoutModalBtnCancel" data-translate="logoutModalBtnCancel">取消</span></button>
+                <button class="btn" onclick="logout()" style="flex: 1; height: 40px; background: #ef4444; color: white;"><span id="logoutModalBtnConfirm" data-translate="logoutModalBtnConfirm">确认退出</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移动端遮罩层 -->
+    <div class="mobile-overlay hidden" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+    <script>
+        // 翻译辅助函数
+        function translate(key) {
+            if (typeof translations !== 'undefined' && typeof currentLang !== 'undefined') {
+                const t = translations[currentLang];
+                return t && t[key] ? t[key] : key;
+            }
+            return key;
+        }
+
+        // 检查登录状态
+        checkAuth();
+
+        // 设置当前页面菜单项
+        setActiveMenuItem('dashboard');
+
+        // 每5秒更新一次数据
+        setInterval(() => {
+            updateRealTimeData();
+        }, 5000);
+
+        // 切换设置面板
+        function toggleEnergySettingsPanel() {
+            const panel = document.getElementById('energy-settings-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // 切换运行情况视图
+        function switchOperationView(view) {
+            // 隐藏所有视图
+            document.getElementById('op-yesterday-view').style.display = 'none';
+            document.getElementById('op-today-view').style.display = 'none';
+            document.getElementById('op-month-view').style.display = 'none';
+            document.getElementById('op-total-view').style.display = 'none';
+
+            // 重置所有按钮样式 - 包括所有四组按钮
+            const allButtons = [
+                'op-yesterday-btn', 'op-today-btn', 'op-month-btn', 'op-total-btn',
+                'op-yesterday-btn-0', 'op-today-btn-0', 'op-month-btn-0', 'op-total-btn-0',
+                'op-yesterday-btn-2', 'op-today-btn-2', 'op-month-btn-2', 'op-total-btn-2',
+                'op-yesterday-btn-3', 'op-today-btn-3', 'op-month-btn-3', 'op-total-btn-3'
+            ];
+            allButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.style.color = '#64748b';
+                    btn.style.fontWeight = '500';
+                }
+            });
+
+            // 显示选中的视图和高亮对应按钮
+            if (view === 'yesterday') {
+                document.getElementById('op-yesterday-view').style.display = 'block';
+                const btn = document.getElementById('op-yesterday-btn-0');
+                if (btn) {
+                    btn.style.color = '#3b82f6';
+                    btn.style.fontWeight = '600';
+                }
+            } else if (view === 'today') {
+                document.getElementById('op-today-view').style.display = 'block';
+                const btn = document.getElementById('op-today-btn');
+                if (btn) {
+                    btn.style.color = '#3b82f6';
+                    btn.style.fontWeight = '600';
+                }
+            } else if (view === 'month') {
+                document.getElementById('op-month-view').style.display = 'block';
+                const btn = document.getElementById('op-month-btn-2');
+                if (btn) {
+                    btn.style.color = '#3b82f6';
+                    btn.style.fontWeight = '600';
+                }
+            } else if (view === 'total') {
+                document.getElementById('op-total-view').style.display = 'block';
+                const btn = document.getElementById('op-total-btn-3');
+                if (btn) {
+                    btn.style.color = '#3b82f6';
+                    btn.style.fontWeight = '600';
+                }
+            }
+        }
+
+        // 点击外部关闭设置面板
+        document.addEventListener('click', function(event) {
+            const settingsBtn = document.getElementById('energy-settings-btn');
+            const settingsPanel = document.getElementById('energy-settings-panel');
+            
+            if (!settingsBtn.contains(event.target) && !settingsPanel.contains(event.target)) {
+                settingsPanel.style.display = 'none';
+            }
+        });
+
+        // 动态调整面板布局
+        function adjustPanelLayout() {
+            const cabinetSection = document.getElementById('cabinet-section');
+            const revenueSection = document.getElementById('revenue-section');
+            const cabinetMetrics = document.getElementById('cabinet-metrics');
+            const revenueMetrics = document.getElementById('revenue-metrics');
+            
+            if (!cabinetSection || !revenueSection) return;
+            
+            // 计算显示的指标数量
+            const cabinetItems = cabinetMetrics.querySelectorAll('.energy-metric-item-new:not([style*="display: none"])');
+            const revenueItems = revenueMetrics.querySelectorAll('.energy-metric-item-new:not([style*="display: none"])');
+            
+            const cabinetCount = cabinetItems.length;
+            const revenueCount = revenueItems.length;
+            
+            // 重置类
+            cabinetSection.classList.remove('expanded', 'collapsed');
+            revenueSection.classList.remove('expanded', 'collapsed');
+            
+            // 应用布局逻辑
+            if (revenueCount < 2) {
+                // 收益少于2个，储能柜扩大
+                cabinetSection.classList.add('expanded');
+                revenueSection.classList.add('collapsed');
+            }
+        }
+
+        // 处理指标显示/隐藏
+        document.querySelectorAll('input[data-metric-item]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const metricId = this.getAttribute('data-metric-item');
+                const metricElements = document.querySelectorAll(`[data-metric-item="${metricId}"]`);
+                
+                metricElements.forEach(element => {
+                    if (element !== this) {
+                        element.style.display = this.checked ? 'block' : 'none';
+                    }
+                });
+                
+                // 调整布局
+                adjustPanelLayout();
+            });
+        });
+
+        // 创建能量流向连线
+        function createEnergyFlowLines() {
+            const svg = document.getElementById('energy-flow-svg-new');
+            if (!svg) {
+                return;
+            }
+            
+            // 设置SVG内容
+            svg.setAttribute('viewBox', '0 0 1000 600');
+            svg.innerHTML = `
+                <!-- 光伏到负载 -->
+                <line x1="500" y1="60" x2="500" y2="210" stroke="#EDEDED" stroke-width="6" />
+                
+                <!-- 储能到光伏 -->
+                <path d="M 100 450 L 100 20 Q 100 0 120 0 L 440 0" 
+                      stroke="#EDEDED" stroke-width="6" fill="none" />
+                
+                <!-- 光伏到电网 -->
+                <path d="M 540 0 L 880 0 Q 900 0 900 20 L 900 450" 
+                      stroke="#EDEDED" stroke-width="6" fill="none" />
+                
+                <!-- 负载到储能 -->
+                <path d="M 480 340 L 480 500 Q 480 520 460 520 L 200 520" 
+                      stroke="#EDEDED" stroke-width="6" fill="none" />
+                
+                <!-- 负载到电网 -->
+                <path d="M 520 340 L 520 500 Q 520 520 540 520 L 800 520" 
+                      stroke="#EDEDED" stroke-width="6" fill="none" />
+                
+                <!-- 储能到电网 -->
+                <line x1="200" y1="540" x2="800" y2="540" stroke="#EDEDED" stroke-width="6" />
+                
+                <!-- 储能到电网动画 -->
+                <line x1="-10" y1="0" x2="10" y2="0" stroke="#5C85FF" stroke-width="4" stroke-linecap="round">
+                    <animateMotion dur="3s" repeatCount="indefinite">
+                        <mpath href="#storageToGridPath"/>
+                    </animateMotion>
+                </line>
+                <path id="storageToGridPath" d="M 200 540 L 800 540" style="display:none;" />
+                <text x="500" y="570" fill="#5C85FF" font-size="24" font-weight="600">4.2 kW</text>
+                
+            `;
+        }
+
+        // 更新能量流图数据
+        function updateEnergyFlowData() {
+            // 获取当前选择的电站
+            const stationSelect = document.getElementById('stationSelect');
+            const selectedStation = stationSelect ? stationSelect.value : 'station1';
+
+            // 从 stationsData 获取数据
+            let stationInfo;
+            let totalCabinets = 0;
+            let totalCapacity = 0;
+            let totalOffline = 0;
+            let totalFault = 0;
+            let dailyCharge = 0;
+            let dailyDischarge = 0;
+            let revenue = 0;
+
+            let yesterdayRevenue = 0;
+
+            if (selectedStation === 'all') {
+                // 全部电站：汇总数据
+                stationsData.forEach(s => {
+                    totalCabinets += s.cabinets;
+                    totalCapacity += parseInt(s.capacity);
+                    totalOffline += s.devicesOffline;
+                    totalFault += s.devicesAlarm;
+                    dailyCharge += parseFloat(s.dailyCharge);
+                    dailyDischarge += parseFloat(s.dailyDischarge);
+                    revenue += parseFloat(s.revenue.replace(/[¥,]/g, ''));
+                    yesterdayRevenue += parseFloat(s.yesterdayRevenue.replace(/[¥,]/g, ''));
+                });
+            } else {
+                // 单个电站
+                const stationIndex = parseInt(selectedStation.replace('station', '')) - 1;
+                stationInfo = stationsData[stationIndex];
+                if (stationInfo) {
+                    totalCabinets = stationInfo.cabinets;
+                    totalCapacity = parseInt(stationInfo.capacity);
+                    totalOffline = stationInfo.devicesOffline;
+                    totalFault = stationInfo.devicesAlarm;
+                    dailyCharge = parseFloat(stationInfo.dailyCharge);
+                    dailyDischarge = parseFloat(stationInfo.dailyDischarge);
+                    revenue = parseFloat(stationInfo.revenue.replace(/[¥,]/g, ''));
+                    yesterdayRevenue = parseFloat(stationInfo.yesterdayRevenue.replace(/[¥,]/g, ''));
+                }
+            }
+
+            // 计算本月和累计数据（基于日数据的合理倍数）
+            const monthMultiplier = 30;
+            const totalMultiplier = 325;
+
+            const monthlyCharge = (dailyCharge * monthMultiplier * (0.95 + Math.random() * 0.1)).toFixed(1);
+            const monthlyDischarge = (dailyDischarge * monthMultiplier * (0.95 + Math.random() * 0.1)).toFixed(1);
+            const totalCharge = (dailyCharge * totalMultiplier * (0.95 + Math.random() * 0.1)).toFixed(1);
+            const totalDischarge = (dailyDischarge * totalMultiplier * (0.95 + Math.random() * 0.1)).toFixed(1);
+
+            const monthRevenue = (revenue * monthMultiplier * (0.95 + Math.random() * 0.1)).toFixed(2);
+            const totalRevenue = (revenue * totalMultiplier * (0.95 + Math.random() * 0.1)).toFixed(2);
+
+            // 模拟动态SOC数据
+            const soc = Math.floor(Math.random() * 20 + 75); // 75-95%
+
+            // 更新储能SOC
+            const socDisplayEl = document.getElementById('soc-display-new');
+            if (socDisplayEl) {
+                socDisplayEl.textContent = soc + '%';
+            }
+            const batteryLevel = document.getElementById('battery-level-new');
+            if (batteryLevel) {
+                batteryLevel.style.width = soc + '%';
+            }
+
+            // 根据电量设置颜色
+            if (batteryLevel) {
+                if (soc > 60) {
+                    batteryLevel.style.background = '#10b981'; // 绿色
+                } else if (soc > 30) {
+                    batteryLevel.style.background = '#f59e0b'; // 橙色
+                } else {
+                    batteryLevel.style.background = '#ef4444'; // 红色
+                }
+            }
+
+            // 更新数据指标（使用 stationsData 的真实数据）
+            const metrics = {
+                'cabinet-total': totalCabinets,
+                'cabinet-capacity': totalCapacity.toLocaleString() + ' kWh',
+                'cabinet-offline': totalOffline,
+                'cabinet-fault': totalFault,
+                'cabinet-daily-charge': dailyCharge.toFixed(1) + ' kWh',
+                'cabinet-daily-discharge': dailyDischarge.toFixed(1) + ' kWh',
+                'cabinet-monthly-charge': monthlyCharge + ' kWh',
+                'cabinet-monthly-discharge': monthlyDischarge + ' kWh',
+                'cabinet-total-charge': totalCharge + ' kWh',
+                'cabinet-total-discharge': totalDischarge + ' kWh',
+                'revenue-yesterday': formatRevenue(yesterdayRevenue.toLocaleString()),
+                'revenue-today': formatRevenue(revenue.toLocaleString()),
+                'revenue-month': formatRevenue(parseFloat(monthRevenue).toLocaleString()),
+                'revenue-total': formatRevenue(parseFloat(totalRevenue).toLocaleString())
+            };
+
+            // 更新页面上的值
+            Object.keys(metrics).forEach(key => {
+                const element = document.querySelector(`[data-metric-item="${key}"] .energy-metric-value-new`);
+                if (element) {
+                    // 处理离线和故障的颜色
+                    if (key === 'cabinet-offline') {
+                        element.textContent = metrics[key];
+                        element.style.color = metrics[key] > 0 ? '#ef4444' : '#10b981';
+                    } else if (key === 'cabinet-fault') {
+                        element.textContent = metrics[key];
+                        element.style.color = metrics[key] > 0 ? '#f59e0b' : '#10b981';
+                    } else if (key.startsWith('revenue-')) {
+                        // 收益相关的指标 - 提取数字部分并设置 data-revenue 属性
+                        const numericValue = metrics[key].replace(/[^\d,.]/g, '');
+                        element.setAttribute('data-revenue', numericValue);
+                        element.textContent = metrics[key];
+                    } else {
+                        element.textContent = metrics[key];
+                    }
+                }
+            });
+        }
+
+        // 初始化能量流图
+        window.addEventListener('DOMContentLoaded', function() {
+            // 初始化货币显示
+            if (typeof updateRevenueCurrency === 'function') {
+                updateRevenueCurrency();
+            }
+
+            // 初始化指标显示状态
+            document.querySelectorAll('input[data-metric-item]').forEach(checkbox => {
+                const metricId = checkbox.getAttribute('data-metric-item');
+                const metricElements = document.querySelectorAll(`[data-metric-item="${metricId}"]`);
+
+                metricElements.forEach(element => {
+                    if (element !== checkbox) {
+                        element.style.display = checkbox.checked ? 'block' : 'none';
+                    }
+                });
+            });
+
+            // 初始化布局
+            adjustPanelLayout();
+            
+            // 创建能量流向连线
+            setTimeout(function() {
+                createEnergyFlowLines();
+            }, 100);
+            
+            // 启动能量流图数据更新
+            updateEnergyFlowData();
+            setInterval(updateEnergyFlowData, 5000); // 每5秒更新一次
+
+            // 窗口大小改变时重新绘制连线
+            window.addEventListener('resize', createEnergyFlowLines);
+
+            // 再次尝试创建连线（备用）
+            setTimeout(createEnergyFlowLines, 500);
+
+            // 电站选择下拉列表事件
+            const stationSelect = document.getElementById('stationSelect');
+            if (stationSelect) {
+                // 初始化时更新默认选中电站的数据
+                const initialStation = stationSelect.value;
+                updateTotalEnergyStatus(initialStation);
+
+                stationSelect.addEventListener('change', function() {
+                    const selectedStation = this.value;
+                    console.log('选择的电站:', selectedStation);
+                    // 根据选择的电站更新数据
+                    updateEnergyFlowData();
+                    // 更新上方的总储能状态数据
+                    updateTotalEnergyStatus(selectedStation);
+                });
+            }
+
+            // 恢复上次的视图状态
+            const savedView = localStorage.getItem('dashboardView');
+            if (savedView === 'map') {
+                // 如果上次是地图视图，立即切换到地图（无动画）
+                const dataViewContainer = document.getElementById('data-view-container');
+                const mapContainer = document.getElementById('map-container');
+                const dataViewBtn = document.getElementById('data-view-btn');
+                const mapViewBtn = document.getElementById('map-view-btn');
+
+                dataViewContainer.style.display = 'none';
+                mapContainer.style.display = 'flex';
+                dataViewBtn.classList.remove('active');
+                mapViewBtn.classList.add('active');
+
+                // 初始化地图
+                setTimeout(() => {
+                    if (!map) {
+                        initMap();
+                    }
+                }, 100);
+            }
+
+            // 初始化数据视图的统计数据（与地图数据保持一致）
+            updateDashboardStats();
+        });
+        
+        // 根据选择的电站更新总储能状态
+        function updateTotalEnergyStatus(station) {
+            // 从 stationsData 获取数据
+            let data;
+
+            if (station === 'all') {
+                // 全部电站：汇总所有站点数据
+                let totalCharge = 0;
+                let totalDischarge = 0;
+                let totalRevenue = 0;
+                let faultyStations = 0;
+                let offlineStations = 0;
+
+                stationsData.forEach(s => {
+                    totalCharge += parseFloat(s.dailyCharge);
+                    totalDischarge += parseFloat(s.dailyDischarge);
+                    totalRevenue += parseFloat(s.revenue.replace(/[¥,]/g, ''));
+                    if (s.devicesAlarm > 0) faultyStations++;
+                    if (s.devicesOffline > 0) offlineStations++;
+                });
+
+                data = {
+                    totalStations: stationsData.length,
+                    faultyStations: faultyStations,
+                    offlineStations: offlineStations,
+                    dailyCharge: totalCharge.toFixed(1),
+                    dailyDischarge: totalDischarge.toFixed(1),
+                    todayRevenue: totalRevenue
+                };
+            } else {
+                // 单个电站：根据 station1-5 找到对应的数据
+                const stationIndex = parseInt(station.replace('station', '')) - 1;
+                const stationInfo = stationsData[stationIndex];
+
+                if (stationInfo) {
+                    data = {
+                        totalStations: 1,
+                        faultyStations: stationInfo.devicesAlarm > 0 ? 1 : 0,
+                        offlineStations: stationInfo.devicesOffline > 0 ? 1 : 0,
+                        dailyCharge: parseFloat(stationInfo.dailyCharge),
+                        dailyDischarge: parseFloat(stationInfo.dailyDischarge),
+                        todayRevenue: parseFloat(stationInfo.revenue.replace(/[¥,]/g, ''))
+                    };
+                }
+            }
+
+            if (!data) return;
+
+            // 更新页面上的数值
+            const elements = {
+                '总电站': data.totalStations,
+                '故障电站': data.faultyStations,
+                '失联电站': data.offlineStations,
+                '当日充电量': data.dailyCharge + ' <span style="font-size: 14px; font-weight: 400;">kWh</span>',
+                '当日放电量': data.dailyDischarge + ' <span style="font-size: 14px; font-weight: 400;">kWh</span>',
+                '今日收益': formatRevenue(data.todayRevenue.toLocaleString())
+            };
+
+            // 查找并更新所有指标
+            const metricsContainer = document.querySelector('.card > div > div');
+            if (metricsContainer) {
+                const metricDivs = metricsContainer.querySelectorAll('div[style*="text-align: center"]');
+                metricDivs.forEach(div => {
+                    const labelDiv = div.querySelector('div:first-child');
+                    const valueDiv = div.querySelector('div:last-child');
+                    if (labelDiv && valueDiv) {
+                        const label = labelDiv.textContent;
+                        if (elements[label]) {
+                            valueDiv.innerHTML = elements[label];
+                        }
+                    }
+                });
+            }
+        }
+
+        // 存储图表实例
+        let revenueChart = null;
+        
+        // 初始化收益趋势图
+        function initRevenueTrendChart() {
+            const ctx = document.getElementById('revenueTrendChart').getContext('2d');
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                    datasets: [
+                        {
+                            label: translate('dashboardChartCharging'),
+                            data: [380, 420, 395, 285, 155, 68, 35, 28, 25, 45, 85, 185],  // 谷时充电(00:00-08:00)，峰时不充电
+                            borderColor: '#10b981',
+                            type: 'line',
+                            tension: 0.4,
+                            fill: false,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            order: 2
+                        },
+                        {
+                            label: translate('dashboardChartDischarging'),
+                            data: [35, 28, 25, 45, 65, 85, 95, 105, 225, 385, 425, 395],  // 峰时放电(08:00-12:00, 18:00-22:00)
+                            borderColor: '#f59e0b',
+                            type: 'line',
+                            tension: 0.4,
+                            fill: false,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            order: 2
+                        },
+                        {
+                            label: translate('dashboardChartRevenue'),
+                            data: [-85, -95, -88, -52, -18, 8, 22, 35, 68, 125, 155, 142],  // 谷时充电为负(成本)，峰时放电为正(收益)
+                            backgroundColor: function(context) {
+                                const value = context.parsed.y;
+                                return value >= 0 ? '#10b981' : '#ef4444';  // 正收益绿色，负收益(成本)红色
+                            },
+                            type: 'bar',
+                            order: 1,
+                            yAxisID: 'y1',
+                            barThickness: 20
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const revenueLabel = translate('dashboardChartRevenue');
+                                    if (context.dataset.label === revenueLabel) {
+                                        label += getCurrencySymbol() + context.parsed.y;
+                                    } else {
+                                        label += context.parsed.y + ' kWh';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: translate('dashboardChartEnergyAxis')
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: translate('dashboardChartRevenueAxis')
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 时间周期切换功能
+        function initPeriodSwitcher() {
+            const periodBtns = document.querySelectorAll('.period-btn');
+            const datePicker = document.getElementById('datePicker');
+            const monthPicker = document.getElementById('monthPicker');
+            const monthPickerWrapper = document.getElementById('monthPickerWrapper');
+            const monthDisplay = document.getElementById('monthDisplay');
+            const yearPicker = document.getElementById('yearPicker');
+
+            // 格式化月份显示为 YYYY/MM
+            function formatMonthDisplay(value) {
+                if (!value) return '';
+                return value.replace('-', '/');  // "2025-10" -> "2025/10"
+            }
+
+            // 设置默认日期
+            const today = new Date();
+            datePicker.value = today.toISOString().split('T')[0];
+            monthPicker.value = today.toISOString().slice(0, 7);
+            monthDisplay.value = formatMonthDisplay(monthPicker.value);
+            yearPicker.value = today.getFullYear();
+
+            // 月份显示框点击事件：触发原生月份选择器
+            monthDisplay.addEventListener('click', function() {
+                monthPicker.style.position = 'absolute';
+                monthPicker.style.opacity = '0';
+                monthPicker.style.pointerEvents = 'auto';
+                monthPicker.style.left = '0';
+                monthPicker.style.top = '0';
+                monthPicker.style.width = '100%';
+                monthPicker.style.height = '100%';
+                monthPicker.showPicker && monthPicker.showPicker();
+            });
+
+            // 原生月份选择器值改变时更新显示
+            monthPicker.addEventListener('change', function() {
+                monthDisplay.value = formatMonthDisplay(this.value);
+                const activePeriod = document.querySelector('.period-btn.active').dataset.period;
+                updateChartData(activePeriod);
+            });
+
+            periodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 更新按钮状态
+                    periodBtns.forEach(b => {
+                        b.classList.remove('active');
+                        b.style.background = 'transparent';
+                    });
+                    this.classList.add('active');
+                    this.style.background = 'white';
+
+                    // 显示/隐藏对应的时间选择器
+                    const period = this.dataset.period;
+                    datePicker.style.display = period === 'day' ? 'block' : 'none';
+                    monthPickerWrapper.style.display = period === 'month' ? 'block' : 'none';
+                    yearPicker.style.display = period === 'year' ? 'block' : 'none';
+
+                    // 更新图表数据
+                    updateChartData(period);
+                });
+            });
+
+            // 时间选择器变化事件
+            [datePicker, yearPicker].forEach(picker => {
+                picker.addEventListener('change', function() {
+                    const activePeriod = document.querySelector('.period-btn.active').dataset.period;
+                    updateChartData(activePeriod);
+                });
+            });
+
+            // 站点选择器变化事件
+            const revenueSiteFilter = document.getElementById('revenueSiteFilter');
+            if (revenueSiteFilter) {
+                revenueSiteFilter.addEventListener('change', function() {
+                    const activePeriod = document.querySelector('.period-btn.active').dataset.period;
+                    updateChartData(activePeriod);
+                });
+            }
+        }
+        
+        // 更新图表数据
+        function updateChartData(period) {
+            if (!revenueChart) return;
+
+            let labels, chargeData, dischargeData, revenueData;
+
+            // 获取当前语言设置
+            const currentLanguage = localStorage.getItem('language') || 'zh';
+
+            // 获取选择的站点
+            const selectedSite = document.getElementById('revenueSiteFilter')?.value || 'all';
+
+            // 站点系数（用于模拟不同站点的数据差异）
+            const siteFactors = {
+                'all': 1.0,
+                'site1': 1.2,    // 科技园区站：装机容量大
+                'site2': 0.9,    // 工业园区站
+                'site3': 0.85,   // 商业中心站
+                'site4': 0.75,   // 物流园区站
+                'site5': 0.95,   // 研发中心站
+                'site6': 1.1     // 数据中心站：耗电量大
+            };
+
+            const siteFactor = siteFactors[selectedSite] || 1.0;
+
+            switch(period) {
+                case 'day':
+                    labels = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+                    // 此消彼长：充电高时放电低，充电低时放电高
+                    chargeData = [35, 28, 25, 85, 185, 295, 380, 420, 395, 285, 155, 68].map(v => Math.round(v * siteFactor));   // 白天充电高
+                    dischargeData = [185, 165, 158, 92, 65, 45, 38, 35, 55, 158, 245, 195].map(v => Math.round(v * siteFactor)); // 晚上放电高
+                    revenueData = [8, 5, 3, 22, 52, 78, 98, 105, 88, 65, 38, 18].map(v => Math.round(v * siteFactor));
+                    break;
+                case 'month':
+                    // 根据当前语言生成不同格式的标签
+                    if (currentLanguage === 'en') {
+                        // 英文：只显示数字
+                        labels = Array.from({length: 30}, (_, i) => `${i + 1}`);
+                    } else {
+                        // 中文：显示数字+日
+                        labels = Array.from({length: 30}, (_, i) => `${i + 1}日`);
+                    }
+                    // 此消彼长：充电和放电呈反向关系
+                    chargeData = Array.from({length: 30}, () => {
+                        return Math.round((Math.floor(Math.random() * 250) + 200) * siteFactor);  // 200-450
+                    });
+                    dischargeData = chargeData.map(charge => {
+                        // 放电与充电反向：总量固定，充电高则放电低
+                        const total = Math.round(550 * siteFactor);
+                        return Math.floor(total - charge + (Math.random() * 60 - 30));
+                    });
+                    revenueData = Array.from({length: 30}, () => Math.round((Math.floor(Math.random() * 80) + 40) * siteFactor));
+                    break;
+                case 'year':
+                    // 根据当前语言生成不同格式的标签
+                    if (currentLanguage === 'en') {
+                        // 英文：显示英文月份简写
+                        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    } else {
+                        // 中文：显示数字+月
+                        labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+                    }
+                    // 夏季光伏强充电多，冬季用电多放电多（此消彼长）
+                    chargeData = [7200, 7500, 9200, 10800, 13200, 14800, 15500, 14900, 12500, 10200, 8500, 7600].map(v => Math.round(v * siteFactor));
+                    dischargeData = [12800, 12500, 10800, 9200, 6800, 5200, 4500, 5100, 7500, 9800, 11500, 12400].map(v => Math.round(v * siteFactor));
+                    revenueData = [1850, 1720, 1920, 2100, 2280, 2450, 2580, 2500, 2250, 2080, 1900, 1850].map(v => Math.round(v * siteFactor));
+                    break;
+                case 'total':
+                    labels = ['2020', '2021', '2022', '2023', '2024'];
+                    // 充电能力提升，放电需求相对稳定（此消彼长）
+                    chargeData = [85000, 98000, 115000, 128000, 142000].map(v => Math.round(v * siteFactor));
+                    dischargeData = [115000, 102000, 95000, 88000, 82000].map(v => Math.round(v * siteFactor));
+                    revenueData = [18500, 20200, 22800, 24500, 26300].map(v => Math.round(v * siteFactor));
+                    break;
+            }
+            
+            revenueChart.data.labels = labels;
+            revenueChart.data.datasets[0].data = chargeData;
+            revenueChart.data.datasets[1].data = dischargeData;
+            revenueChart.data.datasets[2].data = revenueData;
+            revenueChart.update();
+        }
+
+        // 存储告警分布图表实例（已废弃 - 改为电站排行榜）
+        // let alarmDistributionChart = null;
+
+        // 初始化告警分布饼图（已废弃 - 改为电站排行榜）
+        /* function initAlarmDistributionChart() {
+            const ctx = document.getElementById('alarmDistributionChart').getContext('2d');
+
+            // 使用translate函数获取标签
+            const labels = [
+                translate('dashboardStation1'),
+                translate('dashboardStation2'),
+                translate('dashboardStation3'),
+                translate('dashboardStation4'),
+                translate('dashboardStation5')
+            ];
+
+            alarmDistributionChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: [15, 25, 18, 12, 8], // 默认显示今日告警数
+                        backgroundColor: [
+                            '#ef4444', // 红色
+                            '#f59e0b', // 橙色
+                            '#eab308', // 黄色
+                            '#84cc16', // 浅绿色
+                            '#22c55e'  // 绿色
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 10,
+                                font: {
+                                    size: 11
+                                },
+                                boxWidth: 15,
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const meta = chart.getDatasetMeta(0);
+                                            const value = data.datasets[0].data[i];
+                                            const style = meta.controller.getStyle(i);
+                                            
+                                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((value / total) * 100).toFixed(1);
+                                            
+                                            // 使用特殊字符来创建间距
+                                            const spaces = '\u00A0\u00A0\u00A0\u00A0'; // 不间断空格
+                                            // 根据语言设置决定是否显示单位
+                                            const lang = localStorage.getItem('language') || 'zh';
+                                            const unit = lang === 'en' ? '' : '个';
+                                            const text = label.padEnd(8, '\u00A0') + spaces +
+                                                        String(value + unit).padStart(6, '\u00A0') + spaces +
+                                                        String(percentage + '%').padStart(6, '\u00A0');
+                                            
+                                            return {
+                                                text: text,
+                                                fillStyle: style.backgroundColor,
+                                                strokeStyle: style.borderColor,
+                                                lineWidth: style.borderWidth,
+                                                hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                                index: i,
+                                                font: {
+                                                    family: 'monospace' // 使用等宽字体
+                                                }
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    const alarmText = translate('dashboardAlarmTooltip');
+                                    return label + ': ' + value + ' ' + alarmText + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } */
+
+        // 初始化告警分布Tab切换
+        function initAlarmDistributionTabs() {
+            const tabs = document.querySelectorAll('.alarm-tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 更新Tab状态
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = 'transparent';
+                    });
+                    this.classList.add('active');
+                    this.style.background = 'white';
+                    
+                    // 更新图表数据
+                    updateAlarmDistributionChart(this.dataset.period);
+                });
+            });
+        }
+        
+        // 更新告警分布统计信息
+        function updateAlarmDistributionChart(period) {
+            // 完整的告警数据结构
+            const alarmData = {
+                yesterday: {
+                    total: 73,                           // 告警总数
+                    cleared: 62,                         // 已消警数量
+                    active: 11,                          // 未消警数量
+                    autoCleared: 39,                     // 系统消警数量
+                    manualCleared: 23,                   // 人工消警数量
+                    avgClearTime: 13.2                   // 平均消警时间（分钟）
+                },
+                today: {
+                    total: 78,                           // 告警总数
+                    cleared: 65,                         // 已消警数量
+                    active: 13,                          // 未消警数量
+                    autoCleared: 42,                     // 系统消警数量
+                    manualCleared: 23,                   // 人工消警数量
+                    avgClearTime: 12.5                   // 平均消警时间（分钟）
+                },
+                lastMonth: {
+                    total: 1485,
+                    cleared: 1342,
+                    active: 143,
+                    autoCleared: 872,
+                    manualCleared: 470,
+                    avgClearTime: 19.5
+                },
+                month: {
+                    total: 1580,
+                    cleared: 1425,
+                    active: 155,
+                    autoCleared: 925,
+                    manualCleared: 500,
+                    avgClearTime: 18.3
+                }
+            };
+
+            const currentData = alarmData[period];
+
+            // 更新核心统计数据
+            document.getElementById('alarmTotalCount').textContent = currentData.total;
+            document.getElementById('alarmActiveCount').textContent = currentData.active;
+
+            // 计算并更新消警率
+            const clearRate = ((currentData.cleared / currentData.total) * 100).toFixed(1);
+            document.getElementById('alarmClearRate').textContent = clearRate + '%';
+
+            // 计算并更新消警方式百分比
+            const autoClearedPercent = ((currentData.autoCleared / currentData.cleared) * 100).toFixed(1);
+            const manualClearedPercent = ((currentData.manualCleared / currentData.cleared) * 100).toFixed(1);
+            document.getElementById('alarmAutoClearedPercent').textContent = autoClearedPercent + '%';
+            document.getElementById('alarmManualClearedPercent').textContent = manualClearedPercent + '%';
+
+            // 更新平均消警时长
+            document.getElementById('alarmAvgClearTime').textContent = currentData.avgClearTime;
+
+            // 同时更新电站告警排行榜
+            updateStationAlarmRanking(period, 'activeAlarms');
+        }
+
+        // 生成电站告警数据
+        function generateStationAlarmData(period) {
+            // 基于现有stationsData生成告警统计
+            const stationAlarmData = {
+                yesterday: [
+                    { stationName: '科技园区站', nameKey: 'site1Name', activeAlarms: 4, totalAlarms: 17, clearedAlarms: 13, clearRate: 76.5, avgClearTime: 14.8 },
+                    { stationName: '工业园区站', nameKey: 'site2Name', activeAlarms: 3, totalAlarms: 14, clearedAlarms: 11, clearRate: 78.6, avgClearTime: 12.5 },
+                    { stationName: '商业中心站', nameKey: 'site3Name', activeAlarms: 2, totalAlarms: 15, clearedAlarms: 13, clearRate: 86.7, avgClearTime: 11.2 },
+                    { stationName: '物流园区站', nameKey: 'site4Name', activeAlarms: 1, totalAlarms: 13, clearedAlarms: 12, clearRate: 92.3, avgClearTime: 10.8 },
+                    { stationName: '数据中心站', nameKey: 'site5Name', activeAlarms: 1, totalAlarms: 14, clearedAlarms: 13, clearRate: 92.9, avgClearTime: 9.2 }
+                ],
+                today: [
+                    { stationName: '科技园区站', nameKey: 'site1Name', activeAlarms: 5, totalAlarms: 18, clearedAlarms: 13, clearRate: 72.2, avgClearTime: 15.2 },
+                    { stationName: '工业园区站', nameKey: 'site2Name', activeAlarms: 3, totalAlarms: 15, clearedAlarms: 12, clearRate: 80.0, avgClearTime: 11.8 },
+                    { stationName: '商业中心站', nameKey: 'site3Name', activeAlarms: 2, totalAlarms: 16, clearedAlarms: 14, clearRate: 87.5, avgClearTime: 10.3 },
+                    { stationName: '物流园区站', nameKey: 'site4Name', activeAlarms: 2, totalAlarms: 14, clearedAlarms: 12, clearRate: 85.7, avgClearTime: 12.6 },
+                    { stationName: '数据中心站', nameKey: 'site5Name', activeAlarms: 1, totalAlarms: 15, clearedAlarms: 14, clearRate: 93.3, avgClearTime: 8.5 }
+                ],
+                lastMonth: [
+                    { stationName: '科技园区站', nameKey: 'site1Name', activeAlarms: 52, totalAlarms: 368, clearedAlarms: 316, clearRate: 85.9, avgClearTime: 20.5 },
+                    { stationName: '工业园区站', nameKey: 'site2Name', activeAlarms: 38, totalAlarms: 298, clearedAlarms: 260, clearRate: 87.2, avgClearTime: 16.8 },
+                    { stationName: '商业中心站', nameKey: 'site3Name', activeAlarms: 26, totalAlarms: 312, clearedAlarms: 286, clearRate: 91.7, avgClearTime: 14.5 },
+                    { stationName: '物流园区站', nameKey: 'site4Name', activeAlarms: 18, totalAlarms: 281, clearedAlarms: 263, clearRate: 93.6, avgClearTime: 15.3 },
+                    { stationName: '数据中心站', nameKey: 'site5Name', activeAlarms: 9, totalAlarms: 226, clearedAlarms: 217, clearRate: 96.0, avgClearTime: 13.2 }
+                ],
+                month: [
+                    { stationName: '科技园区站', nameKey: 'site1Name', activeAlarms: 58, totalAlarms: 385, clearedAlarms: 327, clearRate: 84.9, avgClearTime: 21.3 },
+                    { stationName: '工业园区站', nameKey: 'site2Name', activeAlarms: 42, totalAlarms: 315, clearedAlarms: 273, clearRate: 86.7, avgClearTime: 17.5 },
+                    { stationName: '商业中心站', nameKey: 'site3Name', activeAlarms: 28, totalAlarms: 328, clearedAlarms: 300, clearRate: 91.5, avgClearTime: 15.2 },
+                    { stationName: '物流园区站', nameKey: 'site4Name', activeAlarms: 18, totalAlarms: 295, clearedAlarms: 277, clearRate: 93.9, avgClearTime: 14.8 },
+                    { stationName: '数据中心站', nameKey: 'site5Name', activeAlarms: 9, totalAlarms: 257, clearedAlarms: 248, clearRate: 96.5, avgClearTime: 12.5 }
+                ]
+            };
+
+            return stationAlarmData[period];
+        }
+
+        // 渲染电站告警排行榜
+        function renderStationAlarmRanking(data, rankType) {
+            const container = document.getElementById('stationAlarmRanking');
+            if (!container) return;
+
+            let sortedData = [...data];
+            let valueKey, valueLabel, valueUnit, sortOrder;
+
+            // 根据排行类型确定排序规则
+            switch(rankType) {
+                case 'activeAlarms':
+                    valueKey = 'activeAlarms';
+                    valueLabel = '未消警';
+                    valueUnit = '条';
+                    sortOrder = 'desc'; // 从多到少
+                    sortedData.sort((a, b) => b.activeAlarms - a.activeAlarms);
+                    break;
+                case 'clearRate':
+                    valueKey = 'clearRate';
+                    valueLabel = '消警率';
+                    valueUnit = '%';
+                    sortOrder = 'asc'; // 从低到高
+                    sortedData.sort((a, b) => a.clearRate - b.clearRate);
+                    break;
+                case 'clearTime':
+                    valueKey = 'avgClearTime';
+                    valueLabel = '平均消警时间';
+                    valueUnit = '分钟';
+                    sortOrder = 'desc'; // 从慢到快
+                    sortedData.sort((a, b) => b.avgClearTime - a.avgClearTime);
+                    break;
+            }
+
+            // 生成排行榜HTML
+            let html = '';
+            sortedData.forEach((station, index) => {
+                const displayName = station.nameKey ? translate(station.nameKey) : station.stationName;
+                const value = station[valueKey];
+
+                // 根据排名和类型设置颜色
+                let badgeColor, valueColor, bgColor;
+                if (index === 0) {
+                    badgeColor = '#ef4444'; // 红色 - 问题最严重
+                    valueColor = '#dc2626';
+                    bgColor = '#fef2f2';
+                } else if (index === 1) {
+                    badgeColor = '#f97316'; // 橙色
+                    valueColor = '#ea580c';
+                    bgColor = '#fff7ed';
+                } else if (index === 2) {
+                    badgeColor = '#f59e0b'; // 黄色
+                    valueColor = '#d97706';
+                    bgColor = '#fffbeb';
+                } else {
+                    badgeColor = '#94a3b8'; // 灰色
+                    valueColor = '#64748b';
+                    bgColor = '#f8fafc';
+                }
+
+                html += `
+                    <div style="background: ${bgColor}; border-radius: 10px; padding: 14px 16px; border: 1px solid ${badgeColor}20; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 28px; height: 28px; background: ${badgeColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;">
+                                ${index + 1}
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    ${displayName}
+                                </div>
+                                <div style="display: flex; gap: 12px; font-size: 11px; color: #64748b;">
+                                    <span>总告警: ${station.totalAlarms}</span>
+                                    <span>已消警: ${station.clearedAlarms}</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <div style="font-size: 20px; font-weight: 700; color: ${valueColor};">
+                                    ${value}
+                                </div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                                    ${valueLabel}${valueUnit ? ' ' + valueUnit : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 当前电站排行榜的时间周期和排行类型
+        let currentStationAlarmPeriod = 'today';
+        let currentStationAlarmType = 'activeAlarms';
+
+        // 更新电站告警排行榜
+        function updateStationAlarmRanking(period, rankType) {
+            currentStationAlarmPeriod = period;
+            currentStationAlarmType = rankType;
+
+            const data = generateStationAlarmData(period);
+            renderStationAlarmRanking(data, rankType);
+        }
+
+        // 初始化电站告警排行榜Tab切换
+        function initStationAlarmTabs() {
+            const tabs = document.querySelectorAll('.station-alarm-tab');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 更新Tab状态
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = 'transparent';
+                        t.style.color = '#64748b';
+                        t.style.boxShadow = 'none';
+                    });
+                    this.classList.add('active');
+                    this.style.background = 'white';
+                    this.style.color = '#1e293b';
+                    this.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+
+                    // 更新排行榜
+                    const rankType = this.dataset.type;
+                    updateStationAlarmRanking(currentStationAlarmPeriod, rankType);
+                });
+            });
+        }
+
+        // 刷新设备统计数据
+        function refreshDeviceStats() {
+            // 显示加载动画
+            const refreshBtn = event.target.closest('button');
+            const icon = refreshBtn.querySelector('i');
+            icon.style.animation = 'spin 1s linear';
+            
+            // 模拟数据刷新
+            setTimeout(() => {
+                // 更新设备数量（随机生成一些变化）
+                const total = 168;
+                const online = 145 + Math.floor(Math.random() * 10) - 5;
+                const charging = 42 + Math.floor(Math.random() * 10) - 5;
+                const discharging = 38 + Math.floor(Math.random() * 10) - 5;
+                const fault = 8 + Math.floor(Math.random() * 4) - 2;
+                
+                // 更新显示
+                document.getElementById('totalDevices').textContent = total;
+                document.getElementById('onlineDevices').textContent = online;
+                document.getElementById('chargingDevices').textContent = charging;
+                document.getElementById('dischargingDevices').textContent = discharging;
+                document.getElementById('faultDevices').textContent = Math.max(0, fault);
+                
+                // 更新百分比进度条
+                const onlinePercent = (online / total * 100).toFixed(1);
+                const chargingPercent = (charging / total * 100).toFixed(1);
+                const dischargingPercent = (discharging / total * 100).toFixed(1);
+                const faultPercent = (Math.max(0, fault) / total * 100).toFixed(1);
+                
+                // 更新进度条宽度
+                const onlineBar = document.querySelector('#onlineDevices').closest('.position-relative').querySelector('.background');
+                if (onlineBar) {
+                    onlineBar.style.width = onlinePercent + '%';
+                }
+                
+                // 更新更新时间
+                document.getElementById('deviceUpdateTime').textContent = '刚刚';
+                
+                // 停止加载动画
+                icon.style.animation = '';
+                
+                // 5秒后更新为"x秒前"
+                setTimeout(() => {
+                    document.getElementById('deviceUpdateTime').textContent = '5秒前';
+                }, 5000);
+            }, 1000);
+        }
+        
+        // 添加旋转动画
+        const dashboardAnimStyle = document.createElement('style');
+        dashboardAnimStyle.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(dashboardAnimStyle);
+        
+        // 初始化环保贡献数据
+        function initEnvironmentalData() {
+            const envPeriodSelect = document.getElementById('envPeriod');
+            if (envPeriodSelect) {
+                envPeriodSelect.addEventListener('change', function() {
+                    updateEnvironmentalData(this.value);
+                });
+                // 初始化显示累计数据
+                updateEnvironmentalData('total');
+            }
+        }
+        
+        // 更新环保贡献数据
+        function updateEnvironmentalData(period) {
+            const data = {
+                today: {
+                    co2: '3.2',
+                    trees: '176',
+                    coal: '1.2',
+                    cleanEnergy: '82.3'
+                },
+                month: {
+                    co2: '96.8',
+                    trees: '5,324',
+                    coal: '35.7',
+                    cleanEnergy: '79.6'
+                },
+                year: {
+                    co2: '1,156.4',
+                    trees: '63,602',
+                    coal: '426.8',
+                    cleanEnergy: '78.9'
+                },
+                total: {
+                    co2: '1,234.5',
+                    trees: '67,890',
+                    coal: '456.7',
+                    cleanEnergy: '78.5'
+                }
+            };
+            
+            const selectedData = data[period];
+            
+            // 更新数值并添加动画效果
+            const co2Element = document.getElementById('co2Value');
+            const treeElement = document.getElementById('treeValue');
+            const coalElement = document.getElementById('coalValue');
+            const cleanEnergyElement = document.getElementById('cleanEnergyValue');
+            
+            if (co2Element) {
+                animateValue(co2Element, co2Element.textContent, selectedData.co2);
+            }
+            if (treeElement) {
+                animateValue(treeElement, treeElement.textContent, selectedData.trees);
+            }
+            if (coalElement) {
+                animateValue(coalElement, coalElement.textContent, selectedData.coal);
+            }
+            if (cleanEnergyElement) {
+                animateValue(cleanEnergyElement, cleanEnergyElement.textContent, selectedData.cleanEnergy);
+            }
+        }
+        
+        // 数值动画效果
+        function animateValue(element, start, end) {
+            element.style.transition = 'all 0.5s ease';
+            element.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                element.textContent = end;
+                element.style.transform = 'scale(1)';
+            }, 100);
+        }
+        
+        // 初始化电站排行榜
+        let currentRankingTime = 'today';
+        let currentRankingType = 'charge';
+        
+        function initStationRanking() {
+            const tabs = document.querySelectorAll('.ranking-tab');
+            const timeSelect = document.getElementById('rankingTimeSelect');
+            
+            // 初始显示今日充电量排行
+            updateRankingData('today', 'charge');
+            
+            // 时间下拉列表切换事件
+            if (timeSelect) {
+                timeSelect.addEventListener('change', function() {
+                    currentRankingTime = this.value;
+                    updateRankingData(currentRankingTime, currentRankingType);
+                });
+            }
+            
+            // 类型切换事件
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 更新Tab状态
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = 'transparent';
+                    });
+                    this.classList.add('active');
+                    this.style.background = 'white';
+                    
+                    currentRankingType = this.dataset.type;
+                    updateRankingData(currentRankingTime, currentRankingType);
+                });
+            });
+        }
+        
+        
+        // 更新排行榜数据
+        function updateRankingData(timeType, dataType) {
+            const rankingContent = document.getElementById('rankingContent');
+            if (!rankingContent) return;
+
+            // 从 stationsData 生成昨日排行数据(略低于今日,带波动系数)
+            const generateYesterdayRanking = () => {
+                const yesterdayFactor = 0.95; // 昨日数据约为今日的95%
+                return {
+                    charge: stationsData.map(s => {
+                        const todayValue = parseFloat(s.dailyCharge);
+                        const waveFactor = 0.93 + Math.random() * 0.10; // 0.93-1.03的波动
+                        const yesterdayValue = (todayValue * yesterdayFactor * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${yesterdayValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    discharge: stationsData.map(s => {
+                        const todayValue = parseFloat(s.dailyDischarge);
+                        const waveFactor = 0.93 + Math.random() * 0.10;
+                        const yesterdayValue = (todayValue * yesterdayFactor * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${yesterdayValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    revenue: stationsData.map(s => {
+                        const todayValue = parseFloat(s.revenue.replace(/[¥$,]/g, ''));
+                        const waveFactor = 0.93 + Math.random() * 0.10;
+                        const yesterdayValue = Math.round(todayValue * yesterdayFactor * waveFactor);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: formatRevenue(yesterdayValue.toLocaleString())
+                        };
+                    }).sort((a, b) => {
+                        const aVal = parseFloat(a.value.replace(/[¥$,]/g, ''));
+                        const bVal = parseFloat(b.value.replace(/[¥$,]/g, ''));
+                        return bVal - aVal;
+                    })
+                };
+            };
+
+            // 从 stationsData 生成今日排行数据
+            const generateTodayRanking = () => {
+                return {
+                    charge: stationsData.map(s => ({
+                        name: s.name,
+                        nameKey: s.nameKey,
+                        capacity: s.capacity,
+                        value: s.dailyCharge
+                    })).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    discharge: stationsData.map(s => ({
+                        name: s.name,
+                        nameKey: s.nameKey,
+                        capacity: s.capacity,
+                        value: s.dailyDischarge
+                    })).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    revenue: stationsData.map(s => ({
+                        name: s.name,
+                        nameKey: s.nameKey,
+                        capacity: s.capacity,
+                        value: formatRevenue(s.revenue)
+                    })).sort((a, b) => {
+                        const aVal = parseFloat(a.value.replace(/[¥$,]/g, ''));
+                        const bVal = parseFloat(b.value.replace(/[¥$,]/g, ''));
+                        return bVal - aVal;
+                    })
+                };
+            };
+
+            // 从 stationsData 生成本月排行数据(30天累计,带波动系数)
+            const generateMonthRanking = () => {
+                const monthMultiplier = 30;
+                return {
+                    charge: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.dailyCharge);
+                        const waveFactor = 0.93 + Math.random() * 0.14; // 0.93-1.07的波动
+                        const monthValue = (dailyValue * monthMultiplier * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${monthValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    discharge: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.dailyDischarge);
+                        const waveFactor = 0.93 + Math.random() * 0.14;
+                        const monthValue = (dailyValue * monthMultiplier * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${monthValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    revenue: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.revenue.replace(/[¥$,]/g, ''));
+                        const waveFactor = 0.93 + Math.random() * 0.14;
+                        const monthValue = Math.round(dailyValue * monthMultiplier * waveFactor);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: formatRevenue(monthValue.toLocaleString())
+                        };
+                    }).sort((a, b) => {
+                        const aVal = parseFloat(a.value.replace(/[¥$,]/g, ''));
+                        const bVal = parseFloat(b.value.replace(/[¥$,]/g, ''));
+                        return bVal - aVal;
+                    })
+                };
+            };
+
+            // 从 stationsData 生成上月排行数据(30天累计,略低于本月,带波动系数)
+            const generateLastMonthRanking = () => {
+                const lastMonthMultiplier = 30;
+                const lastMonthFactor = 0.94; // 上月数据约为本月的94%
+                return {
+                    charge: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.dailyCharge);
+                        const waveFactor = 0.91 + Math.random() * 0.16; // 0.91-1.07的波动
+                        const lastMonthValue = (dailyValue * lastMonthMultiplier * lastMonthFactor * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${lastMonthValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    discharge: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.dailyDischarge);
+                        const waveFactor = 0.91 + Math.random() * 0.16;
+                        const lastMonthValue = (dailyValue * lastMonthMultiplier * lastMonthFactor * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${lastMonthValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    revenue: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.revenue.replace(/[¥$,]/g, ''));
+                        const waveFactor = 0.91 + Math.random() * 0.16;
+                        const lastMonthValue = Math.round(dailyValue * lastMonthMultiplier * lastMonthFactor * waveFactor);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: formatRevenue(lastMonthValue.toLocaleString())
+                        };
+                    }).sort((a, b) => {
+                        const aVal = parseFloat(a.value.replace(/[¥$,]/g, ''));
+                        const bVal = parseFloat(b.value.replace(/[¥$,]/g, ''));
+                        return bVal - aVal;
+                    })
+                };
+            };
+
+            // 从 stationsData 生成累计排行数据(约325天,带波动系数)
+            const generateTotalRanking = () => {
+                const totalMultiplier = 325;
+                return {
+                    charge: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.dailyCharge);
+                        const waveFactor = 0.90 + Math.random() * 0.20; // 0.90-1.10的波动
+                        const totalValue = (dailyValue * totalMultiplier * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${totalValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    discharge: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.dailyDischarge);
+                        const waveFactor = 0.90 + Math.random() * 0.20;
+                        const totalValue = (dailyValue * totalMultiplier * waveFactor).toFixed(1);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: `${totalValue} kWh`
+                        };
+                    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value)),
+
+                    revenue: stationsData.map(s => {
+                        const dailyValue = parseFloat(s.revenue.replace(/[¥$,]/g, ''));
+                        const waveFactor = 0.90 + Math.random() * 0.20;
+                        const totalValue = Math.round(dailyValue * totalMultiplier * waveFactor);
+                        return {
+                            name: s.name,
+                            nameKey: s.nameKey,
+                            capacity: s.capacity,
+                            value: formatRevenue(totalValue.toLocaleString())
+                        };
+                    }).sort((a, b) => {
+                        const aVal = parseFloat(a.value.replace(/[¥$,]/g, ''));
+                        const bVal = parseFloat(b.value.replace(/[¥$,]/g, ''));
+                        return bVal - aVal;
+                    })
+                };
+            };
+
+            // 定义不同时间和类型的数据
+            const rankingData = {
+                yesterday: generateYesterdayRanking(),
+                today: generateTodayRanking(),
+                lastMonth: generateLastMonthRanking(),
+                month: generateMonthRanking(),
+                total: generateTotalRanking()
+            };
+            
+            const data = rankingData[timeType][dataType];
+            const colors = ['#fbbf24', '#9ca3af', '#a78bfa', '#e5e7eb', '#e5e7eb'];
+            const textColors = ['white', 'white', 'white', '#6b7280', '#6b7280'];
+
+            // 生成HTML
+            let html = '';
+            data.forEach((item, index) => {
+                // 直接使用 nameKey 获取翻译
+                const displayName = item.nameKey ? translate(item.nameKey) : item.name;
+                const capacityLabel = translate('dashboardCapacityLabel');
+
+                html += `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 24px; height: 24px; background: ${colors[index]}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: ${textColors[index]};">${index + 1}</div>
+                        <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 500;">${displayName}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${capacityLabel}: ${item.capacity}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${dataType === 'revenue' ? '#10b981' : '#3562E3'};">${item.value}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            rankingContent.innerHTML = html;
+        }
+
+        // 页面加载完成后初始化图表
+        window.addEventListener('load', function() {
+            initRevenueTrendChart();
+            initPeriodSwitcher();
+            // initAlarmDistributionChart(); // 已移除饼图，改为电站排行榜
+            initAlarmDistributionTabs();
+            initStationAlarmTabs(); // 初始化电站告警排行榜Tab
+            initStationRanking();
+            initEnvironmentalData();
+
+            // 初始化时更新科技园区站的数据
+            updateTotalEnergyStatus('station1');
+        });
+
+        // 语言切换时更新动态内容
+        function updateDashboardTranslations() {
+            // 重新初始化排行榜（会使用新的翻译）
+            const timeSelect = document.getElementById('rankingTimeSelect');
+            const activeTab = document.querySelector('.ranking-tab.active');
+            if (timeSelect && activeTab) {
+                const timeType = timeSelect.value;
+                const dataType = activeTab.getAttribute('data-type');
+                updateRankingData(timeType, dataType);
+            }
+
+            // 更新收益趋势图表的图例和坐标轴
+            if (revenueChart) {
+                revenueChart.data.datasets[0].label = translate('dashboardChartCharging');
+                revenueChart.data.datasets[1].label = translate('dashboardChartDischarging');
+                revenueChart.data.datasets[2].label = translate('dashboardChartRevenue');
+                revenueChart.options.scales.y.title.text = translate('dashboardChartEnergyAxis');
+                revenueChart.options.scales.y1.title.text = translate('dashboardChartRevenueAxis');
+                revenueChart.update();
+            }
+
+            // 更新电站告警排行榜的翻译
+            const currentPeriod = document.querySelector('.alarm-tab.active')?.dataset.period || 'today';
+            updateStationAlarmRanking(currentPeriod, currentStationAlarmType);
+        }
+
+        // 用户下拉菜单
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 退出相关函数已在 common.js 中定义
+
+        /* ==================== 地图功能 ==================== */
+
+        let map = null; // 地图实例
+        let markers = []; // 标记数组
+
+        // 电站数据（包含经纬度）
+        const stationsData = [
+            {
+                id: 'site1',
+                name: '科技园区站',
+                nameKey: 'dashboardStation1',
+                position: [116.397428, 39.90923], // 北京示例坐标
+                capacity: '1850kWh',
+                cabinets: 7,
+                devicesOffline: 0,
+                devicesAlarm: 1,
+                status: 'online',
+                dailyCharge: '98.2kWh',      // 总充电486.3的20.2% (按容量比例)
+                dailyDischarge: '75.2kWh',   // 总放电372.5的20.2%
+                revenue: '319',              // 今日收益（纯数字，货币符号由函数添加）
+                yesterdayRevenue: '287'      // 昨日收益（纯数字，货币符号由函数添加）
+            },
+            {
+                id: 'site2',
+                name: '工业园区站',
+                nameKey: 'dashboardStation2',
+                position: [116.320580, 39.98408],
+                capacity: '2650kWh',
+                cabinets: 11,
+                devicesOffline: 1,
+                devicesAlarm: 0,
+                status: 'online',
+                dailyCharge: '140.5kWh',     // 总充电486.3的28.9% (按容量比例)
+                dailyDischarge: '107.6kWh',  // 总放电372.5的28.9%
+                revenue: '457',              // 今日收益（纯数字，货币符号由函数添加）
+                yesterdayRevenue: '425'      // 昨日收益（纯数字，货币符号由函数添加）
+            },
+            {
+                id: 'site3',
+                name: '商业中心站',
+                nameKey: 'dashboardStation3',
+                position: [116.476053, 39.91736],
+                capacity: '1720kWh',
+                cabinets: 8,
+                devicesOffline: 0,
+                devicesAlarm: 0,
+                status: 'online',
+                dailyCharge: '91.0kWh',      // 总充电486.3的18.7% (按容量比例)
+                dailyDischarge: '69.7kWh',   // 总放电372.5的18.7%
+                revenue: '295',              // 今日收益（纯数字，货币符号由函数添加）
+                yesterdayRevenue: '312'      // 昨日收益（纯数字，货币符号由函数添加）
+            },
+            {
+                id: 'site4',
+                name: '物流园区站',
+                nameKey: 'dashboardStation4',
+                position: [116.360703, 39.86633],
+                capacity: '1580kWh',
+                cabinets: 6,
+                devicesOffline: 0,
+                devicesAlarm: 1,
+                status: 'online',
+                dailyCharge: '83.6kWh',      // 总充电486.3的17.2% (按容量比例)
+                dailyDischarge: '64.1kWh',   // 总放电372.5的17.2%
+                revenue: '272',              // 今日收益（纯数字，货币符号由函数添加）
+                yesterdayRevenue: '298'      // 昨日收益（纯数字，货币符号由函数添加）
+            },
+            {
+                id: 'site5',
+                name: '产业园区站',
+                nameKey: 'dashboardStation5',
+                position: [116.453485, 40.01094],
+                capacity: '1380kWh',
+                cabinets: 6,
+                devicesOffline: 0,
+                devicesAlarm: 0,
+                status: 'online',
+                dailyCharge: '73.0kWh',      // 总充电486.3的15.0% (按容量比例)
+                dailyDischarge: '55.9kWh',   // 总放电372.5的15.0%
+                revenue: '237',              // 今日收益（纯数字，货币符号由函数添加）
+                yesterdayRevenue: '258'      // 昨日收益（纯数字，货币符号由函数添加）
+            }
+        ];
+
+        // 更新数据视图的统计数据（与地图数据保持一致）
+        function updateDashboardStats() {
+            // 计算总站点数
+            const totalStations = stationsData.length;
+
+            // 计算总设备数
+            let totalCabinets = 0;
+            stationsData.forEach(station => {
+                totalCabinets += station.cabinets;
+            });
+
+            // 计算总装机容量
+            let totalCapacity = 0;
+            stationsData.forEach(station => {
+                totalCapacity += parseInt(station.capacity);
+            });
+
+            // 更新数据视图中的显示
+            const stationsEl = document.getElementById('dashboard-total-stations');
+            const cabinetsEl = document.getElementById('dashboard-total-cabinets');
+            const capacityEl = document.getElementById('dashboard-total-capacity');
+
+            if (stationsEl) {
+                stationsEl.textContent = totalStations;
+            }
+
+            if (cabinetsEl) {
+                cabinetsEl.textContent = totalCabinets;
+            }
+
+            if (capacityEl) {
+                capacityEl.innerHTML = `${totalCapacity.toLocaleString()} <span style="font-size: 14px; font-weight: 500; color: #92400e;">kWh</span>`;
+            }
+        }
+
+        // 初始化地图
+        function initMap() {
+            if (typeof L === 'undefined') {
+                console.error('地图库未加载');
+                alert('地图加载失败，请检查网络连接');
+                return;
+            }
+
+            // 创建地图实例
+            map = L.map('amap-container', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([39.90923, 116.397428], 11);
+
+            // 添加极简白模地图图层 (无标签版本 - 最简约)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap © CartoDB',
+                maxZoom: 19,
+                subdomains: 'abcd'
+            }).addTo(map);
+
+            // 添加电站标记
+            addStationMarkers();
+
+            // 计算并更新统计数据
+            updateStatsSummary();
+        }
+
+        // 更新统计汇总
+        function updateStatsSummary() {
+            let stationCount = stationsData.length;
+            let deviceCount = 0;
+            let installedCapacity = 0;
+
+            stationsData.forEach(station => {
+                deviceCount += station.cabinets;
+                installedCapacity += parseInt(station.capacity);
+            });
+
+            document.getElementById('station-count').textContent = stationCount;
+            document.getElementById('device-count').textContent = deviceCount;
+            document.getElementById('installed-capacity').textContent = installedCapacity.toLocaleString();
+        }
+
+        // 添加电站标记
+        function addStationMarkers() {
+            stationsData.forEach(station => {
+                // 创建储能柜自定义图标
+                // 确定角标图标和显示
+                let badgeHtml = '';
+                if (station.devicesAlarm > 0) {
+                    // 有告警，显示维修图标
+                    badgeHtml = `
+                        <div style="
+                            position: absolute;
+                            top: -6px;
+                            right: -6px;
+                            width: 18px;
+                            height: 18px;
+                            background: #ef4444;
+                            border: 2px solid white;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.6);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">
+                            <i class="fas fa-tools" style="color: white; font-size: 8px;"></i>
+                        </div>
+                    `;
+                } else if (station.devicesOffline > 0) {
+                    // 有离线，显示WiFi断开图标
+                    badgeHtml = `
+                        <div style="
+                            position: absolute;
+                            top: -6px;
+                            right: -6px;
+                            width: 18px;
+                            height: 18px;
+                            background: #6b7280;
+                            border: 2px solid white;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 6px rgba(107, 114, 128, 0.6);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">
+                            <svg style="width: 10px; height: 10px; color: white;" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 24C8 15.1634 15.1634 8 24 8C32.8366 8 40 15.1634 40 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M15 24C15 19.0294 19.0294 15 24 15C28.9706 15 33 19.0294 33 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M6 42L42 6" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    `;
+                }
+
+                const customIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="position: relative;">
+                            <div style="
+                                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                                border-radius: 8px;
+                                width: 36px;
+                                height: 36px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+                                border: 2px solid white;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            ">
+                                <i class="fas fa-server" style="color: white; font-size: 16px;"></i>
+                            </div>
+                            ${badgeHtml}
+                        </div>
+                    `,
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18]
+                });
+
+                // 创建标记 (Leaflet使用[纬度, 经度]顺序)
+                const marker = L.marker([station.position[1], station.position[0]], {
+                    icon: customIcon
+                }).addTo(map);
+
+                // 创建信息窗口内容
+                const infoWindowContent = createInfoWindowContent(station);
+
+                // 绑定弹出窗口
+                marker.bindPopup(infoWindowContent, {
+                    maxWidth: 300,
+                    className: 'custom-popup'
+                });
+
+                markers.push(marker);
+            });
+        }
+
+        // 创建信息窗口内容
+        function createInfoWindowContent(station) {
+            const stationName = station.nameKey ? translate(station.nameKey) : station.name;
+            const encodedSiteName = encodeURIComponent(stationName);
+
+            // 获取翻译文本，如果翻译失败则使用默认文本
+            const getText = (key, fallback) => {
+                const translated = translate(key);
+                return (translated && translated !== key) ? translated : fallback;
+            };
+
+            return `
+                <div class="station-info-window">
+                    <h4>${stationName}</h4>
+                    <div class="station-info-row">
+                        <span class="station-info-label">${getText('dashboardCapacity', '容量')}</span>
+                        <span class="station-info-value">${station.capacity}</span>
+                    </div>
+                    <div class="station-info-row">
+                        <span class="station-info-label">${getText('dashboardTodayCharge', '今日充电')}</span>
+                        <span class="station-info-value">${station.dailyCharge}</span>
+                    </div>
+                    <div class="station-info-row">
+                        <span class="station-info-label">${getText('dashboardTodayDischarge', '今日放电')}</span>
+                        <span class="station-info-value">${station.dailyDischarge}</span>
+                    </div>
+                    <div class="station-info-row">
+                        <span class="station-info-label">${getText('dashboardRevenue', '收益')}</span>
+                        <span class="station-info-value" style="color: #10b981; font-weight: 600;" data-revenue="${station.revenue.replace(/[^\d,]/g, '')}">${formatRevenue(station.revenue.replace(/[^\d,]/g, ''))}</span>
+                    </div>
+                    <div class="station-info-divider"></div>
+                    <div class="station-info-section">
+                        <div class="station-info-section-title">${getText('dashboardDeviceStatus', '设备状态')}</div>
+                        <div class="station-devices-grid">
+                            <div class="device-stat device-stat-clickable" onclick="navigateToDevices('${station.id}', '${encodedSiteName}', 'all')">
+                                <span class="device-stat-label">${getText('dashboardDeviceTotal', '总数')}</span>
+                                <span class="device-stat-value" style="color: #3b82f6;">${station.cabinets}</span>
+                            </div>
+                            <div class="device-stat device-stat-clickable" onclick="navigateToDevices('${station.id}', '${encodedSiteName}', 'offline')">
+                                <span class="device-stat-label">${getText('dashboardDeviceOffline', '离线')}</span>
+                                <span class="device-stat-value" style="color: #6b7280;">${station.devicesOffline}</span>
+                            </div>
+                            <div class="device-stat device-stat-clickable" onclick="navigateToDevices('${station.id}', '${encodedSiteName}', 'alarm')">
+                                <span class="device-stat-label">${getText('dashboardDeviceAlarm', '告警')}</span>
+                                <span class="device-stat-value" style="color: #ef4444;">${station.devicesAlarm}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 跳转到设备页面
+        function navigateToDevices(siteId, encodedSiteName, filterType) {
+            // 构建URL参数
+            let url = `devices.html?site=${siteId}&siteName=${encodedSiteName}`;
+
+            // 根据filterType添加筛选参数
+            if (filterType === 'offline') {
+                url += '&filter=offline';
+            } else if (filterType === 'alarm') {
+                url += '&filter=alarm';
+            }
+
+            // 跳转到设备页面
+            window.location.href = url;
+        }
+
+        // 视图切换函数
+        function switchView(viewType) {
+            const dataViewContainer = document.getElementById('data-view-container');
+            const mapContainer = document.getElementById('map-container');
+            const dataViewBtn = document.getElementById('data-view-btn');
+            const mapViewBtn = document.getElementById('map-view-btn');
+
+            // 保存视图状态到 localStorage
+            localStorage.setItem('dashboardView', viewType);
+
+            if (viewType === 'map') {
+                // 切换到地图视图
+                dataViewContainer.classList.add('fade-out');
+
+                setTimeout(() => {
+                    dataViewContainer.style.display = 'none';
+                    mapContainer.style.display = 'flex';
+                    mapContainer.classList.remove('fade-out');
+                    mapContainer.classList.add('fade-in');
+
+                    // 更新按钮状态
+                    dataViewBtn.classList.remove('active');
+                    mapViewBtn.classList.add('active');
+
+                    // 初始化地图（仅第一次）
+                    if (!map) {
+                        initMap();
+                    } else {
+                        // 刷新地图显示
+                        setTimeout(() => {
+                            map.invalidateSize();
+                        }, 100);
+                    }
+                }, 300);
+
+            } else {
+                // 切换到数据视图
+                mapContainer.classList.add('fade-out');
+
+                setTimeout(() => {
+                    mapContainer.style.display = 'none';
+                    dataViewContainer.style.display = 'block';
+                    dataViewContainer.classList.remove('fade-out');
+                    dataViewContainer.classList.add('fade-in');
+
+                    // 更新按钮状态
+                    mapViewBtn.classList.remove('active');
+                    dataViewBtn.classList.add('active');
+                }, 300);
+            }
+        }
+
+        // 页面加载时不自动初始化地图，等用户点击地图视图按钮时再初始化
+        // 这样可以提高页面初始加载速度
+
+        // 更新故障分析表格数据
+        // 跳转到设备页面并带查询条件
+        function navigateToDevicesWithFilter(siteId) {
+            // 将站点ID保存到localStorage，以便devices.html页面读取
+            localStorage.setItem('deviceFilterSite', siteId);
+            // 跳转到devices.html
+            window.location.href = 'devices.html';
+        }
+
+        function updateFaultTable() {
+            const timeDimension = document.getElementById('faultTimeDimension').value;
+            const tbody = document.querySelector('#stationTable tbody');
+
+            // 根据不同时间维度生成不同的数据
+            const multipliers = {
+                'yesterday': 0.14,
+                'today': 0.15,
+                'lastMonth': 4.2,
+                'thisMonth': 4.3,
+                'total': 10.0
+            };
+
+            const baseData = [
+                { name: '科技园区站', site: 'site1', baseFault: 28, baseRepair: 65, baseUnfixed: 10, baseTime: 6.2 },
+                { name: '工业园区站', site: 'site2', baseFault: 12, baseRepair: 83, baseUnfixed: 2, baseTime: 4.5 },
+                { name: '商业中心站', site: 'site3', baseFault: 45, baseRepair: 56, baseUnfixed: 20, baseTime: 8.7 }
+            ];
+
+            const multiplier = multipliers[timeDimension] || 1;
+
+            tbody.innerHTML = baseData.map(station => {
+                const faultCount = Math.round(station.baseFault * multiplier);
+                const unfixed = Math.round(station.baseUnfixed * multiplier);
+                const repairRate = station.baseRepair;
+                const repairTime = (station.baseTime * multiplier).toFixed(1);
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="station-name-cell clickable-station" data-site="${station.site}" onclick="navigateToDevicesWithFilter('${station.site}')">
+                                <i class="fas fa-building" style="color: #3b82f6;"></i>
+                                ${station.name}
+                            </div>
+                        </td>
+                        <td class="station-table-number" data-value="${faultCount}">${faultCount}<span class="station-table-unit">次</span></td>
+                        <td class="station-table-number" data-value="${repairRate}">${repairRate}<span class="station-table-unit">%</span></td>
+                        <td class="station-table-number" data-value="${unfixed}">${unfixed}<span class="station-table-unit">次</span></td>
+                        <td class="station-table-number" data-value="${repairTime}">${repairTime}<span class="station-table-unit">小时</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 故障分析表格排序功能
+        function initStationTableSort() {
+            const table = document.getElementById('stationTable');
+            if (!table) {
+                console.error('未找到表格元素 #stationTable');
+                return;
+            }
+
+            const tbody = table.querySelector('tbody');
+            if (!tbody) {
+                console.error('未找到tbody元素');
+                return;
+            }
+
+            // 保存原始行顺序
+            const originalRows = Array.from(tbody.querySelectorAll('tr')).map(row => row.cloneNode(true));
+
+            const headers = table.querySelectorAll('th.sortable');
+            let currentSort = { column: null, direction: null };
+
+            headers.forEach((header) => {
+                const column = header.getAttribute('data-column');
+                const type = header.getAttribute('data-type') || 'string';
+
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // 确定排序方向
+                    if (currentSort.column === column) {
+                        if (currentSort.direction === 'asc') {
+                            currentSort.direction = 'desc';
+                        } else if (currentSort.direction === 'desc') {
+                            currentSort.direction = null;
+                            currentSort.column = null;
+                        } else {
+                            currentSort.direction = 'asc';
+                        }
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+
+                    // 更新表头样式
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+
+                    if (currentSort.direction) {
+                        this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                    }
+
+                    // 执行排序
+                    if (currentSort.direction === null) {
+                        // 恢复原始顺序
+                        tbody.innerHTML = '';
+                        originalRows.forEach(row => {
+                            tbody.appendChild(row.cloneNode(true));
+                        });
+                    } else {
+                        // 执行排序
+                        sortStationTableByColumn(table, column, currentSort.direction, type);
+                    }
+                });
+            });
+        }
+
+        function sortStationTableByColumn(table, column, direction, type) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // 从thead中查找列索引
+            const headers = Array.from(table.querySelector('thead').querySelectorAll('th'));
+            const columnIndex = headers.findIndex(th => th.getAttribute('data-column') === column);
+
+            if (columnIndex === -1) {
+                console.error('未找到列:', column);
+                return;
+            }
+
+            // 排序
+            rows.sort((a, b) => {
+                const aCell = a.cells[columnIndex];
+                const bCell = b.cells[columnIndex];
+
+                if (!aCell || !bCell) {
+                    return 0;
+                }
+
+                let aValue = aCell.getAttribute('data-value');
+                let bValue = bCell.getAttribute('data-value');
+
+                if (type === 'number') {
+                    aValue = parseFloat(aValue);
+                    bValue = parseFloat(bValue);
+
+                    if (isNaN(aValue)) aValue = 0;
+                    if (isNaN(bValue)) bValue = 0;
+                } else {
+                    aValue = aValue || aCell.textContent.trim();
+                    bValue = bValue || bCell.textContent.trim();
+                }
+
+                let comparison = 0;
+                if (aValue > bValue) {
+                    comparison = 1;
+                } else if (aValue < bValue) {
+                    comparison = -1;
+                }
+
+                return direction === 'asc' ? comparison : -comparison;
+            });
+
+            // 清空tbody并重新添加排序后的行
+            tbody.innerHTML = '';
+            rows.forEach(row => {
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==================== 货币符号处理函数 ====================
+        // 获取当前货币符号
+        function getCurrencySymbol() {
+            const lang = localStorage.getItem('language') || 'zh';
+            return lang === 'zh' ? '¥' : '$';
+        }
+
+        // 格式化收益（添加货币符号）
+        function formatRevenue(value) {
+            const symbol = getCurrencySymbol();
+            return symbol + value;
+        }
+
+        // 更新所有收益的货币符号
+        function updateRevenueCurrency() {
+            const symbol = getCurrencySymbol();
+
+            // 更新所有带 data-revenue 属性的元素
+            document.querySelectorAll('[data-revenue]').forEach(element => {
+                const value = element.getAttribute('data-revenue');
+                if (value) {
+                    element.textContent = symbol + value;
+                }
+            });
+
+            // 更新所有 class="revenue" 的元素
+            document.querySelectorAll('.revenue').forEach(element => {
+                const value = element.getAttribute('data-revenue');
+                if (value) {
+                    element.textContent = symbol + value;
+                }
+            });
+        }
+        // ==================== 货币符号处理函数结束 ====================
+
+        // 在页面加载时初始化表格排序
+        document.addEventListener('DOMContentLoaded', function() {
+            // 更新页面标题
+            document.title = getTranslation('pageTitleDashboard') || '仪表盘 - 储能柜管理系统';
+
+            initStationTableSort();
+
+            // 初始化货币符号显示
+            updateRevenueCurrency();
+
+            // 监听语言切换事件，更新地图弹窗中的货币符号
+            window.addEventListener('languageChanged', function() {
+                // 更新页面标题
+                document.title = getTranslation('pageTitleDashboard') || '仪表盘 - 储能柜管理系统';
+                // 更新仪表盘翻译（包括图表）
+                if (typeof updateDashboardTranslations === 'function') {
+                    updateDashboardTranslations();
+                }
+
+                // 更新所有收益的货币符号
+                updateRevenueCurrency();
+
+                // 如果地图已初始化且有打开的弹窗，关闭并重新生成标记
+                if (map && markers.length > 0) {
+                    // 关闭所有弹窗
+                    map.closePopup();
+
+                    // 清除现有标记
+                    markers.forEach(marker => marker.remove());
+                    markers = [];
+
+                    // 重新创建标记（这样会使用新的货币符号）
+                    createStationMarkers();
+                }
+            });
+
+            // 监听页面显示事件（处理从其他页面切换回来的情况）
+            window.addEventListener('pageshow', function() {
+                // 确保货币符号与当前语言一致
+                if (typeof updateRevenueCurrency === 'function') {
+                    updateRevenueCurrency();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="notifPageTitle" data-translate="notifConfigPageTitle">告警通知配置 - 储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="navbar.js"></script>
+    <!-- IconPark Icons -->
+    <script src="https://lf1-cdn-tos.bytegoofy.com/obj/iconpark/svg/all_25547.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            padding: 20px;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+        }
+
+        /* 内容容器 - 与alarm-management保持一致 */
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        [data-theme="dark"] .content-card {
+            background: #1e293b;
+        }
+
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 按钮 - 与其他页面保持一致 */
+        .btn {
+            height: 36px !important;
+            width: auto !important;
+            padding: 0 14px !important;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            background: white;
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .btn {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .btn:hover {
+            background: #475569;
+        }
+
+        .btn-primary {
+            background: #3562E3;
+            color: white;
+            border-color: #3562E3;
+        }
+
+        .btn-primary:hover {
+            background: #2c51c9;
+            border-color: #2c51c9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(53, 98, 227, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: #f3f4f6;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .btn-icon:hover {
+            background: #334155;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        [data-theme="dark"] .modal-content {
+            background: #1e293b;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: #334155;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .modal-close:hover {
+            background: #334155;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            border-top-color: #334155;
+        }
+
+        /* 表单 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .form-label .required {
+            color: #ef4444;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: white;
+            transition: all 0.2s;
+        }
+
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] .form-textarea {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+
+        .form-textarea {
+            height: auto;
+            min-height: 100px;
+            padding: 10px 12px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 24px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        [data-theme="dark"] .empty-state-icon {
+            background: #334155;
+        }
+
+        .empty-state-icon i {
+            font-size: 48px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* 提示框 */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        [data-theme="dark"] .info-box {
+            background: #1e3a8a;
+            border-color: #3b82f6;
+        }
+
+        .info-box i {
+            color: #3b82f6;
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-box-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+
+        [data-theme="dark"] .info-box-title {
+            color: #93c5fd;
+        }
+
+        .info-box-text {
+            font-size: 13px;
+            color: #1e40af;
+            line-height: 1.5;
+        }
+
+        [data-theme="dark"] .info-box-text {
+            color: #bfdbfe;
+        }
+
+        /* 告警等级策略卡片 - 与其他页面保持一致 */
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .level-policy-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        [data-theme="dark"] .level-policy-card {
+            background: #1e293b;
+        }
+
+        .level-policy-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* 告警等级头部 - 小卡片样式 */
+        .level-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .level-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .level-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .level-icon {
+            font-size: 20px;
+        }
+
+        .level-badge.critical {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .level-badge.error {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .level-badge.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .level-badge.info {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        [data-theme="dark"] .level-badge.critical {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        [data-theme="dark"] .level-badge.error {
+            background: #7c2d12;
+            color: #fdba74;
+        }
+
+        [data-theme="dark"] .level-badge.warning {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        [data-theme="dark"] .level-badge.info {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .level-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .level-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .level-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 卡片摘要信息 */
+        .card-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .summary-row i {
+            width: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .summary-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .card-footer {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        [data-theme="dark"] .card-footer {
+            border-top-color: #334155;
+        }
+
+        .card-action {
+            color: #3562E3;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .card-action:hover {
+            color: #2c51c9;
+            gap: 8px;
+        }
+
+        /* Toggle 开关 */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #3562E3;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .toggle-switch input:focus + .toggle-slider {
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.2);
+        }
+
+        /* Section Header - 配置区域标题栏 */
+        .section-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .section-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header h3 i {
+            font-size: 16px;
+            color: #3562E3;
+        }
+
+        /* 配置项 */
+        .config-section {
+            margin-bottom: 24px;
+        }
+
+        .config-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .channel-option {
+            position: relative;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        [data-theme="dark"] .channel-option {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .channel-option:hover {
+            border-color: #3562E3;
+            background: #eff6ff;
+        }
+
+        [data-theme="dark"] .channel-option:hover {
+            background: #1e3a8a;
+        }
+
+        .channel-option input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .channel-option input[type="checkbox"]:checked ~ .channel-label {
+            color: #3562E3;
+            font-weight: 600;
+        }
+
+        .channel-option input[type="checkbox"]:checked ~ .channel-icon {
+            color: #3562E3;
+        }
+
+        .channel-option.selected {
+            border-color: #3562E3;
+            background: #eff6ff;
+        }
+
+        [data-theme="dark"] .channel-option.selected {
+            background: #1e3a8a;
+            border-color: #3b82f6;
+        }
+
+        .channel-icon {
+            font-size: 24px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            transition: color 0.2s;
+        }
+
+        .channel-label {
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        /* 通知组选择 */
+        .group-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        [data-theme="dark"] .group-select {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .group-select:hover {
+            border-color: #3562E3;
+        }
+
+        .group-select:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+
+        /* 高级配置折叠面板 */
+        .advanced-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            cursor: pointer;
+            color: #3562E3;
+            font-size: 13px;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .advanced-toggle:hover {
+            color: #2c51c9;
+        }
+
+        .advanced-content {
+            display: none;
+            padding-top: 12px;
+        }
+
+        .advanced-content.show {
+            display: block;
+        }
+
+        /* 数值输入 */
+        .number-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .number-input {
+            width: 80px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: #3562E3;
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+
+        .unit-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 用户管理相关样式 */
+        .selected-users-container {
+            min-height: 60px;
+        }
+
+        .empty-users-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #f9fafb;
+            border: 1px dashed #e5e7eb;
+            border-radius: 8px;
+        }
+
+        [data-theme="dark"] .empty-users-hint {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .selected-users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 6px 12px 6px 6px;
+            transition: all 0.2s;
+        }
+
+        [data-theme="dark"] .user-chip {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        .user-chip:hover {
+            background: #e5e7eb;
+        }
+
+        [data-theme="dark"] .user-chip:hover {
+            background: #334155;
+        }
+
+        .user-chip-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3562E3, #5b8ef5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-chip-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .user-chip-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .user-chip-role {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1;
+        }
+
+        .user-chip-remove {
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin-left: 4px;
+        }
+
+        .user-chip-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        /* 用户选择器列表样式 */
+        .user-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .user-select-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        [data-theme="dark"] .user-select-item {
+            border-color: #334155;
+        }
+
+        .user-select-item:hover {
+            background: #f9fafb;
+            border-color: #3562E3;
+        }
+
+        [data-theme="dark"] .user-select-item:hover {
+            background: #1e293b;
+        }
+
+        .user-select-item.selected {
+            background: #eff6ff;
+            border-color: #3562E3;
+        }
+
+        [data-theme="dark"] .user-select-item.selected {
+            background: #1e3a8a;
+            border-color: #3b82f6;
+        }
+
+        .user-select-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3562E3, #5b8ef5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-select-info {
+            flex: 1;
+        }
+
+        .user-select-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .user-select-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .role-badge.admin {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .role-badge.operator {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        [data-theme="dark"] .role-badge.admin {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        [data-theme="dark"] .role-badge.operator {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .user-select-checkbox {
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+
+        /* 用户-渠道表格样式 */
+        .user-channel-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .user-channel-table {
+            border-color: #334155;
+        }
+
+        .user-channel-table thead {
+            background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+        }
+
+        [data-theme="dark"] .user-channel-table thead {
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+        }
+
+        .user-channel-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        [data-theme="dark"] .user-channel-table th {
+            border-bottom-color: #334155;
+            color: #94a3b8;
+        }
+
+        .user-channel-table th:nth-child(n+3) {
+            text-align: center;
+        }
+
+        .user-channel-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .user-channel-table td:nth-child(n+3) {
+            text-align: center;
+        }
+
+        [data-theme="dark"] .user-channel-table td {
+            border-bottom-color: #1e293b;
+        }
+
+        .user-channel-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .user-channel-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .user-channel-table tbody tr:hover {
+            background: #fafbfc;
+            transform: scale(1.002);
+        }
+
+        /* 禁用已锁定行的hover效果 */
+        .user-channel-table tbody tr[data-is-locked="true"]:hover {
+            background: transparent;
+            transform: none;
+        }
+
+        [data-theme="dark"] .user-channel-table tbody tr:hover {
+            background: #1e293b;
+        }
+
+        [data-theme="dark"] .user-channel-table tbody tr[data-is-locked="true"]:hover {
+            background: transparent;
+        }
+
+        .user-channel-table .user-info-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-table-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3562E3, #5b8ef5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-table-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .user-table-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .channel-checkbox-cell {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .channel-checkbox-cell input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .channel-checkbox-cell input[type="checkbox"]:hover {
+            transform: scale(1.1);
+        }
+
+        .channel-checkbox-cell input[type="checkbox"]:checked {
+            accent-color: #3562E3;
+        }
+
+        .action-cell {
+            text-align: center;
+        }
+
+        .remove-user-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .remove-user-btn:hover {
+            background: #fee2e2;
+            color: #ef4444;
+            transform: scale(1.1);
+        }
+
+        [data-theme="dark"] .remove-user-btn {
+            color: #64748b;
+        }
+
+        [data-theme="dark"] .remove-user-btn:hover {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .empty-table-hint {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* IconPark 图标样式 */
+        .iconpark-icon {
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.15em;
+            fill: currentColor;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        /* 抽屉组件 - 与其他页面保持一致 */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+        }
+
+        .drawer-overlay.show {
+            display: block;
+        }
+
+        .drawer-content {
+            position: fixed;
+            top: 0;
+            right: -480px;
+            bottom: 0;
+            width: 480px;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-overlay.show .drawer-content {
+            right: 0;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .drawer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+            padding: 4px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .drawer-close:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .drawer-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .drawer-footer {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .policy-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .policy-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-row {
+                font-size: 12px;
+            }
+
+            .card-summary {
+                gap: 8px;
+            }
+
+            .level-desc {
+                display: none;
+            }
+        }
+
+        /* 自定义复选框样式 */
+        .custom-checkbox {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin: 0;
+            opacity: 0;
+        }
+
+        .custom-checkbox-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-checkbox-icon {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 2px solid #d1d5db;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+
+        /* 未勾选状态 - 白色填充 */
+        .custom-checkbox:not(:checked) + .custom-checkbox-icon {
+            background: white;
+            border-color: #d1d5db;
+        }
+
+        .custom-checkbox:not(:checked) + .custom-checkbox-icon::after {
+            content: '';
+            display: none;
+        }
+
+        /* 已添加状态 - 灰色填充，黑色对号 */
+        .custom-checkbox.previously-added:checked + .custom-checkbox-icon {
+            background: #9ca3af;
+            border-color: #9ca3af;
+        }
+
+        .custom-checkbox.previously-added:checked + .custom-checkbox-icon::after {
+            content: '✓';
+            color: #1f2937;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* 本次添加状态 - 蓝色填充，白色对号 */
+        .custom-checkbox.newly-added:checked + .custom-checkbox-icon {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .custom-checkbox.newly-added:checked + .custom-checkbox-icon::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* hover效果 */
+        .custom-checkbox-wrapper:hover .custom-checkbox-icon {
+            border-color: #3b82f6;
+        }
+
+        /* disabled状态 - 已添加的用户不可取消 */
+        .custom-checkbox:disabled + .custom-checkbox-icon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .custom-checkbox:disabled.previously-added:checked + .custom-checkbox-icon {
+            background: #9ca3af;
+            border-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .custom-checkbox-wrapper:has(.custom-checkbox:disabled):hover .custom-checkbox-icon {
+            border-color: #9ca3af;
+        }
+
+        [data-theme="dark"] .custom-checkbox:not(:checked) + .custom-checkbox-icon {
+            background: #1e293b;
+            border-color: #475569;
+        }
+
+        [data-theme="dark"] .custom-checkbox-wrapper:hover .custom-checkbox-icon {
+            border-color: #60a5fa;
+        }
+
+        /* 优化后的徽章样式 */
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+            animation: badge-appear 0.3s ease;
+        }
+
+        @keyframes badge-appear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        [data-theme="dark"] .user-badge {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            box-shadow: 0 2px 4px rgba(96, 165, 250, 0.3);
+        }
+
+        .user-name-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 键盘导航和可访问性样式 */
+        .user-selector-table tbody tr {
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        /* 键盘焦点样式 */
+        .user-selector-table tbody tr:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: -2px;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 焦点+选中状态的组合样式 */
+        .user-selector-table tbody tr:focus[aria-selected="true"] {
+            outline: 2px solid #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* 改善表格可访问性 */
+        .user-selector-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .user-selector-table tbody tr {
+            position: relative;
+        }
+
+        /* 焦点指示器 - 左侧高亮条 */
+        .user-selector-table tbody tr:focus::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #3b82f6;
+            z-index: 1;
+        }
+
+        /* 搜索高亮样式 */
+        .user-selector-table tbody tr.search-matched {
+            background: #fef3c7 !important;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .user-selector-table tbody tr.search-dimmed {
+            opacity: 0.4;
+            transition: opacity 0.2s ease;
+        }
+
+        .user-selector-table tbody tr.search-matched:hover {
+            background: #fde68a !important;
+        }
+
+        [data-theme="dark"] .user-selector-table tbody tr.search-matched {
+            background: #78350f !important;
+        }
+
+        [data-theme="dark"] .user-selector-table tbody tr.search-matched:hover {
+            background: #92400e !important;
+        }
+    </style>
+</head>
+<body data-page="notification-config">
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <!-- 策略列表页 -->
+        <div id="policyListPage">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <h1 class="page-title" id="notifMainPageTitle" data-translate="notifPageTitle">告警通知策略</h1>
+            </div>
+
+            <!-- 通知策略 -->
+            <div class="content-card">
+                <div class="info-box" style="margin-bottom: 24px;">
+                    <i class="fas fa-lightbulb"></i>
+                    <div class="info-box-content">
+                        <div class="info-box-title" id="notifSmartTitleText" data-translate="notifSmartTitle">智能分级通知</div>
+                        <div class="info-box-text" id="notifSmartDescText" data-translate="notifSmartDesc">
+                            根据告警等级自动匹配通知渠道和接收人，严重告警触发短信通知，一般告警发送邮件通知。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 告警等级策略卡片 -->
+                <div id="policiesGrid" class="policy-grid">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 策略详情页 -->
+        <div id="policyDetailPage" style="display: none;">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn-icon" onclick="backToPolicyList()" style="width: 36px; height: 36px;">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="page-title" id="detailPageTitle" style="margin-bottom: 0;">策略配置</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div id="policyDetailContent">
+                    <!-- 动态生成 -->
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="backToPolicyList()">
+                        <span id="notifBackBtnText" data-translate="notifBackBtn">返回</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="savePolicyConfig()">
+                        <span id="notifSaveConfigBtnText" data-translate="notifSaveConfig">保存配置</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 添加/编辑通知策略模态框（暂时隐藏，未使用） -->
+    <div class="modal" id="policyModal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="policyModalTitle">创建通知策略</h3>
+                <button class="modal-close" onclick="closePolicyModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 基本信息 -->
+                <div class="form-group full-width" style="margin-bottom: 24px;">
+                    <label class="form-label">策略名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="policyName" placeholder="例如: 严重告警策略">
+                </div>
+                <div class="form-group full-width" style="margin-bottom: 24px;">
+                    <label class="form-label">策略描述</label>
+                    <textarea class="form-textarea" id="policyDescription" placeholder="描述此策略的用途和适用场景" rows="2"></textarea>
+                </div>
+
+                <!-- 步骤1: 初次通知 -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div class="step-title">初次通知配置</div>
+                    </div>
+                    <div class="step-content">
+                        <div class="form-group full-width">
+                            <label class="form-label">通知组 <span class="required">*</span></label>
+                            <select class="form-select" id="policyGroup">
+                                <option value="">请选择通知组</option>
+                                <option value="oncall">值班组</option>
+                                <option value="admin">管理员组</option>
+                                <option value="operator">运维组</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">告警级别 <span class="required">*</span></label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyLevelCritical">
+                                    <label for="policyLevelCritical">
+                                        <i class="fas fa-exclamation-circle" style="color: #dc2626;"></i>
+                                        严重告警 - 立即处理
+                                    </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyLevelMajor">
+                                    <label for="policyLevelMajor">
+                                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                                        重要告警 - 24小时内处理
+                                    </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyLevelMinor">
+                                    <label for="policyLevelMinor">
+                                        <i class="fas fa-info-circle" style="color: #3b82f6;"></i>
+                                        一般告警 - 常规处理
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">通知渠道 <span class="required">*</span></label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyChannelSMS">
+                                    <label for="policyChannelSMS">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        短信通知
+                                    </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyChannelEmail">
+                                    <label for="policyChannelEmail">
+                                        <i class="fas fa-envelope"></i>
+                                        邮件通知
+                                    </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyChannelPhone">
+                                    <label for="policyChannelPhone">
+                                        <i class="fas fa-phone"></i>
+                                        电话语音
+                                    </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="policyChannelWechat">
+                                    <label for="policyChannelWechat">
+                                        <i class="fab fa-weixin"></i>
+                                        企业微信
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2: 降噪设置 -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div class="step-title">告警降噪配置</div>
+                    </div>
+                    <div class="step-content">
+                        <div class="policy-section">
+                            <div class="policy-section-title">重复告警抑制</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label class="form-label">重复间隔(分钟)</label>
+                                    <input type="number" class="form-input" id="policyRepeatInterval" value="30" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">最大重复次数</label>
+                                    <input type="number" class="form-input" id="policyMaxRepeats" value="3" min="1">
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                                <i class="fas fa-info-circle"></i>
+                                同一告警在 <strong id="repeatIntervalDisplay">30</strong> 分钟内最多发送 <strong id="maxRepeatsDisplay">3</strong> 次通知
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 升级通知 -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <div class="step-title">升级通知机制</div>
+                    </div>
+                    <div class="step-content">
+                        <div class="form-group full-width">
+                            <label class="checkbox-item" style="margin-bottom: 12px;">
+                                <input type="checkbox" id="policyEnableEscalation">
+                                <label for="policyEnableEscalation" style="font-weight: 600;">启用升级通知</label>
+                            </label>
+                        </div>
+                        <div id="escalationSettings" style="display: none;">
+                            <div class="policy-section">
+                                <div class="policy-section-title">升级条件</div>
+                                <div class="form-group">
+                                    <label class="form-label">未确认超时(分钟)</label>
+                                    <input type="number" class="form-input" id="policyEscalationTimeout" value="15" min="1">
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                        超过此时间未确认,自动升级通知
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">升级通知组</label>
+                                    <select class="form-select" id="policyEscalationGroup">
+                                        <option value="admin">管理员组</option>
+                                        <option value="supervisor">主管级别</option>
+                                        <option value="emergency">应急团队</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">升级渠道</label>
+                                    <div class="checkbox-group">
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="escalationChannelPhone" checked>
+                                            <label for="escalationChannelPhone">
+                                                <i class="fas fa-phone"></i>
+                                                电话通知
+                                            </label>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="escalationChannelSMS" checked>
+                                            <label for="escalationChannelSMS">
+                                                <i class="fas fa-mobile-alt"></i>
+                                                短信通知
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤4: 恢复通知 -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <div class="step-title">告警恢复通知</div>
+                    </div>
+                    <div class="step-content">
+                        <div class="form-group full-width">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="policyEnableRecovery" checked>
+                                <label for="policyEnableRecovery" style="font-weight: 600;">发送恢复通知</label>
+                            </label>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; margin-left: 24px;">
+                                告警恢复后,自动发送恢复通知给相关人员
+                            </div>
+                        </div>
+                        <div id="recoverySettings">
+                            <div class="form-group full-width" style="margin-top: 12px;">
+                                <label class="form-label">恢复通知渠道</label>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="recoveryChannelEmail" checked>
+                                        <label for="recoveryChannelEmail">
+                                            <i class="fas fa-envelope"></i>
+                                            邮件
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="recoveryChannelWechat">
+                                        <label for="recoveryChannelWechat">
+                                            <i class="fab fa-weixin"></i>
+                                            企业微信
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤5: 静默期 -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <div class="step-title">静默期配置</div>
+                    </div>
+                    <div class="step-content">
+                        <div class="form-group full-width">
+                            <label class="checkbox-item" style="margin-bottom: 12px;">
+                                <input type="checkbox" id="policyEnableSilence">
+                                <label for="policyEnableSilence" style="font-weight: 600;">启用静默期</label>
+                            </label>
+                        </div>
+                        <div id="silenceSettings" style="display: none;">
+                            <div class="policy-section">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div class="form-group">
+                                        <label class="form-label">开始时间</label>
+                                        <input type="time" class="form-input" id="policySilenceStart" value="22:00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">结束时间</label>
+                                        <input type="time" class="form-input" id="policySilenceEnd" value="08:00">
+                                    </div>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                                    <i class="fas fa-moon"></i>
+                                    静默期内,一般告警将被抑制,严重告警仍会发送
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePolicyModal()">取消</button>
+                <button class="btn btn-primary" onclick="savePolicy()">保存策略</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户选择器抽屉 -->
+    <div class="drawer-overlay" id="userSelectorDrawer" onclick="closeUserSelector(event)">
+        <div class="drawer-content" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <h3 class="drawer-title" data-translate="notifDrawerTitle">选择通知接收人</h3>
+                <button class="drawer-close" onclick="closeUserSelector()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="drawer-body">
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 16px;" data-translate="notifDrawerDesc">
+                    请选择接收此告警级别通知的用户
+                </div>
+
+                <!-- 搜索栏 -->
+                <div style="margin-bottom: 16px;">
+                    <div style="position: relative;">
+                        <i class="fas fa-search" aria-hidden="true" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
+                        <input type="text"
+                               id="userSearchInput"
+                               class="form-input"
+                               data-translate-placeholder="notifSearchPlaceholder"
+                               placeholder="搜索姓名、角色或邮箱..."
+                               aria-label="搜索用户"
+                               style="padding-left: 36px;"
+                               oninput="filterUserList(this.value)">
+                    </div>
+                </div>
+
+                <div class="user-list" id="userSelectorList">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn btn-secondary" onclick="closeUserSelector()">
+                    <span id="notifDrawerCancelBtn" data-translate="notifBtnCancel">取消</span>
+                </button>
+                <button class="btn btn-primary" onclick="saveUserSelection()">
+                    <span id="notifDrawerConfirmBtn" data-translate="notifBtnConfirm">确定</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色选择器抽屉 -->
+    <div class="drawer-overlay" id="roleSelectorDrawer" onclick="closeRoleSelector(event)">
+        <div class="drawer-content" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <h3 class="drawer-title">选择角色</h3>
+                <button class="drawer-close" onclick="closeRoleSelector()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="drawer-body">
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+                    请选择需要接收通知的角色，支持多选
+                </div>
+
+                <!-- 角色列表（动态生成） -->
+                <div id="roleListContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- 角色将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn btn-secondary" onclick="closeRoleSelector()">
+                    取消
+                </button>
+                <button class="btn btn-primary" onclick="confirmRoleSelection()">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加用户模态框 -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="notifAddUserTitleText" data-translate="notifAddUserTitle">添加用户</h3>
+                <button class="modal-close" onclick="closeAddUserModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" id="notifUserNameLabel" data-translate="notifUserName">姓名 <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="newUserName" data-translate-placeholder="notifInputName" placeholder="请输入姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="notifUserRoleLabel" data-translate="notifUserRole">角色 <span class="required">*</span></label>
+                        <select class="form-select" id="newUserRole">
+                            <option value="operator" data-translate="notifRoleOperator">运维人员</option>
+                            <option value="admin" data-translate="notifRoleAdmin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="notifUserPhoneLabel" data-translate="notifUserPhone">手机号 <span class="required">*</span></label>
+                        <input type="tel" class="form-input" id="newUserPhone" data-translate-placeholder="notifInputPhone" placeholder="请输入手机号">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="notifUserEmailLabel" data-translate="notifUserEmail">邮箱</label>
+                        <input type="email" class="form-input" id="newUserEmail" data-translate-placeholder="notifInputEmail" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="notifUserWechatLabel" data-translate="notifUserWechat">企业微信</label>
+                        <input type="text" class="form-input" id="newUserWechat" data-translate-placeholder="notifInputWechat" placeholder="请输入企业微信ID">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddUserModal()">
+                    <span id="notifAddUserCancelBtn" data-translate="notifBtnCancel">取消</span>
+                </button>
+                <button class="btn btn-primary" onclick="saveNewUser()">
+                    <span id="notifAddUserAddBtn" data-translate="notifBtnAdd">添加</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        // 检查登录状态
+        checkAuth();
+
+        // 获取翻译文本的辅助函数
+        function getTranslation(key) {
+            if (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][key]) {
+                return translations[currentLang][key];
+            }
+            return key; // 如果找不到翻译，返回键名
+        }
+
+        // 角色数据（从角色管理系统获取）
+        let rolesData = [
+            { id: 1, name: '超级管理员', nameKey: 'roleDataSuperAdmin', description: '拥有系统所有权限', descKey: 'roleDataSuperAdminDesc', userCount: 1, status: 'active', createTime: '2024-01-01 10:00:00' },
+            { id: 2, name: '运维人员', nameKey: 'roleDataOperator', description: '负责设备维护和告警处理', descKey: 'roleDataOperatorDesc', userCount: 3, status: 'active', createTime: '2024-01-02 14:30:00' },
+            { id: 3, name: '操作员', nameKey: 'roleDataUser', description: '负责日常操作和监控', descKey: 'roleDataUserDesc', userCount: 3, status: 'active', createTime: '2024-01-03 09:15:00' },
+            { id: 4, name: '访客', nameKey: 'roleDataGuest', description: '只能查看数据', descKey: 'roleDataGuestDesc', userCount: 1, status: 'inactive', createTime: '2024-01-05 16:20:00' }
+        ];
+
+        // 用户数据模型
+        let users = [
+            {
+                id: 1,
+                name: '张三',
+                nameKey: 'userName1',
+                role: 'admin',
+                roleId: 1, // 超级管理员
+                phone: '13800138001',
+                email: 'zhangsan@example.com',
+                wechat: 'zhangsan_wx',
+                avatar: 'Z'
+            },
+            {
+                id: 2,
+                name: '李四',
+                nameKey: 'userName2',
+                role: 'operator',
+                roleId: 2, // 运维人员
+                phone: '13800138002',
+                email: 'lisi@example.com',
+                wechat: 'lisi_wx',
+                avatar: 'L'
+            },
+            {
+                id: 3,
+                name: '王五',
+                nameKey: 'userName3',
+                role: 'operator',
+                roleId: 2, // 运维人员
+                phone: '13800138003',
+                email: 'wangwu@example.com',
+                wechat: 'wangwu_wx',
+                avatar: 'W'
+            },
+            {
+                id: 4,
+                name: '赵六',
+                nameKey: 'userName4',
+                role: 'admin',
+                roleId: 1, // 超级管理员
+                phone: '13800138004',
+                email: 'zhaoliu@example.com',
+                wechat: 'zhaoliu_wx',
+                avatar: 'Z'
+            }
+        ];
+
+        // 告警等级策略配置 - 用户-渠道表格版
+        const levelPolicies = [
+            {
+                level: 'critical',
+                nameKey: 'notifLevelCritical',
+                descriptionKey: 'notifLevelCriticalDesc',
+                name: '严重告警',
+                description: '系统故障、电池过热等紧急情况',
+                icon: 'fa-exclamation-circle',
+                enabled: true,
+                group: 'all',
+                recipientScope: 'partial', // 接收人范围: ''(未选择) | partial(部分人员) | all(全部用户) | role(按角色)
+                selectedRoles: [], // 选中的角色（当recipientScope为'role'时使用）
+                userChannels: [
+                    { userId: 1, channels: ['sms', 'email'] },
+                    { userId: 2, channels: ['sms', 'email'] }
+                ],
+                noiseReductionEnabled: true, // 启用降噪配置
+                noiseReductionDimension: 'device-alarm', // 降噪维度：固定为 device-alarm（设备+告警类型），符合国际标准
+                repeatInterval: 10,
+                maxRepeats: 10
+            },
+            {
+                level: 'error',
+                nameKey: 'notifLevelError',
+                descriptionKey: 'notifLevelErrorDesc',
+                name: '重要告警',
+                description: '设备异常、通信中断等需要关注的问题',
+                icon: 'fa-times-circle',
+                enabled: true,
+                group: 'operator',
+                recipientScope: 'partial', // 接收人范围: ''(未选择) | partial(部分人员) | all(全部用户) | role(按角色)
+                selectedRoles: [], // 选中的角色（当recipientScope为'role'时使用）
+                userChannels: [
+                    { userId: 2, channels: ['sms'] },
+                    { userId: 3, channels: ['sms'] }
+                ],
+                noiseReductionEnabled: true, // 启用降噪配置
+                noiseReductionDimension: 'device-alarm', // 降噪维度：固定为 device-alarm（设备+告警类型），符合国际标准
+                repeatInterval: 30,
+                maxRepeats: 5
+            },
+            {
+                level: 'warning',
+                nameKey: 'notifLevelWarning',
+                descriptionKey: 'notifLevelWarningDesc',
+                name: '一般告警',
+                description: '性能下降、资源不足等预警信息',
+                icon: 'fa-exclamation-triangle',
+                enabled: true,
+                group: 'operator',
+                recipientScope: 'partial', // 接收人范围: ''(未选择) | partial(部分人员) | all(全部用户) | role(按角色)
+                selectedRoles: [], // 选中的角色（当recipientScope为'role'时使用）
+                userChannels: [
+                    { userId: 3, channels: ['email'] },
+                    { userId: 4, channels: ['email'] }
+                ],
+                noiseReductionEnabled: true, // 启用降噪配置
+                noiseReductionDimension: 'device-alarm', // 降噪维度：固定为 device-alarm（设备+告警类型），符合国际标准
+                repeatInterval: 60,
+                maxRepeats: 3
+            }
+        ];
+
+        // 渲染选中的用户列表
+        function renderSelectedUsers(policy) {
+            if (!policy.selectedUsers || policy.selectedUsers.length === 0) {
+                return `<div class="empty-users-hint">
+                    <i class="fas fa-user-slash" style="color: var(--text-secondary); margin-right: 8px;"></i>
+                    <span style="color: var(--text-secondary); font-size: 13px;">${getTranslation('notifNoRecipients')}</span>
+                </div>`;
+            }
+
+            const selectedUsersList = policy.selectedUsers
+                .map(userId => users.find(u => u.id === userId))
+                .filter(u => u) // 过滤掉不存在的用户
+                .map(user => `
+                    <div class="user-chip">
+                        <div class="user-chip-avatar">${user.avatar}</div>
+                        <div class="user-chip-info">
+                            <div class="user-chip-name">${getUserDisplayName(user)}</div>
+                            <div class="user-chip-role">${user.role === 'admin' ? getTranslation('notifRoleAdmin') : getTranslation('notifRoleOperator')}</div>
+                        </div>
+                        <button class="user-chip-remove" onclick="removeUserFromPolicy('${policy.level}', ${user.id})" title="移除">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+            return `<div class="selected-users-list">${selectedUsersList}</div>`;
+        }
+
+        // 渲染通知策略 - 小卡片版
+        function renderPolicies() {
+            const grid = document.getElementById('policiesGrid');
+
+            grid.innerHTML = levelPolicies.map((policy, index) => {
+                // 从userChannels获取用户列表
+                const selectedUsers = (policy.userChannels || [])
+                    .map(uc => users.find(u => u.id === uc.userId))
+                    .filter(u => u);
+
+                // 统计所有渠道(合并所有用户的渠道)
+                const allChannels = new Set();
+                (policy.userChannels || []).forEach(uc => {
+                    uc.channels.forEach(ch => allChannels.add(ch));
+                });
+
+                // 生成渠道名称显示文本
+                const channelNames = {
+                    'sms': getTranslation('notifChannelSms'),
+                    'email': getTranslation('notifChannelEmail')
+                };
+                const channelText = Array.from(allChannels)
+                    .map(ch => channelNames[ch] || ch)
+                    .join('、') || getTranslation('notifNoChannels') || '暂无';
+
+                const policyName = getTranslation(policy.nameKey) || policy.name;
+                const policyDesc = getTranslation(policy.descriptionKey) || policy.description;
+
+                return `
+                    <div class="level-policy-card" data-level="${policy.level}" onclick="openPolicyConfig('${policy.level}')">
+                        <div class="level-header">
+                            <div class="level-title-row">
+                                <span class="level-badge ${policy.level}">
+                                    <i class="fas ${policy.icon}"></i>
+                                    <span>${policyName}</span>
+                                </span>
+                                <label class="toggle-switch" onclick="event.stopPropagation()">
+                                    <input type="checkbox" ${policy.enabled ? 'checked' : ''}
+                                           onchange="toggleLevelPolicy('${policy.level}', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="level-desc">${policyDesc}</div>
+                        </div>
+
+                        <div class="card-summary">
+                            <div class="summary-row">
+                                <i class="fas fa-users"></i>
+                                <span>${getTranslation('notifRecipients')}：</span>
+                                <span class="summary-value">${selectedUsers.length}${getTranslation('notifPerson')}</span>
+                            </div>
+                            <div class="summary-row">
+                                <i class="fas fa-bell"></i>
+                                <span>${getTranslation('notifChannels')}：</span>
+                                <span class="summary-value">${channelText}</span>
+                            </div>
+                            <div class="summary-row">
+                                <i class="fas fa-filter"></i>
+                                <span>${getTranslation('notifNoiseReduction')}：</span>
+                                <span class="summary-value">${policy.repeatInterval}${getTranslation('notifMinutesMax')}${policy.maxRepeats}${getTranslation('notifTimes')}</span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <span class="card-action">
+                                ${getTranslation('notifConfigDetails')}
+                                <i class="fas fa-arrow-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+
+        // 打开策略配置 - 切换到详情页
+        let currentConfigLevel = null;
+
+        function openPolicyConfig(level) {
+            currentConfigLevel = level;
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            // 更新详情页标题
+            const policyName = getTranslation(policy.nameKey) || policy.name;
+            document.getElementById('detailPageTitle').innerHTML = `
+                ${getTranslation('notifConfiguration')}
+                <span class="level-badge ${policy.level}">
+                    <i class="fas ${policy.icon}"></i>
+                    <span>${policyName}</span>
+                </span>
+            `;
+
+            // 渲染详情页内容
+            renderPolicyDetail(policy);
+
+            // 切换页面显示
+            document.getElementById('policyListPage').style.display = 'none';
+            document.getElementById('policyDetailPage').style.display = 'block';
+        }
+
+        // 返回策略列表页
+        function backToPolicyList() {
+            document.getElementById('policyDetailPage').style.display = 'none';
+            document.getElementById('policyListPage').style.display = 'block';
+            currentConfigLevel = null;
+        }
+
+        // 获取用户显示名称（支持国际化）
+        function getUserDisplayName(user) {
+            return user.nameKey ? getTranslation(user.nameKey) : user.name;
+        }
+
+        // 渲染策略详情页内容
+        function renderPolicyDetail(policy) {
+            const detailContent = document.getElementById('policyDetailContent');
+
+            const channelNames = {
+                sms: getTranslation('notifChannelSms'),
+                email: getTranslation('notifChannelEmail')
+            };
+
+            // IconPark图标名称
+            const channelIcons = {
+                sms: 'message',
+                email: 'mail'
+            };
+
+            // 生成用户-渠道表格
+            const userChannelsHtml = (policy.userChannels && policy.userChannels.length > 0) ? `
+                <table class="user-channel-table">
+                    <thead>
+                        <tr>
+                            <th>${getTranslation('notifTableRecipient')}</th>
+                            <th>${getTranslation('notifTableHeaderRole')}</th>
+                            ${Object.keys(channelNames).map(ch => `
+                                <th>
+                                    <input type="checkbox"
+                                           id="selectAll_${policy.level}_${ch}"
+                                           onchange="toggleAllChannels('${policy.level}', '${ch}', this.checked)"
+                                           style="margin-right: 8px; cursor: pointer;">
+                                    <svg class="iconpark-icon" aria-hidden="true"><use href="#${channelIcons[ch]}"></use></svg>
+                                    ${channelNames[ch]}
+                                </th>
+                            `).join('')}
+                            <th>${getTranslation('notifTableActions')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${policy.userChannels.map(uc => {
+                            const user = users.find(u => u.id === uc.userId);
+                            if (!user) return '';
+
+                            return `
+                                <tr>
+                                    <td>
+                                        <span class="user-table-name">${getUserDisplayName(user)}</span>
+                                    </td>
+                                    <td>
+                                        <span class="user-table-role">${user.role === 'admin' ? getTranslation('notifRoleAdmin') : getTranslation('notifRoleOperator')}</span>
+                                    </td>
+                                    ${Object.keys(channelNames).map(ch => `
+                                        <td class="channel-checkbox-cell">
+                                            <input type="checkbox"
+                                                   ${uc.channels.includes(ch) ? 'checked' : ''}
+                                                   onchange="toggleUserChannel('${policy.level}', ${uc.userId}, '${ch}', this.checked)">
+                                        </td>
+                                    `).join('')}
+                                    <td class="action-cell">
+                                        <button class="remove-user-btn" onclick="removeUserFromPolicy('${policy.level}', ${uc.userId})" title="${getTranslation('notifBtnCancel')}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            ` : `
+                <div class="empty-table-hint">
+                    <i class="fas fa-user-slash" style="font-size: 32px; margin-bottom: 12px; opacity: 0.3;"></i>
+                    <div>${getTranslation('notifNoRecipientsDetail')}</div>
+                </div>
+            `;
+
+            detailContent.innerHTML = `
+                <!-- 接收人范围 -->
+                <div class="config-section">
+                    <div class="section-header">
+                        <h3 data-translate="notifRecipientScope">接收人范围</h3>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;" data-translate="notifRecipientRange">
+                            接收人范围
+                        </label>
+                        <select class="form-input" style="width: 280px;"
+                                onchange="handleRecipientScopeChange('${policy.level}', this.value)">
+                            <option value="" ${policy.recipientScope === '' ? 'selected' : ''} disabled data-translate="notifRecipientRangePlaceholder">
+                                请选择接收人范围
+                            </option>
+                            <option value="partial" ${policy.recipientScope === 'partial' ? 'selected' : ''} data-translate="notifRecipientRangePartial">
+                                部分人员
+                            </option>
+                            <option value="all" ${policy.recipientScope === 'all' ? 'selected' : ''} data-translate="notifRecipientRangeAll">
+                                全部用户
+                            </option>
+                            <option value="role" ${policy.recipientScope === 'role' ? 'selected' : ''} data-translate="notifRecipientRangeRole">
+                                按角色
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- 选择角色按钮（仅在role模式显示） -->
+                    <div id="selectRoleBtn_${policy.level}" style="margin-bottom: 16px; display: ${policy.recipientScope === 'role' ? 'block' : 'none'};">
+                        <button class="btn btn-secondary" onclick="openRoleSelector('${policy.level}')">
+                            <i class="fas fa-users"></i>
+                            <span id="selectedRolesText_${policy.level}" data-translate="notifSelectRoles">选择角色</span>
+                        </button>
+                    </div>
+
+                    <!-- 添加接收人按钮（仅在partial模式显示） -->
+                    <div id="addRecipientBtn_${policy.level}" style="margin-bottom: 16px; display: ${policy.recipientScope === 'partial' ? 'block' : 'none'};">
+                        <button class="btn" onclick="openUserSelector('${policy.level}')">
+                            <i class="fas fa-plus"></i>
+                            <span data-translate="notifAddRecipient">添加接收人</span>
+                        </button>
+                    </div>
+
+                    <!-- 用户-渠道表格 -->
+                    <div id="detail-user-channels-${policy.level}">
+                        ${userChannelsHtml}
+                    </div>
+                </div>
+
+                <!-- 降噪配置 -->
+                <div class="config-section">
+                    <div class="section-header">
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${policy.noiseReductionEnabled ? 'checked' : ''}
+                                   onchange="toggleNoiseReduction('${policy.level}', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <h3 data-translate="notifNoiseReductionTitle">告警降噪</h3>
+                    </div>
+
+                    <div style="display: ${policy.noiseReductionEnabled ? 'block' : 'none'};" id="detail-noise-reduction-config-${policy.level}">
+                        <div style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-left: 3px solid #0066cc; border-radius: 4px;">
+                            <div style="font-size: 13px; color: var(--text-primary); margin-bottom: 4px; font-weight: 500;">
+                                <i class="fas fa-info-circle" style="color: #0066cc; margin-right: 6px;"></i>
+                                <span data-translate="notifNoiseRuleTitle">降噪规则</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;" data-translate="notifNoiseRuleDesc">
+                                针对同一设备的同一类告警进行降噪
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="number" class="form-input" style="width: 80px; text-align: center;"
+                                       value="${policy.repeatInterval}" min="1" max="120"
+                                       onchange="updateRepeatInterval('${policy.level}', this.value)">
+                                <span style="font-size: 14px; color: var(--text-primary);" data-translate="notifMinutesWithin">分钟内</span>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 14px; color: var(--text-primary);" data-translate="notifMaxSend">最多发送</span>
+                                <input type="number" class="form-input" style="width: 80px; text-align: center;"
+                                       value="${policy.maxRepeats}" min="1" max="20"
+                                       onchange="updateMaxRepeats('${policy.level}', this.value)">
+                                <span style="font-size: 14px; color: var(--text-primary);" data-translate="notifNotifications">次通知</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 重新应用翻译到动态生成的内容
+            setLanguage(currentLang);
+        }
+
+        // 切换等级策略启用/禁用
+        function toggleLevelPolicy(level, enabled) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (policy) {
+                policy.enabled = enabled;
+                showToast(`${policy.name}已${enabled ? '启用' : '禁用'}`, 'success');
+                // 不需要更新状态文本，因为小卡片没有状态文本
+            }
+        }
+
+        // 保存策略配置
+        function savePolicyConfig() {
+            if (!currentConfigLevel) return;
+
+            showToast(getTranslation('notifSaveSuccess'), 'success');
+
+            // 重新渲染卡片以显示最新数据
+            renderPolicies();
+
+            // 返回列表页
+            backToPolicyList();
+        }
+
+        // 切换通知渠道
+        function toggleChannel(level, channel) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            const index = policy.channels.indexOf(channel);
+            if (index > -1) {
+                policy.channels.splice(index, 1);
+            } else {
+                policy.channels.push(channel);
+            }
+
+            // 更新UI
+            const option = event.currentTarget;
+            option.classList.toggle('selected');
+            const checkbox = option.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+        }
+
+        // 切换用户的某个通知渠道
+        function toggleUserChannel(level, userId, channel, checked) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            const userChannel = policy.userChannels.find(uc => uc.userId === userId);
+            if (!userChannel) return;
+
+            if (checked) {
+                // 添加渠道
+                if (!userChannel.channels.includes(channel)) {
+                    userChannel.channels.push(channel);
+                }
+            } else {
+                // 移除渠道
+                const index = userChannel.channels.indexOf(channel);
+                if (index > -1) {
+                    userChannel.channels.splice(index, 1);
+                }
+            }
+
+            // 刷新策略卡片(更新渠道数量显示)
+            renderPolicies();
+
+            // 更新全选复选框的状态
+            updateSelectAllCheckbox(level, channel);
+        }
+
+        // 全选/取消全选某个渠道的所有复选框
+        function toggleAllChannels(level, channel, checked) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            // 更新所有用户的该渠道状态
+            policy.userChannels.forEach(uc => {
+                if (checked) {
+                    // 添加渠道
+                    if (!uc.channels.includes(channel)) {
+                        uc.channels.push(channel);
+                    }
+                } else {
+                    // 移除渠道
+                    const index = uc.channels.indexOf(channel);
+                    if (index > -1) {
+                        uc.channels.splice(index, 1);
+                    }
+                }
+            });
+
+            // 刷新详情页面和策略卡片
+            renderPolicyDetail(policy);
+            renderPolicies();
+        }
+
+        // 更新全选复选框的状态
+        function updateSelectAllCheckbox(level, channel) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            const checkbox = document.getElementById(`selectAll_${level}_${channel}`);
+            if (!checkbox) return;
+
+            // 检查是否所有用户都选中了该渠道（空数组时设置为未选中）
+            const allChecked = policy.userChannels.length > 0 &&
+                              policy.userChannels.every(uc => uc.channels.includes(channel));
+            checkbox.checked = allChecked;
+        }
+
+        // 更新接收人范围UI（显示/隐藏相应的按钮）
+        function updateRecipientScopeUI(level, scope) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            const addRecipientBtn = document.getElementById(`addRecipientBtn_${level}`);
+            const selectRoleBtn = document.getElementById(`selectRoleBtn_${level}`);
+            const selectedRolesText = document.getElementById(`selectedRolesText_${level}`);
+
+            if (scope === 'partial') {
+                // 部分人员：显示添加接收人按钮
+                if (addRecipientBtn) addRecipientBtn.style.display = 'inline-flex';
+                if (selectRoleBtn) selectRoleBtn.style.display = 'none';
+            } else if (scope === 'all') {
+                // 全部用户：隐藏所有按钮
+                if (addRecipientBtn) addRecipientBtn.style.display = 'none';
+                if (selectRoleBtn) selectRoleBtn.style.display = 'none';
+            } else if (scope === 'role') {
+                // 按角色：显示选择角色按钮
+                if (addRecipientBtn) addRecipientBtn.style.display = 'none';
+                if (selectRoleBtn) selectRoleBtn.style.display = 'inline-flex';
+
+                // 更新按钮文本以显示已选角色
+                if (selectedRolesText && policy.selectedRoles && policy.selectedRoles.length > 0) {
+                    // 根据角色ID获取角色名称
+                    const roleNames = policy.selectedRoles.map(roleId => {
+                        const role = rolesData.find(r => r.id === roleId);
+                        if (role) {
+                            return role.nameKey && getTranslation(role.nameKey)
+                                ? getTranslation(role.nameKey)
+                                : role.name;
+                        }
+                        return '';
+                    }).filter(name => name).join('、');
+                    selectedRolesText.textContent = `已选: ${roleNames}`;
+                } else if (selectedRolesText) {
+                    selectedRolesText.textContent = '选择角色';
+                }
+            } else {
+                // 未选择或空字符串：隐藏所有按钮
+                if (addRecipientBtn) addRecipientBtn.style.display = 'none';
+                if (selectRoleBtn) selectRoleBtn.style.display = 'none';
+            }
+        }
+
+        // 处理接收人范围变化
+        function handleRecipientScopeChange(level, scope) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            const previousScope = policy.recipientScope;
+
+            // 更新policy的recipientScope
+            policy.recipientScope = scope;
+
+            // 更新UI
+            updateRecipientScopeUI(level, scope);
+
+            // 根据不同的范围，更新userChannels
+            if (scope === 'all') {
+                // 全部用户：自动添加所有用户
+                policy.userChannels = users.map(user => ({
+                    userId: user.id,
+                    channels: ['sms', 'email'] // 默认启用所有渠道
+                }));
+                // 重新渲染表格
+                renderPolicyDetail(policy);
+                renderPolicies();
+            } else if (scope === 'role') {
+                // 按角色：先清空userChannels，等待用户选择角色
+                policy.userChannels = [];
+                policy.selectedRoles = [];
+                renderPolicyDetail(policy);
+                renderPolicies();
+            } else if (scope === 'partial') {
+                // 部分人员：如果是从其他模式切换过来，清空userChannels
+                if (previousScope !== 'partial' && previousScope !== '') {
+                    policy.userChannels = [];
+                    renderPolicyDetail(policy);
+                    renderPolicies();
+                }
+                // 如果是首次选择（从空字符串切换），保持空表格，等待用户添加
+            }
+        }
+
+        // 获取角色图标（根据角色名称返回对应的图标和颜色）
+        function getRoleIcon(roleName) {
+            const iconMap = {
+                '超级管理员': { icon: 'fa-user-shield', color: '#3b82f6' },
+                '运维人员': { icon: 'fa-user-cog', color: '#10b981' },
+                '操作员': { icon: 'fa-user', color: '#f59e0b' },
+                '访客': { icon: 'fa-user-tag', color: '#6b7280' }
+            };
+            return iconMap[roleName] || { icon: 'fa-user', color: '#6b7280' };
+        }
+
+        // 渲染角色列表
+        function renderRoleList(selectedRoleIds = []) {
+            const container = document.getElementById('roleListContainer');
+            if (!container) return;
+
+            // 只显示状态为 active 的角色
+            const activeRoles = rolesData.filter(role => role.status === 'active');
+
+            const roleListHtml = activeRoles.map(role => {
+                const iconInfo = getRoleIcon(role.name);
+                const isChecked = selectedRoleIds.includes(role.id);
+                const roleName = role.nameKey && getTranslation(role.nameKey)
+                    ? getTranslation(role.nameKey)
+                    : role.name;
+                const roleDesc = role.descKey && getTranslation(role.descKey)
+                    ? getTranslation(role.descKey)
+                    : role.description;
+
+                return `
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;"
+                         onclick="toggleRoleSelection(${role.id})"
+                         onmouseover="this.style.background='#f9fafb'"
+                         onmouseout="this.style.background='white'">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox"
+                                   id="role_${role.id}"
+                                   ${isChecked ? 'checked' : ''}
+                                   style="width: 18px; height: 18px; cursor: pointer;"
+                                   onclick="event.stopPropagation()">
+                            <div style="flex: 1;">
+                                <div style="font-size: 15px; font-weight: 500; color: #1e293b; margin-bottom: 4px;">
+                                    <i class="fas ${iconInfo.icon}" style="color: ${iconInfo.color}; margin-right: 6px;"></i>
+                                    ${roleName}
+                                </div>
+                                <div style="font-size: 13px; color: #64748b;">
+                                    ${roleDesc}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = roleListHtml;
+        }
+
+        // 打开角色选择器
+        function openRoleSelector(level) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            currentConfigLevel = level;
+
+            // 渲染角色列表并设置已选中的角色
+            renderRoleList(policy.selectedRoles || []);
+
+            // 显示抽屉
+            document.getElementById('roleSelectorDrawer').classList.add('show');
+        }
+
+        // 关闭角色选择器
+        function closeRoleSelector(event) {
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+
+            document.getElementById('roleSelectorDrawer').classList.remove('show');
+        }
+
+        // 切换角色选择状态
+        function toggleRoleSelection(role) {
+            const checkbox = document.getElementById(`role_${role}`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+        }
+
+        // 确认角色选择
+        function confirmRoleSelection() {
+            const level = currentConfigLevel;
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            // 获取选中的角色ID
+            const selectedRoleIds = [];
+            const activeRoles = rolesData.filter(role => role.status === 'active');
+
+            activeRoles.forEach(role => {
+                const checkbox = document.getElementById(`role_${role.id}`);
+                if (checkbox && checkbox.checked) {
+                    selectedRoleIds.push(role.id);
+                }
+            });
+
+            if (selectedRoleIds.length === 0) {
+                showToast('请至少选择一个角色', 'warning');
+                return;
+            }
+
+            // 更新policy的selectedRoles（存储角色ID）
+            policy.selectedRoles = selectedRoleIds;
+
+            // 根据选中的角色ID过滤用户
+            const filteredUsers = users.filter(user => selectedRoleIds.includes(user.roleId));
+
+            // 更新userChannels
+            policy.userChannels = filteredUsers.map(user => ({
+                userId: user.id,
+                channels: ['sms', 'email'] // 默认启用所有渠道
+            }));
+
+            // 更新UI
+            updateRecipientScopeUI(level, 'role');
+            renderPolicyDetail(policy);
+            renderPolicies();
+
+            // 关闭对话框
+            closeRoleSelector();
+
+            showToast('角色选择已更新', 'success');
+        }
+
+        // 获取降噪维度说明文字
+        function getDimensionDescription(dimension) {
+            const descriptions = {
+                'device-alarm': '针对同一设备的同一类告警进行降噪（如：设备A的温度告警）',
+                'device': '针对同一设备的所有告警进行降噪（如：设备A的所有告警）',
+                'site-alarm': '针对同一站点的同一类告警进行降噪（如：站点1的温度告警）',
+                'alarm': '针对同一类告警进行降噪，不区分设备和站点（如：所有温度告警）'
+            };
+            return descriptions[dimension] || descriptions['device-alarm'];
+        }
+
+        // 更新降噪维度
+        function updateNoiseReductionDimension(level, dimension) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (policy) {
+                policy.noiseReductionDimension = dimension;
+
+                // 更新说明文字
+                const descTextEl = document.getElementById(`dimension-text-${level}`);
+                if (descTextEl) {
+                    descTextEl.textContent = getDimensionDescription(dimension);
+                }
+            }
+        }
+
+        // 切换降噪配置
+        function toggleNoiseReduction(level, enabled) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (policy) {
+                policy.noiseReductionEnabled = enabled;
+                // 更新详情页中的降噪配置显示
+                const detailConfigEl = document.getElementById(`detail-noise-reduction-config-${level}`);
+                if (detailConfigEl) {
+                    detailConfigEl.style.display = enabled ? 'block' : 'none';
+                }
+            }
+        }
+
+        // 更新降噪参数
+        function updateRepeatInterval(level, value) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (policy) {
+                policy.repeatInterval = parseInt(value);
+            }
+        }
+
+        function updateMaxRepeats(level, value) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (policy) {
+                policy.maxRepeats = parseInt(value);
+            }
+        }
+
+        // === 用户管理相关函数 ===
+        let currentEditingLevel = null; // 当前正在编辑的告警级别
+        let tempSelectedUsers = []; // 临时存储用户选择
+        let initialSelectedUsers = []; // 初始已选中的用户（用于区分"已添加"和"本次添加"）
+
+        // 打开用户选择器
+        function openUserSelector(level) {
+            currentEditingLevel = level;
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            // 从userChannels提取已选中的用户ID列表
+            tempSelectedUsers = (policy.userChannels || []).map(uc => uc.userId);
+            // 记录初始已选中的用户，用于区分"已添加"和"本次添加"
+            initialSelectedUsers = [...tempSelectedUsers];
+
+            // 渲染用户列表
+            renderUserSelectorList();
+
+            // 显示抽屉
+            document.getElementById('userSelectorDrawer').classList.add('show');
+
+            // 应用国际化翻译到抽屉静态内容
+            setLanguage(currentLang);
+        }
+
+        // 关闭用户选择器
+        function closeUserSelector(event) {
+            // 如果event存在且不是点击overlay,则不关闭
+            if (event && !event.target.classList.contains('drawer-overlay')) {
+                return;
+            }
+
+            document.getElementById('userSelectorDrawer').classList.remove('show');
+
+            // 清空搜索框
+            const searchInput = document.getElementById('userSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            currentEditingLevel = null;
+            tempSelectedUsers = [];
+            initialSelectedUsers = [];
+        }
+
+        // 搜索过滤用户列表
+        function filterUserList(searchTerm) {
+            renderUserSelectorList(searchTerm);
+        }
+
+        // 渲染用户选择器列表
+        function renderUserSelectorList(searchTerm = '') {
+            const listContainer = document.getElementById('userSelectorList');
+
+            if (users.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 12px;"></i>
+                        <div style="color: var(--text-secondary);" data-translate="notifEmptyUsers">暂无用户，请先添加用户</div>
+                    </div>
+                `;
+                setLanguage(currentLang);
+                return;
+            }
+
+            // 检查用户是否匹配搜索词
+            const matchesSearch = (user) => {
+                if (!searchTerm) return true;
+                const term = searchTerm.toLowerCase();
+                const userName = getUserDisplayName(user);
+                const roleName = user.role === 'admin' ? getTranslation('notifRoleAdmin') : getTranslation('notifRoleOperator');
+                return userName.toLowerCase().includes(term) ||
+                       roleName.toLowerCase().includes(term) ||
+                       (user.email && user.email.toLowerCase().includes(term));
+            };
+
+            // 不再过滤，显示所有用户
+            const displayedUsers = users;
+
+            // 显示无结果提示（检查是否有匹配项）
+            const hasMatches = searchTerm ? users.some(matchesSearch) : true;
+            if (!hasMatches) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 12px;"></i>
+                        <div style="color: var(--text-secondary);" data-translate="notifEmptySearch">未找到匹配的用户</div>
+                    </div>
+                `;
+                setLanguage(currentLang);
+                return;
+            }
+
+            listContainer.innerHTML = `
+                <table class="user-channel-table user-selector-table" role="table" aria-label="用户选择列表">
+                    <thead>
+                        <tr role="row">
+                            <th style="width: 60px; text-align: center;" role="columnheader" data-translate="notifTableHeaderSelect">选择</th>
+                            <th role="columnheader" data-translate="notifTableHeaderName">姓名</th>
+                            <th role="columnheader" data-translate="notifTableHeaderRole">角色</th>
+                            <th role="columnheader" data-translate="notifTableHeaderEmail">邮箱</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${displayedUsers.map(user => {
+                            const isSelected = tempSelectedUsers.includes(user.id);
+                            const wasPreviouslyAdded = initialSelectedUsers.includes(user.id);
+                            const isMatched = matchesSearch(user);
+
+                            // 确定复选框类名
+                            let checkboxClass = 'custom-checkbox';
+                            if (isSelected) {
+                                checkboxClass += wasPreviouslyAdded ? ' previously-added' : ' newly-added';
+                            }
+
+                            // 确定行的额外class
+                            const rowClass = isMatched && searchTerm ? 'search-matched' : (searchTerm ? 'search-dimmed' : '');
+
+                            return `
+                                <tr onclick="${wasPreviouslyAdded ? '' : `toggleUserSelection(${user.id})`}"
+                                    class="${rowClass}"
+                                    onkeydown="handleUserRowKeyDown(event, ${user.id})"
+                                    tabindex="0"
+                                    role="row"
+                                    aria-selected="${isSelected}"
+                                    aria-label="${getUserDisplayName(user)}, ${user.role === 'admin' ? getTranslation('notifRoleAdmin') : getTranslation('notifRoleOperator')}, ${user.email || ''}"
+                                    data-user-id="${user.id}"
+                                    data-is-locked="${wasPreviouslyAdded}"
+                                    style="cursor: ${wasPreviouslyAdded ? 'default' : 'pointer'}; ${wasPreviouslyAdded ? 'pointer-events: none;' : ''} ${isSelected && !wasPreviouslyAdded ? 'background: linear-gradient(to right, #dbeafe, #eff6ff); border-left: 3px solid #3b82f6;' : 'background: transparent; border-left: 3px solid transparent;'}">
+                                    <td style="text-align: center;" role="cell">
+                                        <div class="custom-checkbox-wrapper">
+                                            <input type="checkbox"
+                                                   class="${checkboxClass}"
+                                                   ${isSelected ? 'checked' : ''}
+                                                   ${wasPreviouslyAdded ? 'disabled' : ''}
+                                                   tabindex="-1"
+                                                   aria-label="${getUserDisplayName(user)}"
+                                                   onclick="event.stopPropagation(); ${wasPreviouslyAdded ? '' : `toggleUserSelection(${user.id})`}">
+                                            <span class="custom-checkbox-icon"></span>
+                                        </div>
+                                    </td>
+                                    <td role="cell">
+                                        <span class="user-table-name">${getUserDisplayName(user)}</span>
+                                    </td>
+                                    <td role="cell">
+                                        <span class="role-badge ${user.role}">
+                                            ${user.role === 'admin' ? getTranslation('notifRoleAdmin') : getTranslation('notifRoleOperator')}
+                                        </span>
+                                    </td>
+                                    <td style="color: var(--text-secondary);" role="cell">${user.email || '-'}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            // 应用国际化翻译
+            setLanguage(currentLang);
+        }
+
+        // 切换用户选择状态
+        function toggleUserSelection(userId) {
+            const index = tempSelectedUsers.indexOf(userId);
+            if (index > -1) {
+                tempSelectedUsers.splice(index, 1);
+            } else {
+                tempSelectedUsers.push(userId);
+            }
+            // 重新渲染时保持搜索状态
+            const searchInput = document.getElementById('userSearchInput');
+            const searchTerm = searchInput ? searchInput.value : '';
+            renderUserSelectorList(searchTerm);
+        }
+
+        // 处理用户行的键盘事件
+        function handleUserRowKeyDown(event, userId) {
+            const currentRow = event.currentTarget;
+            const allRows = Array.from(currentRow.parentElement.querySelectorAll('tr[data-user-id]'));
+            const currentIndex = allRows.indexOf(currentRow);
+
+            switch(event.key) {
+                case 'ArrowDown':
+                    // 下移焦点到下一个用户
+                    event.preventDefault();
+                    if (currentIndex < allRows.length - 1) {
+                        allRows[currentIndex + 1].focus();
+                    }
+                    break;
+
+                case 'ArrowUp':
+                    // 上移焦点到上一个用户
+                    event.preventDefault();
+                    if (currentIndex > 0) {
+                        allRows[currentIndex - 1].focus();
+                    }
+                    break;
+
+                case 'Home':
+                    // 跳转到第一个用户
+                    event.preventDefault();
+                    if (allRows.length > 0) {
+                        allRows[0].focus();
+                    }
+                    break;
+
+                case 'End':
+                    // 跳转到最后一个用户
+                    event.preventDefault();
+                    if (allRows.length > 0) {
+                        allRows[allRows.length - 1].focus();
+                    }
+                    break;
+
+                case 'Enter':
+                case ' ':
+                    // 空格或回车键切换选择状态（仅对未锁定的用户）
+                    event.preventDefault();
+                    const isLocked = currentRow.getAttribute('data-is-locked') === 'true';
+                    if (!isLocked) {
+                        toggleUserSelection(userId);
+                        // 重新渲染后恢复焦点到当前行
+                        setTimeout(() => {
+                            const newRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+                            if (newRow) newRow.focus();
+                        }, 50);
+                    }
+                    break;
+
+                case 'Escape':
+                    // ESC键关闭抽屉
+                    event.preventDefault();
+                    closeUserSelector();
+                    break;
+            }
+        }
+
+        // 保存用户选择
+        function saveUserSelection() {
+            if (!currentEditingLevel) return;
+
+            const policy = levelPolicies.find(p => p.level === currentEditingLevel);
+            if (!policy) return;
+
+            // 获取当前已有的用户ID列表
+            const currentUserIds = (policy.userChannels || []).map(uc => uc.userId);
+
+            // 找出新增的用户
+            const newUserIds = tempSelectedUsers.filter(id => !currentUserIds.includes(id));
+
+            // 找出要移除的用户
+            const removedUserIds = currentUserIds.filter(id => !tempSelectedUsers.includes(id));
+
+            // 移除取消选择的用户
+            policy.userChannels = policy.userChannels.filter(uc => !removedUserIds.includes(uc.userId));
+
+            // 为新增的用户添加userChannel,默认启用所有渠道
+            newUserIds.forEach(userId => {
+                policy.userChannels.push({
+                    userId: userId,
+                    channels: ['sms', 'email'] // 默认所有渠道
+                });
+            });
+
+            // 刷新详情页表格显示
+            renderPolicyDetail(policy);
+
+            // 刷新策略卡片
+            renderPolicies();
+
+            showToast('接收人已更新', 'success');
+            closeUserSelector();
+        }
+
+        // 从策略中移除用户
+        function removeUserFromPolicy(level, userId) {
+            const policy = levelPolicies.find(p => p.level === level);
+            if (!policy) return;
+
+            // 从userChannels数组中移除该用户
+            const index = policy.userChannels.findIndex(uc => uc.userId === userId);
+            if (index > -1) {
+                policy.userChannels.splice(index, 1);
+
+                // 刷新详情页表格显示
+                renderPolicyDetail(policy);
+
+                // 刷新策略卡片
+                renderPolicies();
+
+                const user = users.find(u => u.id === userId);
+                showToast(`已移除 ${user ? getUserDisplayName(user) : '用户'}`, 'success');
+            }
+        }
+
+        // 打开添加用户模态框
+        function openAddUserModal() {
+            // 清空表单
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserRole').value = 'operator';
+            document.getElementById('newUserPhone').value = '';
+            document.getElementById('newUserEmail').value = '';
+            document.getElementById('newUserWechat').value = '';
+
+            document.getElementById('addUserModal').classList.add('show');
+        }
+
+        // 关闭添加用户模态框
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('show');
+        }
+
+        // 保存新用户
+        function saveNewUser() {
+            const name = document.getElementById('newUserName').value.trim();
+            const role = document.getElementById('newUserRole').value;
+            const phone = document.getElementById('newUserPhone').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const wechat = document.getElementById('newUserWechat').value.trim();
+
+            // 验证必填字段
+            if (!name) {
+                showToast('请输入姓名', 'warning');
+                return;
+            }
+            if (!phone) {
+                showToast('请输入手机号', 'warning');
+                return;
+            }
+
+            // 验证手机号格式
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('手机号格式不正确', 'warning');
+                return;
+            }
+
+            // 生成新用户ID
+            const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+
+            // 创建新用户
+            const newUser = {
+                id: newId,
+                name: name,
+                role: role,
+                phone: phone,
+                email: email || '',
+                wechat: wechat || '',
+                avatar: name.charAt(0).toUpperCase()
+            };
+
+            // 添加到用户列表
+            users.push(newUser);
+
+            showToast(getTranslation('notifAddSuccess'), 'success');
+
+            // 关闭添加用户模态框
+            closeAddUserModal();
+
+            // 如果用户选择器是打开的，刷新列表
+            if (currentEditingLevel) {
+                renderUserSelectorList();
+            }
+        }
+
+
+        // 显示提示
+        function showToast(message, type = 'info') {
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                info: '#3b82f6',
+                warning: '#f59e0b'
+            };
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: white;
+                color: var(--text-primary);
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border-left: 4px solid ${colors[type]};
+            `;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]}" style="color: ${colors[type]}; font-size: 18px;"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 监听语言切换事件
+        window.addEventListener('languageChanged', function() {
+            // 重新渲染策略卡片
+            renderPolicies();
+
+            // 如果在详情页，重新渲染详情页内容
+            if (currentConfigLevel) {
+                const policy = levelPolicies.find(p => p.level === currentConfigLevel);
+                if (policy) {
+                    // 更新详情页标题
+                    const policyName = getTranslation(policy.nameKey) || policy.name;
+                    document.getElementById('detailPageTitle').innerHTML = `
+                        <span class="level-badge ${policy.level}">
+                            <i class="fas ${policy.icon}"></i>
+                            <span>${policyName}</span>
+                        </span>
+                        ${getTranslation('notifConfiguration')}
+                    `;
+                    renderPolicyDetail(policy);
+                }
+            }
+        });
+
+        // 页面加载时渲染
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPolicies();
+
+            // 升级通知开关控制
+            const escalationCheckbox = document.getElementById('policyEnableEscalation');
+            if (escalationCheckbox) {
+                escalationCheckbox.addEventListener('change', function() {
+                    document.getElementById('escalationSettings').style.display = this.checked ? 'block' : 'none';
+                });
+            }
+
+            // 静默期开关控制
+            const silenceCheckbox = document.getElementById('policyEnableSilence');
+            if (silenceCheckbox) {
+                silenceCheckbox.addEventListener('change', function() {
+                    document.getElementById('silenceSettings').style.display = this.checked ? 'block' : 'none';
+                });
+            }
+
+            // 降噪参数实时预览
+            const repeatIntervalInput = document.getElementById('policyRepeatInterval');
+            const maxRepeatsInput = document.getElementById('policyMaxRepeats');
+
+            if (repeatIntervalInput) {
+                repeatIntervalInput.addEventListener('input', function() {
+                    document.getElementById('repeatIntervalDisplay').textContent = this.value;
+                });
+            }
+
+            if (maxRepeatsInput) {
+                maxRepeatsInput.addEventListener('input', function() {
+                    document.getElementById('maxRepeatsDisplay').textContent = this.value;
+                });
+            }
+        });
+
+        // 添加动画样式
+        const animationStyle = document.createElement('style');
+        animationStyle.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(animationStyle);
+    </script>
+</body>
+</html>

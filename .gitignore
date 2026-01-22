@@ -1,0 +1,16 @@
+# 临时文件
+tmpclaude-*
+temp_*.txt
+*.backup-*
+test-*.html
+
+# IDE
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log

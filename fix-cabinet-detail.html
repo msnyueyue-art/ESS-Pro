@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>储能柜详情页面 - 诊断与修复工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f8fafc;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            font-size: 20px;
+            color: #1e293b;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .status.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #10b981;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        button.secondary:hover {
+            background: #475569;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 12px;
+        }
+
+        .code-inline {
+            background: #f1f5f9;
+            color: #dc2626;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .step {
+            margin-bottom: 24px;
+            padding-left: 28px;
+            position: relative;
+        }
+
+        .step::before {
+            content: '●';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-size: 20px;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔧 储能柜详情页面 - 诊断与修复工具</h1>
+            <p class="subtitle">自动检测并修复"点击tab数据消失"的问题</p>
+
+            <div id="diagnosisResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 诊断结果</h2>
+            <div id="diagnosticInfo"></div>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ 修复选项</h2>
+
+            <div class="step">
+                <div class="step-title">方案 1：清除字段设置（推荐）</div>
+                <div class="step-desc">
+                    清除 localStorage 中的字段设置，恢复所有字段到默认可见状态。
+                    这不会影响其他设置（如个性化设置）。
+                </div>
+                <button onclick="fixOption1()">清除字段设置</button>
+            </div>
+
+            <div class="step">
+                <div class="step-title">方案 2：重置为默认字段显示</div>
+                <div class="step-desc">
+                    重新初始化字段设置，确保所有重要字段都处于可见状态。
+                </div>
+                <button onclick="fixOption2()">重置字段设置</button>
+            </div>
+
+            <div class="step">
+                <div class="step-title">方案 3：查看完整 localStorage 数据</div>
+                <div class="step-desc">
+                    显示当前 localStorage 中的所有储能柜相关数据，用于高级调试。
+                </div>
+                <button class="secondary" onclick="showFullData()">查看完整数据</button>
+            </div>
+
+            <div class="step">
+                <div class="step-title">方案 4：完全清空 localStorage（慎用）</div>
+                <div class="step-desc">
+                    ⚠️ <strong>警告：</strong>这将清除所有本地设置，包括个性化设置、字段设置等。
+                </div>
+                <button class="danger" onclick="clearAll()">完全清空</button>
+            </div>
+
+            <div id="fullDataDisplay"></div>
+        </div>
+
+        <div class="card">
+            <h2>🎯 操作完成后</h2>
+            <p style="margin-bottom: 16px; color: #64748b;">执行修复后，请按以下步骤操作：</p>
+
+            <div class="step">
+                <div class="step-title">步骤 1：关闭此页面</div>
+                <div class="step-desc">诊断和修复已完成</div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">步骤 2：刷新储能柜详情页面</div>
+                <div class="step-desc">按 F5 或点击浏览器刷新按钮</div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">步骤 3：测试功能</div>
+                <div class="step-desc">点击不同的 tab，检查数据是否正常显示</div>
+            </div>
+
+            <button onclick="openCabinetDetail()">打开储能柜详情页面</button>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时自动诊断
+        window.addEventListener('DOMContentLoaded', function() {
+            runDiagnosis();
+        });
+
+        // 运行诊断
+        function runDiagnosis() {
+            const resultDiv = document.getElementById('diagnosisResult');
+            const infoDiv = document.getElementById('diagnosticInfo');
+
+            // 检查 localStorage 中的 fieldSettings
+            const fieldSettings = localStorage.getItem('fieldSettings');
+
+            if (!fieldSettings) {
+                resultDiv.innerHTML = `
+                    <div class="status info">
+                        <strong>✓ 未发现字段设置问题</strong><br>
+                        localStorage 中没有字段设置数据，所有字段应使用默认配置。
+                    </div>
+                `;
+
+                infoDiv.innerHTML = `
+                    <div class="status info">
+                        没有找到 <code class="code-inline">fieldSettings</code> 数据。
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const settings = JSON.parse(fieldSettings);
+                const components = Object.keys(settings);
+
+                if (components.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            <strong>✓ 字段设置为空对象</strong><br>
+                            没有任何组件的字段设置，所有字段应使用默认配置。
+                        </div>
+                    `;
+                } else {
+                    // 检查是否有组件的所有字段都被隐藏
+                    let hasIssue = false;
+                    let issueDetails = [];
+
+                    for (let comp of components) {
+                        const compSettings = settings[comp];
+                        if (compSettings && compSettings.realtime) {
+                            const realtimeFields = compSettings.realtime;
+                            const visibleFields = Object.values(realtimeFields).filter(v => v === true);
+
+                            if (visibleFields.length === 0) {
+                                hasIssue = true;
+                                issueDetails.push(`<strong>${comp}</strong> 组件的所有实时数据字段都被隐藏`);
+                            }
+                        }
+                    }
+
+                    if (hasIssue) {
+                        resultDiv.innerHTML = `
+                            <div class="status error">
+                                <strong>✗ 发现问题！</strong><br>
+                                以下组件的所有字段都被隐藏，导致点击 tab 时数据消失：<br>
+                                ${issueDetails.map(d => `• ${d}`).join('<br>')}
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="status warning">
+                                <strong>⚠ 发现字段设置</strong><br>
+                                找到了字段设置数据，但看起来没有明显问题。<br>
+                                如果仍然遇到数据消失的问题，建议清除字段设置。
+                            </div>
+                        `;
+                    }
+                }
+
+                // 显示详细信息
+                infoDiv.innerHTML = `
+                    <div class="status info">
+                        <strong>字段设置内容：</strong>
+                        <pre>${JSON.stringify(settings, null, 2)}</pre>
+                    </div>
+                `;
+
+            } catch (e) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>✗ 数据格式错误！</strong><br>
+                        localStorage 中的 fieldSettings 数据格式不正确：${e.message}
+                    </div>
+                `;
+
+                infoDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>原始数据：</strong>
+                        <pre>${fieldSettings}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // 修复方案 1：清除字段设置
+        function fixOption1() {
+            if (confirm('确定要清除所有字段设置吗？这将恢复所有字段到默认可见状态。')) {
+                localStorage.removeItem('fieldSettings');
+                alert('✓ 字段设置已清除！\n\n请刷新储能柜详情页面查看效果。');
+                runDiagnosis();
+            }
+        }
+
+        // 修复方案 2：重置为默认设置
+        function fixOption2() {
+            if (confirm('确定要重置字段设置为默认值吗？')) {
+                // 设置为空对象，让页面使用 fieldConfigs 中的默认值
+                localStorage.setItem('fieldSettings', JSON.stringify({}));
+                alert('✓ 字段设置已重置！\n\n请刷新储能柜详情页面查看效果。');
+                runDiagnosis();
+            }
+        }
+
+        // 显示完整数据
+        function showFullData() {
+            const display = document.getElementById('fullDataDisplay');
+
+            const allData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                try {
+                    const value = localStorage.getItem(key);
+                    // 尝试解析 JSON
+                    try {
+                        allData[key] = JSON.parse(value);
+                    } catch {
+                        allData[key] = value;
+                    }
+                } catch (e) {
+                    allData[key] = `[读取失败: ${e.message}]`;
+                }
+            }
+
+            display.innerHTML = `
+                <div class="status info" style="margin-top: 16px;">
+                    <strong>localStorage 完整数据：</strong>
+                    <pre>${JSON.stringify(allData, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        // 完全清空
+        function clearAll() {
+            if (confirm('⚠️ 警告！\n\n这将清除所有本地存储数据，包括：\n• 个性化设置（Logo、海报、能量流图标）\n• 字段设置\n• 其他所有设置\n\n确定要继续吗？')) {
+                if (confirm('再次确认：真的要清空所有数据吗？此操作不可恢复！')) {
+                    localStorage.clear();
+                    alert('✓ 所有数据已清空！\n\n请刷新储能柜详情页面。');
+                    runDiagnosis();
+                }
+            }
+        }
+
+        // 打开储能柜详情页面
+        function openCabinetDetail() {
+            window.open('cabinet-detail.html?cabinetId=1', '_blank');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史数据 - 储能柜管理系统（优化版）</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="navbar.js"></script>
+    <style>
+        /* 页面布局 */
+        .main-content {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 0;
+            background: #f5f6fa;
+        }
+
+        /* 页面头部 */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid #e1e4e8;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 快捷筛选栏 - 始终显示的常用筛选项 */
+        .quick-filter-bar {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .filter-select,
+        .filter-input {
+            height: 32px;
+            padding: 0 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            min-width: 120px;
+        }
+
+        /* 快捷时间按钮组 */
+        .time-quick-btns {
+            display: flex;
+            gap: 4px;
+            background: #f5f6fa;
+            padding: 2px;
+            border-radius: 6px;
+        }
+
+        .time-quick-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .time-quick-btn:hover {
+            background: white;
+            color: #3562E3;
+        }
+
+        .time-quick-btn.active {
+            background: #3562E3;
+            color: white;
+        }
+
+        /* 高级筛选按钮 */
+        .advanced-filter-btn {
+            margin-left: auto;
+            padding: 6px 16px;
+            background: white;
+            border: 1px solid #3562E3;
+            color: #3562E3;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .advanced-filter-btn:hover {
+            background: #3562E3;
+            color: white;
+        }
+
+        /* 参数选择面板 - 侧边抽屉式 */
+        .param-selector-drawer {
+            position: fixed;
+            right: -400px;
+            top: 60px;
+            width: 400px;
+            height: calc(100vh - 60px);
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .param-selector-drawer.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .drawer-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f5f6fa;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* 参数分组选择 */
+        .param-group {
+            margin-bottom: 24px;
+        }
+
+        .param-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .param-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .param-select-all {
+            font-size: 12px;
+            color: #3562E3;
+            cursor: pointer;
+        }
+
+        .param-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .param-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .param-item:hover {
+            background: #f5f6fa;
+        }
+
+        .param-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .param-label {
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .param-unit {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* 数据展示区域 */
+        .data-container {
+            margin: 20px 24px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 视图切换标签 */
+        .view-tabs {
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            padding: 0 20px;
+            background: #fafbfc;
+        }
+
+        .view-tab {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .view-tab:hover {
+            color: #3562E3;
+        }
+
+        .view-tab.active {
+            color: #3562E3;
+            border-bottom-color: #3562E3;
+            font-weight: 600;
+        }
+
+        /* 数据操作栏 */
+        .data-toolbar {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .data-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .data-count {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .data-granularity {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+            background: #f5f6fa;
+            border-radius: 6px;
+        }
+
+        .granularity-option {
+            padding: 4px 12px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .granularity-option:hover {
+            background: white;
+        }
+
+        .granularity-option.active {
+            background: white;
+            color: #3562E3;
+            font-weight: 600;
+        }
+
+        .data-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 14px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #333;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: #3562E3;
+            color: #3562E3;
+        }
+
+        .action-btn.primary {
+            background: #3562E3;
+            color: white;
+            border-color: #3562E3;
+        }
+
+        .action-btn.primary:hover {
+            background: #2851d1;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            padding: 20px;
+            height: 400px;
+            position: relative;
+        }
+
+        /* 表格容器 */
+        .table-container {
+            position: relative;
+            height: 500px;
+            overflow: auto;
+        }
+
+        /* 虚拟滚动表格 */
+        .virtual-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .virtual-table th {
+            position: sticky;
+            top: 0;
+            background: #f5f6fa;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 2px solid #e1e4e8;
+            z-index: 10;
+        }
+
+        .virtual-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .virtual-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* 固定第一列（时间列） */
+        .virtual-table th:first-child,
+        .virtual-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 5;
+            box-shadow: 1px 0 0 #e1e4e8;
+        }
+
+        .virtual-table th:first-child {
+            z-index: 11;
+            background: #f5f6fa;
+        }
+
+        /* 异常值高亮 */
+        .value-warning {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .value-danger {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* 数据对比面板 */
+        .compare-panel {
+            position: fixed;
+            bottom: -300px;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            transition: bottom 0.3s ease;
+            z-index: 999;
+        }
+
+        .compare-panel.open {
+            bottom: 0;
+        }
+
+        /* 查询模板管理 */
+        .template-manager {
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 12px;
+            display: none;
+            z-index: 200;
+        }
+
+        .template-manager.show {
+            display: block;
+        }
+
+        .template-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .template-item:hover {
+            background: #f5f6fa;
+        }
+
+        .template-name {
+            font-size: 13px;
+            color: #333;
+        }
+
+        .template-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .template-action {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: #999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .template-action:hover {
+            background: #e1e4e8;
+            color: #333;
+        }
+
+        /* 加载状态 */
+        .loading-skeleton {
+            padding: 20px;
+        }
+
+        .skeleton-row {
+            height: 40px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* 深色模式适配 */
+        [data-theme="dark"] .main-content {
+            background: #0f172a;
+        }
+
+        [data-theme="dark"] .page-header,
+        [data-theme="dark"] .quick-filter-bar,
+        [data-theme="dark"] .data-container,
+        [data-theme="dark"] .param-selector-drawer {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .filter-select,
+        [data-theme="dark"] .filter-input {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .virtual-table th {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .virtual-table td {
+            color: #e2e8f0;
+            border-color: #334155;
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .quick-filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-select,
+            .filter-input {
+                width: 100%;
+            }
+
+            .param-selector-drawer {
+                width: 100%;
+                right: -100%;
+            }
+
+            .param-list {
+                grid-template-columns: 1fr;
+            }
+
+            .data-toolbar {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .data-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body data-page="history-data">
+    <!-- 主内容区域 -->
+    <main class="main-content" id="mainContent">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-chart-line"></i>
+                <span>历史数据分析</span>
+            </h1>
+            <div class="header-actions">
+                <button class="action-btn" onclick="toggleTemplateManager()">
+                    <i class="fas fa-bookmark"></i>
+                    <span>查询模板</span>
+                </button>
+                <button class="action-btn" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>刷新</span>
+                </button>
+            </div>
+
+            <!-- 查询模板下拉菜单 -->
+            <div class="template-manager" id="templateManager">
+                <div class="template-item">
+                    <span class="template-name">日常巡检报表</span>
+                    <div class="template-actions">
+                        <button class="template-action"><i class="fas fa-play"></i></button>
+                        <button class="template-action"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="template-item">
+                    <span class="template-name">月度能效分析</span>
+                    <div class="template-actions">
+                        <button class="template-action"><i class="fas fa-play"></i></button>
+                        <button class="template-action"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="template-item">
+                    <span class="template-name">设备对比分析</span>
+                    <div class="template-actions">
+                        <button class="template-action"><i class="fas fa-play"></i></button>
+                        <button class="template-action"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷筛选栏 -->
+        <div class="quick-filter-bar">
+            <div class="filter-group">
+                <label class="filter-label">站点:</label>
+                <select class="filter-select" id="siteSelect">
+                    <option value="">全部站点</option>
+                    <option value="site1">科技园区站</option>
+                    <option value="site2">工业园区站</option>
+                    <option value="site3">商业中心站</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">设备:</label>
+                <select class="filter-select" id="deviceSelect" multiple style="min-width: 180px;">
+                    <option value="ess01">ESS-01 储能柜</option>
+                    <option value="ess02">ESS-02 储能柜</option>
+                    <option value="pv01">PV-01 光伏阵列</option>
+                    <option value="grid01">GRID-01 市电</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">时间:</label>
+                <div class="time-quick-btns">
+                    <button class="time-quick-btn" onclick="setQuickTime('today')">今日</button>
+                    <button class="time-quick-btn" onclick="setQuickTime('yesterday')">昨日</button>
+                    <button class="time-quick-btn active" onclick="setQuickTime('week')">近7天</button>
+                    <button class="time-quick-btn" onclick="setQuickTime('month')">近30天</button>
+                    <button class="time-quick-btn" onclick="setQuickTime('custom')">自定义</button>
+                </div>
+            </div>
+
+            <button class="advanced-filter-btn" onclick="toggleParamSelector()">
+                <i class="fas fa-filter"></i>
+                <span>参数筛选</span>
+            </button>
+        </div>
+
+        <!-- 参数选择抽屉 -->
+        <div class="param-selector-drawer" id="paramSelector">
+            <div class="drawer-header">
+                <h3 class="drawer-title">选择监测参数</h3>
+                <button class="drawer-close" onclick="toggleParamSelector()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="drawer-body">
+                <!-- 储能系统参数 -->
+                <div class="param-group">
+                    <div class="param-group-header">
+                        <span class="param-group-title">储能系统</span>
+                        <span class="param-select-all" onclick="selectAllParams('storage')">全选</span>
+                    </div>
+                    <div class="param-list">
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-voltage" checked>
+                            <label class="param-label" for="param-voltage">电压 <span class="param-unit">V</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-current" checked>
+                            <label class="param-label" for="param-current">电流 <span class="param-unit">A</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-power" checked>
+                            <label class="param-label" for="param-power">功率 <span class="param-unit">kW</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-soc" checked>
+                            <label class="param-label" for="param-soc">SOC <span class="param-unit">%</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-soh">
+                            <label class="param-label" for="param-soh">SOH <span class="param-unit">%</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-temp" checked>
+                            <label class="param-label" for="param-temp">温度 <span class="param-unit">℃</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BMS参数 -->
+                <div class="param-group">
+                    <div class="param-group-header">
+                        <span class="param-group-title">BMS系统</span>
+                        <span class="param-select-all" onclick="selectAllParams('bms')">全选</span>
+                    </div>
+                    <div class="param-list">
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-cell-voltage">
+                            <label class="param-label" for="param-cell-voltage">单体电压 <span class="param-unit">V</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-cell-temp">
+                            <label class="param-label" for="param-cell-temp">单体温度 <span class="param-unit">℃</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-voltage-diff">
+                            <label class="param-label" for="param-voltage-diff">压差 <span class="param-unit">mV</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-insulation">
+                            <label class="param-label" for="param-insulation">绝缘电阻 <span class="param-unit">kΩ</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PCS参数 -->
+                <div class="param-group">
+                    <div class="param-group-header">
+                        <span class="param-group-title">PCS系统</span>
+                        <span class="param-select-all" onclick="selectAllParams('pcs')">全选</span>
+                    </div>
+                    <div class="param-list">
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-ac-voltage">
+                            <label class="param-label" for="param-ac-voltage">交流电压 <span class="param-unit">V</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-ac-current">
+                            <label class="param-label" for="param-ac-current">交流电流 <span class="param-unit">A</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-efficiency">
+                            <label class="param-label" for="param-efficiency">转换效率 <span class="param-unit">%</span></label>
+                        </div>
+                        <div class="param-item">
+                            <input type="checkbox" class="param-checkbox" id="param-pf">
+                            <label class="param-label" for="param-pf">功率因数</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 应用参数 -->
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e1e4e8;">
+                    <button class="action-btn primary" style="width: 100%;" onclick="applyParamSelection()">
+                        <i class="fas fa-check"></i>
+                        <span>应用筛选</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据展示区域 -->
+        <div class="data-container">
+            <!-- 视图切换 -->
+            <div class="view-tabs">
+                <button class="view-tab active" onclick="switchView('chart')">
+                    <i class="fas fa-chart-line"></i> 图表视图
+                </button>
+                <button class="view-tab" onclick="switchView('table')">
+                    <i class="fas fa-table"></i> 表格视图
+                </button>
+                <button class="view-tab" onclick="switchView('compare')">
+                    <i class="fas fa-columns"></i> 对比分析
+                </button>
+                <button class="view-tab" onclick="switchView('statistics')">
+                    <i class="fas fa-chart-pie"></i> 统计分析
+                </button>
+            </div>
+
+            <!-- 数据工具栏 -->
+            <div class="data-toolbar">
+                <div class="data-info">
+                    <span class="data-count">共 <strong>2,016</strong> 条数据</span>
+                    <div class="data-granularity">
+                        <button class="granularity-option" onclick="setGranularity('1m')">1分钟</button>
+                        <button class="granularity-option active" onclick="setGranularity('5m')">5分钟</button>
+                        <button class="granularity-option" onclick="setGranularity('15m')">15分钟</button>
+                        <button class="granularity-option" onclick="setGranularity('1h')">1小时</button>
+                        <button class="granularity-option" onclick="setGranularity('1d')">1天</button>
+                    </div>
+                </div>
+                <div class="data-actions">
+                    <button class="action-btn" onclick="saveTemplate()">
+                        <i class="fas fa-save"></i>
+                        <span>保存模板</span>
+                    </button>
+                    <button class="action-btn" onclick="exportData('excel')">
+                        <i class="fas fa-file-excel"></i>
+                        <span>导出Excel</span>
+                    </button>
+                    <button class="action-btn" onclick="exportData('pdf')">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>导出PDF</span>
+                    </button>
+                    <button class="action-btn primary" onclick="queryData()">
+                        <i class="fas fa-search"></i>
+                        <span>查询数据</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 图表视图 -->
+            <div class="chart-container" id="chartView">
+                <canvas id="dataChart"></canvas>
+            </div>
+
+            <!-- 表格视图 (隐藏) -->
+            <div class="table-container" id="tableView" style="display: none;">
+                <table class="virtual-table">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>电压 (V)</th>
+                            <th>电流 (A)</th>
+                            <th>功率 (kW)</th>
+                            <th>SOC (%)</th>
+                            <th>温度 (℃)</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- 动态生成数据行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 数据对比面板 -->
+        <div class="compare-panel" id="comparePanel">
+            <div style="padding: 20px;">
+                <h3>设备性能对比</h3>
+                <!-- 对比内容 -->
+            </div>
+        </div>
+    </main>
+
+    <script src="common.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script>
+        // 检查登录状态
+        checkAuth();
+
+        // 初始化图表
+        let dataChart = null;
+
+        function initChart() {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+            dataChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '时间'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '数值'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 切换参数选择器
+        function toggleParamSelector() {
+            const drawer = document.getElementById('paramSelector');
+            drawer.classList.toggle('open');
+        }
+
+        // 切换模板管理器
+        function toggleTemplateManager() {
+            const manager = document.getElementById('templateManager');
+            manager.classList.toggle('show');
+        }
+
+        // 切换视图
+        function switchView(view) {
+            // 更新标签样式
+            document.querySelectorAll('.view-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.closest('.view-tab').classList.add('active');
+
+            // 切换视图内容
+            document.getElementById('chartView').style.display = view === 'chart' ? 'block' : 'none';
+            document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+
+            if (view === 'compare') {
+                document.getElementById('comparePanel').classList.add('open');
+            } else {
+                document.getElementById('comparePanel').classList.remove('open');
+            }
+        }
+
+        // 设置快捷时间
+        function setQuickTime(type) {
+            // 更新按钮样式
+            document.querySelectorAll('.time-quick-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 设置时间范围逻辑
+            console.log('设置时间范围:', type);
+        }
+
+        // 设置数据粒度
+        function setGranularity(granularity) {
+            // 更新按钮样式
+            document.querySelectorAll('.granularity-option').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 重新查询数据
+            console.log('设置数据粒度:', granularity);
+        }
+
+        // 全选参数组
+        function selectAllParams(group) {
+            console.log('全选参数组:', group);
+        }
+
+        // 应用参数选择
+        function applyParamSelection() {
+            toggleParamSelector();
+            queryData();
+        }
+
+        // 查询数据
+        function queryData() {
+            // 显示加载状态
+            const container = document.getElementById('tableView');
+            container.innerHTML = `
+                <div class="loading-skeleton">
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                </div>
+            `;
+
+            // 模拟数据加载
+            setTimeout(() => {
+                // 生成模拟数据
+                generateChartData();
+                generateTableData();
+            }, 1000);
+        }
+
+        // 生成图表数据
+        function generateChartData() {
+            const hours = 24 * 7; // 7天数据
+            const labels = [];
+            const voltageData = [];
+            const currentData = [];
+            const powerData = [];
+            const socData = [];
+
+            for (let i = 0; i < hours; i += 1) {
+                const date = new Date();
+                date.setHours(date.getHours() - (hours - i));
+                labels.push(date.toLocaleDateString('zh-CN') + ' ' + date.getHours() + ':00');
+
+                // 生成真实的储能系统数据
+                voltageData.push(380 + Math.random() * 20);
+                currentData.push(250 + Math.random() * 100);
+                powerData.push(100 + Math.random() * 50);
+                socData.push(30 + Math.random() * 50);
+            }
+
+            dataChart.data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '电压 (V)',
+                        data: voltageData,
+                        borderColor: '#3562E3',
+                        backgroundColor: 'rgba(53, 98, 227, 0.1)',
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: '功率 (kW)',
+                        data: powerData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        yAxisID: 'y1',
+                    },
+                    {
+                        label: 'SOC (%)',
+                        data: socData,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        yAxisID: 'y2',
+                    }
+                ]
+            };
+
+            // 配置多Y轴
+            dataChart.options.scales = {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: '时间'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: '电压 (V)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '功率 (kW)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                },
+                y2: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'SOC (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            };
+
+            dataChart.update();
+        }
+
+        // 生成表格数据
+        function generateTableData() {
+            const tbody = document.getElementById('tableBody');
+            let html = '';
+
+            for (let i = 0; i < 100; i++) {
+                const date = new Date();
+                date.setMinutes(date.getMinutes() - i * 5);
+
+                const voltage = (380 + Math.random() * 20).toFixed(2);
+                const current = (250 + Math.random() * 100).toFixed(2);
+                const power = (100 + Math.random() * 50).toFixed(2);
+                const soc = (30 + Math.random() * 50).toFixed(1);
+                const temp = (25 + Math.random() * 10).toFixed(1);
+
+                // 判断是否异常
+                const isWarning = soc < 20 || temp > 35;
+                const isDanger = soc < 10 || temp > 40;
+
+                html += `
+                    <tr>
+                        <td>${date.toLocaleString('zh-CN')}</td>
+                        <td>${voltage}</td>
+                        <td>${current}</td>
+                        <td>${power}</td>
+                        <td class="${isDanger ? 'value-danger' : isWarning ? 'value-warning' : ''}">${soc}</td>
+                        <td class="${temp > 40 ? 'value-danger' : temp > 35 ? 'value-warning' : ''}">${temp}</td>
+                        <td><span style="color: #10b981;">正常</span></td>
+                    </tr>
+                `;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        // 导出数据
+        function exportData(format) {
+            console.log('导出数据:', format);
+            // 实现导出逻辑
+        }
+
+        // 保存查询模板
+        function saveTemplate() {
+            const name = prompt('请输入模板名称:');
+            if (name) {
+                console.log('保存模板:', name);
+                // 保存当前查询条件
+            }
+        }
+
+        // 刷新数据
+        function refreshData() {
+            queryData();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            // 自动加载数据
+            setTimeout(queryData, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+/* 英文文本优化 - 自适应单元格大小 */
+
+/* 导航菜单优化 */
+.nav-item {
+    font-size: 15px !important;
+    padding: 10px 20px !important;
+    letter-spacing: 0.3px;
+}
+
+/* Logo文字优化 */
+.logo-text {
+    font-size: 18px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 统计标签优化 */
+.stat-label {
+    font-size: 12px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 按钮文本优化 */
+button, .button, .btn {
+    font-size: 14px !important;
+    padding: 8px 16px !important;
+}
+
+/* 表格单元格优化 */
+td, th {
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* 表格头部优化 */
+th {
+    font-size: 13px !important;
+}
+
+/* 卡片标题优化 */
+.card-title, .section-title {
+    font-size: 16px !important;
+}
+
+/* 表单标签优化 */
+label, .form-label {
+    font-size: 13px !important;
+}
+
+/* 输入框优化 */
+input, select, textarea {
+    font-size: 14px !important;
+}
+
+/* 模态框标题优化 */
+.modal-title, .dialog-title {
+    font-size: 18px !important;
+}
+
+/* 退出弹窗优化 */
+.logout-title {
+    font-size: 20px !important;
+}
+
+.logout-message {
+    font-size: 14px !important;
+}
+
+/* 时间显示优化 */
+.header-time {
+    font-size: 14px !important;
+}
+
+/* 标签页优化 */
+.tab-item, .nav-tab {
+    font-size: 14px !important;
+    padding: 8px 16px !important;
+}
+
+/* 下拉菜单优化 */
+.dropdown-item, .menu-item {
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+}
+
+/* 面包屑导航优化 */
+.breadcrumb-item {
+    font-size: 13px !important;
+}
+
+/* 工具提示优化 */
+.tooltip, [data-tooltip] {
+    font-size: 12px !important;
+}
+
+/* 通用文本自适应 */
+[data-i18n] {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 确保英文单词在必要时换行 */
+* {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}

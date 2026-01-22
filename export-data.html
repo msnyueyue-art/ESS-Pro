@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="exportPageTitle">数据导出</title> - <title>储能柜管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* ==================== 全局重置 ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        /* ==================== 顶部导航栏 ==================== */
+        .top-bar {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .page-title i {
+            color: #2196f3;
+            font-size: 24px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #e9ecef;
+            border-color: #cbd5e0;
+        }
+
+        /* ==================== 主内容区 ==================== */
+        .main-content {
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .export-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        /* ==================== 时间选择区域 ==================== */
+        .time-section {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: #2196f3;
+        }
+
+        .date-range-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+
+        .date-input {
+            height: 40px;
+            padding: 0 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 200px;
+        }
+
+        .date-input:hover {
+            border-color: #2196f3;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .date-separator {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* ==================== 组件选择区域 ==================== */
+        .component-section {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .component-selector {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .component-select {
+            width: 300px;
+            height: 40px;
+            padding: 0 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .component-select:hover {
+            border-color: #2196f3;
+        }
+
+        .component-select:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        /* ==================== 指标选择区域 ==================== */
+        .indicators-section {
+            padding: 24px;
+        }
+
+        .indicator-groups {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .indicator-group {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .group-header {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .group-header:hover {
+            background: #e9ecef;
+        }
+
+        .group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .group-title i {
+            color: #2196f3;
+        }
+
+        .group-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .select-all-btn {
+            font-size: 12px;
+            color: #2196f3;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .select-all-btn:hover {
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .expand-icon {
+            color: #64748b;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .group-header.collapsed .expand-icon {
+            transform: rotate(-90deg);
+        }
+
+        .group-content {
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            background: white;
+        }
+
+        .group-content.collapsed {
+            display: none;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #f8f9fa;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #2196f3;
+        }
+
+        .checkbox-item label {
+            font-size: 14px;
+            color: #475569;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* ==================== 底部操作栏 ==================== */
+        .action-bar {
+            padding: 20px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .selection-info {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .selection-count {
+            color: #2196f3;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            height: 40px;
+            padding: 0 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976d2;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #cbd5e0;
+        }
+
+        /* ==================== 数据表格区域 ==================== */
+        .data-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: none;
+        }
+
+        .data-table-container.show {
+            display: block;
+        }
+
+        .table-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-title i {
+            color: #2196f3;
+        }
+
+        .data-count {
+            font-size: 14px;
+            color: #64748b;
+            margin-left: 12px;
+        }
+
+        .export-btn {
+            background: #4caf50;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .export-btn:hover {
+            background: #45a049;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #475569;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* 空状态 */
+        .empty-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-data i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #cbd5e0;
+        }
+
+        .empty-data-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-data-hint {
+            font-size: 14px;
+            color: #cbd5e0;
+        }
+
+        /* ==================== 通知提示 ==================== */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        .notification.success {
+            border-left-color: #4caf50;
+        }
+
+        .notification.warning {
+            border-left-color: #ff9800;
+        }
+
+        .notification.error {
+            border-left-color: #f44336;
+        }
+
+        .notification.info {
+            border-left-color: #2196f3;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ==================== 加载状态 ==================== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #1e293b;
+            font-size: 14px;
+        }
+
+        /* ==================== 响应式设计 ==================== */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 16px;
+            }
+
+            .date-range-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .date-input {
+                width: 100%;
+            }
+
+            .component-select {
+                width: 100%;
+            }
+
+            .indicator-groups {
+                grid-template-columns: 1fr;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="top-bar">
+        <div class="page-title">
+            <i class="fas fa-download"></i>
+            <span data-translate="exportPageTitle">数据导出</span>
+        </div>
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+            <span data-translate="exportBtnBack">返回</span>
+        </button>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 查询条件区 -->
+        <div class="export-container">
+            <!-- 时间选择区域 -->
+            <div class="time-section">
+                <div class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span data-translate="exportSelectTimeRange">选择时间范围</span>
+                </div>
+                <div class="date-range-selector">
+                    <input type="text" class="date-input" id="startDate" data-translate-placeholder="exportStartTime" placeholder="开始时间" readonly>
+                    <span class="date-separator" data-translate="exportDateSeparator">至</span>
+                    <input type="text" class="date-input" id="endDate" data-translate-placeholder="exportEndTime" placeholder="结束时间" readonly>
+                </div>
+            </div>
+
+            <!-- 组件选择区域 -->
+            <div class="component-section">
+                <div class="section-title">
+                    <i class="fas fa-cube"></i>
+                    <span data-translate="exportSelectComponent">选择组件类型</span>
+                </div>
+                <div class="component-selector">
+                    <select class="component-select" id="componentSelect" onchange="handleComponentChange()">
+                        <option value="overall" data-translate="exportComponentOverall">整机</option>
+                        <option value="ems" data-translate="exportComponentEMS">EMS</option>
+                        <option value="inverter" data-translate="exportComponentInverter">逆变器</option>
+                        <option value="bms" data-translate="exportComponentBMS">BMS</option>
+                        <option value="meter" data-translate="exportComponentMeter">电表</option>
+                        <option value="temperature" data-translate="exportComponentThermal">温度</option>
+                        <option value="fire" data-translate="exportComponentFire">消防</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 指标选择区域 -->
+            <div class="indicators-section">
+                <div class="section-title">
+                    <i class="fas fa-check-square"></i>
+                    <span data-translate="exportSelectIndicators">选择查询指标</span>
+                </div>
+                <div class="indicator-groups" id="indicatorGroups">
+                    <!-- 动态生成指标组 -->
+                </div>
+            </div>
+
+            <!-- 底部操作栏 -->
+            <div class="action-bar">
+                <div class="selection-info">
+                    <span data-translate="exportSelectedCount">已选择</span> <span class="selection-count" id="selectionCount">0</span> <span data-translate="exportItemsIndicator">项指标</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="resetSelection()">
+                        <i class="fas fa-undo"></i>
+                        <span data-translate="exportBtnReset">重置</span>
+                    </button>
+                    <button class="btn btn-primary" id="queryBtn" onclick="handleQuery()" disabled>
+                        <i class="fas fa-search"></i>
+                        <span data-translate="exportBtnQuery">查询</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据表格区域 -->
+        <div class="data-table-container" id="dataTableContainer">
+            <div class="table-header">
+                <div>
+                    <span class="table-title">
+                        <i class="fas fa-table"></i>
+                        <span data-translate="exportQueryResult">查询结果</span>
+                    </span>
+                    <span class="data-count" id="dataCount"><span data-translate="exportDataCount">共</span> 0 <span data-translate="exportDataCountItems">条数据</span></span>
+                </div>
+                <button class="export-btn" onclick="handleExport()">
+                    <i class="fas fa-download"></i>
+                    <span>导出数据</span>
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText"><span data-translate="exportLoadingQuery">正在查询数据...</span></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script src="common.js"></script>
+    <script>
+        
+        // ==================== 国际化映射 ====================
+        const groupNameI18nMap = {
+            // 通用组名
+            '基础信息': 'exportGroupBasicInfo',
+            '功率数据': 'exportGroupPowerData',
+            '电池状态': 'exportGroupBatteryStatus',
+            '能量统计': 'exportGroupEnergyStats',
+            '策略控制': 'exportGroupStrategyControl',
+            '性能监控': 'exportGroupPerformance',
+            '功率参数': 'exportGroupPowerParams',
+            '性能与保护': 'exportGroupPerformanceProtection',
+            '电池信息': 'exportGroupBatteryInfo',
+            '温度监控': 'exportGroupTemperature',
+            '温控参数': 'exportGroupThermalParams',
+            '液冷参数': 'exportGroupCoolingParams',
+            '消防状态': 'exportGroupFireStatus',
+            '防护系统': 'exportGroupFireProtection',
+            // EMS相关
+            '调度指令': 'exportGroupDispatchCmd',
+            '运行策略': 'exportGroupRunningStrategy',
+            '功率控制': 'exportGroupPowerControl',
+            '经济数据': 'exportGroupEconomicData',
+            // Inverter相关
+            '直流侧参数': 'exportGroupDCParams',
+            '交流侧参数': 'exportGroupACParams',
+            // BMS相关
+            '整体电气参数': 'exportGroupElectricalParams',
+            '单体电压': 'exportGroupCellVoltage',
+            '电池温度': 'exportGroupBatteryTemp',
+            'Pack簇信息': 'exportGroupPackInfo',
+            '保护状态': 'exportGroupProtectionStatus',
+            '告警阈值': 'exportGroupAlarmThresholds',
+            '温度监测': 'exportGroupTempMonitoring',
+            // Meter相关
+            '三相电压': 'exportGroupThreePhaseVoltage',
+            '三相电流': 'exportGroupThreePhaseCurrent',
+            '电能数据': 'exportGroupElectricalData',
+            '电能质量': 'exportGroupElectricalQuality',
+            // Temperature相关
+            '环境温度': 'exportGroupEnvironmentTemp',
+            '热管理': 'exportGroupThermalMgmt',
+            '空调系统': 'exportGroupAirConditioning',
+            // Fire相关
+            '烟感探测': 'exportGroupSmokeDetection',
+            '温感探测': 'exportGroupTempDetection',
+            '气体监测': 'exportGroupGasMonitoring',
+            '告警信息': 'exportGroupAlarmInfo',
+            '灭火系统': 'exportGroupFireSuppression',
+            '联动控制': 'exportGroupInterlock'
+        };
+
+        const indicatorLabelI18nMap = {
+            // 基础通用
+            '时间戳': 'exportLabelTimestamp',
+            '储能柜ID': 'exportLabelCabinetId',
+            '系统状态': 'exportLabelSystemStatus',
+            '运行模式': 'exportLabelOperationMode',
+            // 设备ID和状态
+            'EMS设备ID': 'exportLabelEMSId',
+            'EMS运行状态': 'exportLabelEMSStatus',
+            'PCS设备ID': 'exportLabelPCSId',
+            'PCS运行状态': 'exportLabelPCSStatus',
+            'BMS设备ID': 'exportLabelBMSId',
+            'BMS运行状态': 'exportLabelBMSStatus',
+            '电表设备ID': 'exportLabelMeterId',
+            '电表类型': 'exportLabelMeterType',
+            '温控系统ID': 'exportLabelThermalSystemId',
+            '消防系统ID': 'exportLabelFireSystemId',
+            '故障代码': 'exportLabelFaultCode',
+            '通信状态': 'exportLabelCommStatus',
+            // 功率参数
+            '有功功率 (kW)': 'exportLabelActivePower',
+            '无功功率 (kVar)': 'exportLabelReactivePower',
+            '视在功率 (kVA)': 'exportLabelApparentPower',
+            '功率因数': 'exportLabelPowerFactor',
+            '总有功功率 (kW)': 'exportLabelTotalActivePower',
+            '总无功功率 (kVar)': 'exportLabelTotalReactivePower',
+            '总视在功率 (kVA)': 'exportLabelTotalApparentPower',
+            '总功率因数': 'exportLabelTotalPowerFactor',
+            '充电功率 (kW)': 'exportLabelChargePower',
+            '放电功率 (kW)': 'exportLabelDischargePower',
+            // 直流侧
+            'DC电压 (V)': 'exportLabelDCVoltage',
+            'DC电流 (A)': 'exportLabelDCCurrent',
+            'DC功率 (kW)': 'exportLabelDCPower',
+            // 交流侧
+            'AC电压-A相 (V)': 'exportLabelACVoltageA',
+            'AC电压-B相 (V)': 'exportLabelACVoltageB',
+            'AC电压-C相 (V)': 'exportLabelACVoltageC',
+            'AC电流-A相 (A)': 'exportLabelACCurrentA',
+            'AC电流-B相 (A)': 'exportLabelACCurrentB',
+            'AC电流-C相 (A)': 'exportLabelACCurrentC',
+            '频率 (Hz)': 'exportLabelFrequency',
+            // 三相
+            'A相电压 (V)': 'exportLabelPhaseAVoltage',
+            'B相电压 (V)': 'exportLabelPhaseBVoltage',
+            'C相电压 (V)': 'exportLabelPhaseCVoltage',
+            'A相电流 (A)': 'exportLabelPhaseACurrent',
+            'B相电流 (A)': 'exportLabelPhaseBCurrent',
+            'C相电流 (A)': 'exportLabelPhaseCCurrent',
+            'A相有功功率 (kW)': 'exportLabelPhaseActivePowerA',
+            'B相有功功率 (kW)': 'exportLabelPhaseActivePowerB',
+            'C相有功功率 (kW)': 'exportLabelPhaseActivePowerC',
+            'A相功率因数': 'exportLabelPhaseAPowerFactor',
+            'B相功率因数': 'exportLabelPhaseBPowerFactor',
+            'C相功率因数': 'exportLabelPhaseCPowerFactor',
+            // 电池参数
+            'SOC (%)': 'exportLabelSOC',
+            'SOH (%)': 'exportLabelSOH',
+            '电池电压 (V)': 'exportLabelBatteryVoltage',
+            '电池电流 (A)': 'exportLabelBatteryCurrent',
+            '电池温度 (°C)': 'exportLabelBatteryTemp',
+            '总电压 (V)': 'exportLabelTotalVoltage',
+            '总电流 (A)': 'exportLabelTotalCurrent',
+            '最高单体电压 (V)': 'exportLabelMaxCellVoltage',
+            '最低单体电压 (V)': 'exportLabelMinCellVoltage',
+            '压差 (mV)': 'exportLabelVoltageDiff',
+            '最高温度 (°C)': 'exportLabelMaxTemp',
+            '最低温度 (°C)': 'exportLabelMinTemp',
+            '平均温度 (°C)': 'exportLabelAverageTemp',
+            '温差 (°C)': 'exportLabelTempDiff',
+            // 能量统计
+            '今日充电量 (kWh)': 'exportLabelChargeEnergy',
+            '今日放电量 (kWh)': 'exportLabelDischargeEnergy',
+            '累计充电量 (MWh)': 'exportLabelCumulativeCharge',
+            '累计放电量 (MWh)': 'exportLabelCumulativeDischarge',
+            '系统效率 (%)': 'exportLabelEfficiency',
+            // EMS调度
+            '调度模式': 'exportLabelDispatchMode',
+            '目标功率 (kW)': 'exportLabelTargetPower',
+            '目标SOC (%)': 'exportLabelTargetSOC',
+            '控制策略': 'exportLabelControlStrategy',
+            // 温度监测
+            '室内温度 (°C)': 'exportLabelIndoorTemp',
+            '室外温度 (°C)': 'exportLabelOutdoorTemp',
+            '环境温度 (°C)': 'exportLabelAmbientTemp',
+            'IGBT温度 (°C)': 'exportLabelIGBTTemp',
+            // 消防
+            '1号烟感探测器': 'exportLabelSmokeDetector1',
+            '2号烟感探测器': 'exportLabelSmokeDetector2',
+            '烟雾浓度 (ppm)': 'exportLabelSmokeConcentration',
+            '1号温感探测器 (°C)': 'exportLabelTempDetector1',
+            '2号温感探测器 (°C)': 'exportLabelTempDetector2',
+            'H₂浓度 (ppm)': 'exportLabelH2Concentration',
+            '气体告警等级': 'exportLabelGasAlarmLevel',
+            '火灾报警状态': 'exportLabelFireAlarmStatus',
+            '告警级别': 'exportLabelAlarmLevel',
+            '告警类型': 'exportLabelAlarmType',
+            '喷淋状态': 'exportLabelSprayStatus',
+            '灭火剂压力 (MPa)': 'exportLabelExtinguisherPressure',
+            '紧急停机': 'exportLabelEmergencyStop',
+            '电源切断': 'exportLabelPowerCutoff',
+            // 保护
+            '充电过压保护': 'exportLabelChargeOVProtection',
+            '充电过流保护': 'exportLabelChargeOCProtection',
+            '放电欠压保护': 'exportLabelDischargeUVProtection',
+            '放电过流保护': 'exportLabelDischargeOCProtection',
+            // 其他常用
+            '转换效率 (%)': 'exportLabelConversionEfficiency',
+            '故障等级': 'exportLabelFaultLevel',
+            // 新增缺失的标签
+            '传感器数量': 'exportLabelSensorCount',
+            '自检状态': 'exportLabelSelfCheckStatus',
+            'AB线电压 (V)': 'exportLabelLineVoltageAB',
+            'BC线电压 (V)': 'exportLabelLineVoltageBC',
+            'CA线电压 (V)': 'exportLabelLineVoltageCA',
+            '零线电流 (A)': 'exportLabelNeutralCurrent',
+            '电网功率 (kW)': 'exportLabelGridPower',
+            '负载功率 (kW)': 'exportLabelLoadPower',
+            '光伏功率 (kW)': 'exportLabelPVPower',
+            '正向有功总电能 (kWh)': 'exportLabelForwardActiveEnergy',
+            '反向有功总电能 (kWh)': 'exportLabelReverseActiveEnergy',
+            '正向无功总电能 (kVarh)': 'exportLabelForwardReactiveEnergy',
+            '反向无功总电能 (kVarh)': 'exportLabelReverseReactiveEnergy',
+            '累计收益 (元)': 'exportLabelCumulativeRevenue',
+            '今日收益 (元)': 'exportLabelTodayRevenue',
+            '当前电价 (元/kWh)': 'exportLabelCurrentPrice',
+            '平均单体电压 (V)': 'exportLabelAverageVoltage',
+            '最高电压单体号': 'exportLabelMaxCellNum',
+            '最低电压单体号': 'exportLabelMinCellNum',
+            '最高温度探头号': 'exportLabelMaxTempProbe',
+            '最低温度探头号': 'exportLabelMinTempProbe',
+            '电池平均温度 (°C)': 'exportLabelBatteryAvgTemp',
+            '电池最高温度 (°C)': 'exportLabelBatteryMaxTemp',
+            '电池最低温度 (°C)': 'exportLabelBatteryMinTemp',
+            '电池温差 (°C)': 'exportLabelBatteryTempDiff',
+            '剩余容量 (Ah)': 'exportLabelRemainingCapacity',
+            '循环次数': 'exportLabelCycleCount',
+            'Pack簇数量': 'exportLabelPackCount',
+            'Pack1电压 (V)': 'exportLabelPack1Voltage',
+            'Pack1电流 (A)': 'exportLabelPack1Current',
+            'Pack1 SOC (%)': 'exportLabelPack1SOC',
+            'Pack1最高温度 (°C)': 'exportLabelPack1MaxTemp',
+            '过温保护': 'exportLabelHighTempProtection',
+            '低温保护': 'exportLabelLowTempProtection',
+            '高温告警阈值 (°C)': 'exportLabelHighTempThreshold',
+            '低温告警阈值 (°C)': 'exportLabelLowTempThreshold',
+            '温差告警阈值 (°C)': 'exportLabelTempDiffThreshold',
+            '功率限制 (kW)': 'exportLabelPowerLimit',
+            '削峰填谷状态': 'exportLabelPeakShaving',
+            '调频服务': 'exportLabelFrequencyRegulation',
+            '需求响应': 'exportLabelDemandResponse',
+            '柜体进风温度 (°C)': 'exportLabelInletTemp',
+            '柜体出风温度 (°C)': 'exportLabelOutletTemp',
+            '空调功率 (kW)': 'exportLabelACPower',
+            '空调运行状态': 'exportLabelACStatus',
+            '空调设定温度 (°C)': 'exportLabelACSetTemp',
+            '风机转速 (rpm)': 'exportLabelFanSpeed',
+            '制冷状态': 'exportLabelCoolingStatus',
+            '加热状态': 'exportLabelHeatingStatus',
+            '散热功率 (kW)': 'exportLabelHeatDissipationPower',
+            '3号烟感探测器': 'exportLabelSmokeDetector3',
+            '3号温感探测器 (°C)': 'exportLabelTempDetector3',
+            '温升速率 (°C/min)': 'exportLabelTempRiseRate',
+            'CO浓度 (ppm)': 'exportLabelCOConcentration',
+            'CO₂浓度 (ppm)': 'exportLabelCO2Concentration',
+            '告警位置': 'exportLabelAlarmPosition',
+            '灭火模式': 'exportLabelExtinguishingMode',
+            '气体灭火状态': 'exportLabelGasExtinguisherStatus',
+            '灭火剂重量 (kg)': 'exportLabelExtinguisherWeight',
+            '喷头状态': 'exportLabelNozzleStatus',
+            '通风系统状态': 'exportLabelVentilationStatus',
+            '门禁状态': 'exportLabelDoorLockStatus',
+            '电感温度 (°C)': 'exportLabelInductorTemp',
+            '电压不平衡度 (%)': 'exportLabelVoltageUnbalance',
+            '电流不平衡度 (%)': 'exportLabelCurrentUnbalance',
+            // 更多缺失的翻译
+            '系统运行状态': 'exportLabelSystemStatus'
+        };
+
+        // 获取翻译后的文本
+        function getTranslatedText(text, i18nMap) {
+            const key = i18nMap[text];
+            if (key && typeof getTranslation === 'function') {
+                return getTranslation(key) || text;
+            }
+            return text;
+        }
+
+        // ==================== 各组件指标配置 ====================
+        const componentIndicatorConfigs = {
+            // 整机指标 - 系统级综合数据
+            overall: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'cabinetId', label: '储能柜ID', checked: true },
+                    { id: 'systemStatus', label: '系统状态', checked: true },
+                    { id: 'operationMode', label: '运行模式', checked: true }
+                ],
+                '功率数据': [
+                    { id: 'activePower', label: '有功功率 (kW)', checked: true },
+                    { id: 'reactivePower', label: '无功功率 (kVar)', checked: false },
+                    { id: 'apparentPower', label: '视在功率 (kVA)', checked: false },
+                    { id: 'powerFactor', label: '功率因数', checked: false }
+                ],
+                '电池状态': [
+                    { id: 'soc', label: 'SOC (%)', checked: true },
+                    { id: 'soh', label: 'SOH (%)', checked: true },
+                    { id: 'batteryVoltage', label: '电池电压 (V)', checked: true },
+                    { id: 'batteryCurrent', label: '电池电流 (A)', checked: true },
+                    { id: 'batteryTemp', label: '电池温度 (°C)', checked: true }
+                ],
+                '能量统计': [
+                    { id: 'todayCharge', label: '今日充电量 (kWh)', checked: false },
+                    { id: 'todayDischarge', label: '今日放电量 (kWh)', checked: false },
+                    { id: 'totalChargeEnergy', label: '累计充电量 (MWh)', checked: false },
+                    { id: 'totalDischargeEnergy', label: '累计放电量 (MWh)', checked: false },
+                    { id: 'efficiency', label: '系统效率 (%)', checked: false }
+                ]
+            },
+            // EMS指标 - 能量管理系统
+            ems: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'emsId', label: 'EMS设备ID', checked: true },
+                    { id: 'emsStatus', label: 'EMS运行状态', checked: true },
+                    { id: 'commStatus', label: '通信状态', checked: true }
+                ],
+                '调度指令': [
+                    { id: 'dispatchMode', label: '调度模式', checked: true },
+                    { id: 'targetPower', label: '目标功率 (kW)', checked: true },
+                    { id: 'targetSOC', label: '目标SOC (%)', checked: true },
+                    { id: 'powerLimit', label: '功率限制 (kW)', checked: false }
+                ],
+                '功率控制': [
+                    { id: 'chargePower', label: '充电功率 (kW)', checked: true },
+                    { id: 'dischargePower', label: '放电功率 (kW)', checked: true },
+                    { id: 'gridPower', label: '电网功率 (kW)', checked: true },
+                    { id: 'pvPower', label: '光伏功率 (kW)', checked: false },
+                    { id: 'loadPower', label: '负载功率 (kW)', checked: false }
+                ],
+                '运行策略': [
+                    { id: 'controlStrategy', label: '控制策略', checked: false },
+                    { id: 'peakShavingStatus', label: '削峰填谷状态', checked: false },
+                    { id: 'demandResponse', label: '需求响应', checked: false },
+                    { id: 'frequencyRegulation', label: '调频服务', checked: false }
+                ],
+                '经济数据': [
+                    { id: 'electricityPrice', label: '当前电价 (元/kWh)', checked: false },
+                    { id: 'todayRevenue', label: '今日收益 (元)', checked: false },
+                    { id: 'totalRevenue', label: '累计收益 (元)', checked: false }
+                ]
+            },
+            // 逆变器/PCS指标 - 功率转换系统
+            inverter: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'pcsId', label: 'PCS设备ID', checked: true },
+                    { id: 'pcsStatus', label: 'PCS运行状态', checked: true },
+                    { id: 'faultCode', label: '故障代码', checked: false }
+                ],
+                '直流侧参数': [
+                    { id: 'dcVoltage', label: 'DC电压 (V)', checked: true },
+                    { id: 'dcCurrent', label: 'DC电流 (A)', checked: true },
+                    { id: 'dcPower', label: 'DC功率 (kW)', checked: true }
+                ],
+                '交流侧参数': [
+                    { id: 'acVoltageA', label: 'AC电压-A相 (V)', checked: true },
+                    { id: 'acVoltageB', label: 'AC电压-B相 (V)', checked: false },
+                    { id: 'acVoltageC', label: 'AC电压-C相 (V)', checked: false },
+                    { id: 'acCurrentA', label: 'AC电流-A相 (A)', checked: true },
+                    { id: 'acCurrentB', label: 'AC电流-B相 (A)', checked: false },
+                    { id: 'acCurrentC', label: 'AC电流-C相 (A)', checked: false },
+                    { id: 'frequency', label: '频率 (Hz)', checked: true }
+                ],
+                '功率参数': [
+                    { id: 'activePower', label: '有功功率 (kW)', checked: true },
+                    { id: 'reactivePower', label: '无功功率 (kVar)', checked: true },
+                    { id: 'apparentPower', label: '视在功率 (kVA)', checked: false },
+                    { id: 'powerFactor', label: '功率因数', checked: true }
+                ],
+                '性能与保护': [
+                    { id: 'efficiency', label: '转换效率 (%)', checked: false },
+                    { id: 'igbtTemp', label: 'IGBT温度 (°C)', checked: true },
+                    { id: 'inductorTemp', label: '电感温度 (°C)', checked: false },
+                    { id: 'ambientTemp', label: '环境温度 (°C)', checked: false }
+                ]
+            },
+            // BMS指标 - 电池管理系统
+            bms: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'bmsId', label: 'BMS设备ID', checked: true },
+                    { id: 'bmsStatus', label: 'BMS运行状态', checked: true },
+                    { id: 'faultLevel', label: '故障等级', checked: true }
+                ],
+                '整体电气参数': [
+                    { id: 'totalVoltage', label: '总电压 (V)', checked: true },
+                    { id: 'totalCurrent', label: '总电流 (A)', checked: true },
+                    { id: 'soc', label: 'SOC (%)', checked: true },
+                    { id: 'soh', label: 'SOH (%)', checked: true },
+                    { id: 'cycleCount', label: '循环次数', checked: false },
+                    { id: 'remainCapacity', label: '剩余容量 (Ah)', checked: false }
+                ],
+                '单体电压': [
+                    { id: 'maxCellVoltage', label: '最高单体电压 (V)', checked: true },
+                    { id: 'minCellVoltage', label: '最低单体电压 (V)', checked: true },
+                    { id: 'avgCellVoltage', label: '平均单体电压 (V)', checked: false },
+                    { id: 'voltageDiff', label: '压差 (mV)', checked: true },
+                    { id: 'maxCellNum', label: '最高电压单体号', checked: false },
+                    { id: 'minCellNum', label: '最低电压单体号', checked: false }
+                ],
+                '温度监测': [
+                    { id: 'maxTemp', label: '最高温度 (°C)', checked: true },
+                    { id: 'minTemp', label: '最低温度 (°C)', checked: true },
+                    { id: 'avgTemp', label: '平均温度 (°C)', checked: true },
+                    { id: 'tempDiff', label: '温差 (°C)', checked: true },
+                    { id: 'maxTempNum', label: '最高温度探头号', checked: false },
+                    { id: 'minTempNum', label: '最低温度探头号', checked: false }
+                ],
+                'Pack簇信息': [
+                    { id: 'packCount', label: 'Pack簇数量', checked: false },
+                    { id: 'pack1Voltage', label: 'Pack1电压 (V)', checked: false },
+                    { id: 'pack1Current', label: 'Pack1电流 (A)', checked: false },
+                    { id: 'pack1Soc', label: 'Pack1 SOC (%)', checked: false },
+                    { id: 'pack1MaxTemp', label: 'Pack1最高温度 (°C)', checked: false }
+                ],
+                '保护状态': [
+                    { id: 'chargeOverVoltage', label: '充电过压保护', checked: false },
+                    { id: 'dischargeUnderVoltage', label: '放电欠压保护', checked: false },
+                    { id: 'chargeOverCurrent', label: '充电过流保护', checked: false },
+                    { id: 'dischargeOverCurrent', label: '放电过流保护', checked: false },
+                    { id: 'overTemp', label: '过温保护', checked: false },
+                    { id: 'underTemp', label: '低温保护', checked: false }
+                ]
+            },
+            // 电表指标 - 电网侧计量
+            meter: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'meterId', label: '电表设备ID', checked: true },
+                    { id: 'meterType', label: '电表类型', checked: false }
+                ],
+                '三相电压': [
+                    { id: 'voltageA', label: 'A相电压 (V)', checked: true },
+                    { id: 'voltageB', label: 'B相电压 (V)', checked: true },
+                    { id: 'voltageC', label: 'C相电压 (V)', checked: true },
+                    { id: 'voltageAB', label: 'AB线电压 (V)', checked: false },
+                    { id: 'voltageBC', label: 'BC线电压 (V)', checked: false },
+                    { id: 'voltageCA', label: 'CA线电压 (V)', checked: false }
+                ],
+                '三相电流': [
+                    { id: 'currentA', label: 'A相电流 (A)', checked: true },
+                    { id: 'currentB', label: 'B相电流 (A)', checked: true },
+                    { id: 'currentC', label: 'C相电流 (A)', checked: true },
+                    { id: 'currentN', label: '零线电流 (A)', checked: false }
+                ],
+                '功率数据': [
+                    { id: 'totalActivePower', label: '总有功功率 (kW)', checked: true },
+                    { id: 'totalReactivePower', label: '总无功功率 (kVar)', checked: false },
+                    { id: 'totalApparentPower', label: '总视在功率 (kVA)', checked: false },
+                    { id: 'activePowerA', label: 'A相有功功率 (kW)', checked: false },
+                    { id: 'activePowerB', label: 'B相有功功率 (kW)', checked: false },
+                    { id: 'activePowerC', label: 'C相有功功率 (kW)', checked: false }
+                ],
+                '电能数据': [
+                    { id: 'positiveActiveEnergy', label: '正向有功总电能 (kWh)', checked: true },
+                    { id: 'reverseActiveEnergy', label: '反向有功总电能 (kWh)', checked: true },
+                    { id: 'positiveReactiveEnergy', label: '正向无功总电能 (kVarh)', checked: false },
+                    { id: 'reverseReactiveEnergy', label: '反向无功总电能 (kVarh)', checked: false }
+                ],
+                '电能质量': [
+                    { id: 'frequency', label: '频率 (Hz)', checked: true },
+                    { id: 'totalPowerFactor', label: '总功率因数', checked: true },
+                    { id: 'powerFactorA', label: 'A相功率因数', checked: false },
+                    { id: 'powerFactorB', label: 'B相功率因数', checked: false },
+                    { id: 'powerFactorC', label: 'C相功率因数', checked: false },
+                    { id: 'voltageUnbalance', label: '电压不平衡度 (%)', checked: false },
+                    { id: 'currentUnbalance', label: '电流不平衡度 (%)', checked: false }
+                ]
+            },
+            // 温度指标 - 温控系统
+            temperature: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'tempSystemId', label: '温控系统ID', checked: true },
+                    { id: 'sensorCount', label: '传感器数量', checked: false }
+                ],
+                '环境温度': [
+                    { id: 'outdoorTemp', label: '室外温度 (°C)', checked: true },
+                    { id: 'indoorTemp', label: '室内温度 (°C)', checked: true },
+                    { id: 'cabinetInletTemp', label: '柜体进风温度 (°C)', checked: true },
+                    { id: 'cabinetOutletTemp', label: '柜体出风温度 (°C)', checked: true }
+                ],
+                '电池温度': [
+                    { id: 'batteryMaxTemp', label: '电池最高温度 (°C)', checked: true },
+                    { id: 'batteryMinTemp', label: '电池最低温度 (°C)', checked: true },
+                    { id: 'batteryAvgTemp', label: '电池平均温度 (°C)', checked: true },
+                    { id: 'batteryTempDiff', label: '电池温差 (°C)', checked: true }
+                ],
+                '空调系统': [
+                    { id: 'acStatus', label: '空调运行状态', checked: false },
+                    { id: 'acSetTemp', label: '空调设定温度 (°C)', checked: false },
+                    { id: 'acPower', label: '空调功率 (kW)', checked: false },
+                    { id: 'fanSpeed', label: '风机转速 (rpm)', checked: false }
+                ],
+                '热管理': [
+                    { id: 'heatingStatus', label: '加热状态', checked: false },
+                    { id: 'coolingStatus', label: '制冷状态', checked: false },
+                    { id: 'heatDissipation', label: '散热功率 (kW)', checked: false }
+                ],
+                '告警阈值': [
+                    { id: 'highTempAlarm', label: '高温告警阈值 (°C)', checked: false },
+                    { id: 'lowTempAlarm', label: '低温告警阈值 (°C)', checked: false },
+                    { id: 'tempDiffAlarm', label: '温差告警阈值 (°C)', checked: false }
+                ]
+            },
+            // 消防指标 - 消防安全系统
+            fire: {
+                '基础信息': [
+                    { id: 'timestamp', label: '时间戳', checked: true },
+                    { id: 'fireSystemId', label: '消防系统ID', checked: true },
+                    { id: 'systemStatus', label: '系统运行状态', checked: true },
+                    { id: 'selfCheckStatus', label: '自检状态', checked: false }
+                ],
+                '烟感探测': [
+                    { id: 'smokeDetector1', label: '1号烟感探测器', checked: true },
+                    { id: 'smokeDetector2', label: '2号烟感探测器', checked: true },
+                    { id: 'smokeDetector3', label: '3号烟感探测器', checked: false },
+                    { id: 'smokeConcentration', label: '烟雾浓度 (ppm)', checked: true }
+                ],
+                '温感探测': [
+                    { id: 'tempDetector1', label: '1号温感探测器 (°C)', checked: true },
+                    { id: 'tempDetector2', label: '2号温感探测器 (°C)', checked: true },
+                    { id: 'tempDetector3', label: '3号温感探测器 (°C)', checked: false },
+                    { id: 'tempRiseRate', label: '温升速率 (°C/min)', checked: false }
+                ],
+                '气体监测': [
+                    { id: 'h2Concentration', label: 'H₂浓度 (ppm)', checked: true },
+                    { id: 'coConcentration', label: 'CO浓度 (ppm)', checked: false },
+                    { id: 'co2Concentration', label: 'CO₂浓度 (ppm)', checked: false },
+                    { id: 'gasAlarmLevel', label: '气体告警等级', checked: true }
+                ],
+                '告警信息': [
+                    { id: 'fireAlarmStatus', label: '火灾报警状态', checked: true },
+                    { id: 'alarmLevel', label: '告警级别', checked: true },
+                    { id: 'alarmType', label: '告警类型', checked: true },
+                    { id: 'alarmPosition', label: '告警位置', checked: false }
+                ],
+                '灭火系统': [
+                    { id: 'extinguishingMode', label: '灭火模式', checked: false },
+                    { id: 'sprayStatus', label: '喷淋状态', checked: true },
+                    { id: 'gasExtinguisherStatus', label: '气体灭火状态', checked: false },
+                    { id: 'extinguisherPressure', label: '灭火剂压力 (MPa)', checked: true },
+                    { id: 'extinguisherWeight', label: '灭火剂重量 (kg)', checked: false },
+                    { id: 'nozzleStatus', label: '喷头状态', checked: false }
+                ],
+                '联动控制': [
+                    { id: 'emergencyStop', label: '紧急停机', checked: false },
+                    { id: 'powerCutoff', label: '电源切断', checked: false },
+                    { id: 'ventilationStatus', label: '通风系统状态', checked: false },
+                    { id: 'doorLockStatus', label: '门禁状态', checked: false }
+                ]
+            }
+        };
+
+        // ==================== 全局变量 ====================
+        let startDatePicker, endDatePicker;
+        let selectedIndicators = new Set();
+        let currentData = [];
+        let currentComponent = 'overall'; // 当前选中的组件
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            initComponent(); // 初始化组件选择
+            initDatePickers();
+            renderIndicatorGroups();
+            updateSelectionCount();
+
+            // 确保翻译应用到动态生成的内容
+            if (typeof setLanguage === 'function' && typeof currentLang !== 'undefined') {
+                setLanguage(currentLang);
+            }
+        });
+
+        // 初始化组件选择（从URL参数读取）
+        function initComponent() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const componentParam = urlParams.get('component');
+
+            // 如果URL中有component参数，则使用该参数
+            if (componentParam && componentIndicatorConfigs[componentParam]) {
+                currentComponent = componentParam;
+                document.getElementById('componentSelect').value = componentParam;
+            }
+        }
+
+        // 初始化日期选择器
+        function initDatePickers() {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            startDatePicker = flatpickr("#startDate", {
+                locale: flatpickr.l10ns.zh,
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                defaultDate: sevenDaysAgo,
+                time_24hr: true,
+                maxDate: now
+            });
+
+            endDatePicker = flatpickr("#endDate", {
+                locale: flatpickr.l10ns.zh,
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                defaultDate: now,
+                time_24hr: true,
+                maxDate: now
+            });
+        }
+
+        // 处理组件切换
+        function handleComponentChange() {
+            const select = document.getElementById('componentSelect');
+            currentComponent = select.value;
+
+            // 清空当前选择
+            selectedIndicators.clear();
+
+            // 重新渲染指标组
+            renderIndicatorGroups();
+            updateSelectionCount();
+
+            // 重新应用翻译到新生成的内容
+            if (typeof setLanguage === 'function' && typeof currentLang !== 'undefined') {
+                setLanguage(currentLang);
+            }
+
+            // 隐藏数据表格
+            document.getElementById('dataTableContainer').classList.remove('show');
+        }
+
+        // 渲染指标组
+        function renderIndicatorGroups() {
+            const container = document.getElementById('indicatorGroups');
+            container.innerHTML = '';
+
+            // 获取当前组件的指标配置
+            const indicatorConfig = componentIndicatorConfigs[currentComponent];
+            if (!indicatorConfig) {
+                console.error('未找到组件配置:', currentComponent);
+                return;
+            }
+
+            Object.entries(indicatorConfig).forEach(([groupName, indicators]) => {
+                // 获取翻译键
+                const groupNameKey = groupNameI18nMap[groupName];
+
+                const groupHtml = `
+                    <div class="indicator-group">
+                        <div class="group-header" onclick="toggleGroup(this)">
+                            <div class="group-title">
+                                <i class="fas fa-folder"></i>
+                                <span ${groupNameKey ? `data-translate="${groupNameKey}"` : ''}>${groupName}</span>
+                            </div>
+                            <div class="group-actions">
+                                <span class="select-all-btn" onclick="selectAllInGroup(event, '${groupName}')" data-translate="exportSelectAll">全选</span>
+                                <i class="fas fa-chevron-down expand-icon"></i>
+                            </div>
+                        </div>
+                        <div class="group-content" id="group-${groupName}">
+                            ${indicators.map(ind => {
+                                // 获取指标标签的翻译键
+                                const labelKey = indicatorLabelI18nMap[ind.label];
+                                return `
+                                    <div class="checkbox-item">
+                                        <input type="checkbox"
+                                               id="${ind.id}"
+                                               ${ind.checked ? 'checked' : ''}
+                                               onchange="handleCheckboxChange('${ind.id}')">
+                                        <label for="${ind.id}" ${labelKey ? `data-translate="${labelKey}"` : ''}>${ind.label}</label>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += groupHtml;
+
+                // 初始化选中的指标
+                indicators.forEach(ind => {
+                    if (ind.checked) {
+                        selectedIndicators.add(ind.id);
+                    }
+                });
+            });
+        }
+
+        // 切换分组展开/折叠
+        function toggleGroup(header) {
+            if (event.target.closest('.select-all-btn')) return;
+
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            content.classList.toggle('collapsed');
+        }
+
+        // 全选分组
+        function selectAllInGroup(event, groupName) {
+            event.stopPropagation();
+            const group = document.getElementById(`group-${groupName}`);
+            const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+                if (!allChecked) {
+                    selectedIndicators.add(checkbox.id);
+                } else {
+                    selectedIndicators.delete(checkbox.id);
+                }
+            });
+
+            updateSelectionCount();
+        }
+
+        // 复选框变化处理
+        function handleCheckboxChange(id) {
+            const checkbox = document.getElementById(id);
+            if (checkbox.checked) {
+                selectedIndicators.add(id);
+            } else {
+                selectedIndicators.delete(id);
+            }
+            updateSelectionCount();
+        }
+
+        // 更新选择计数
+        function updateSelectionCount() {
+            const count = selectedIndicators.size;
+            document.getElementById('selectionCount').textContent = count;
+            document.getElementById('queryBtn').disabled = count === 0;
+        }
+
+        // 重置选择
+        function resetSelection() {
+            selectedIndicators.clear();
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateSelectionCount();
+            // 隐藏数据表格
+            document.getElementById('dataTableContainer').classList.remove('show');
+            showNotification('已重置选择', 'info');
+        }
+
+        // 查询数据
+        function handleQuery() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                showNotification(getTranslation ? getTranslation('exportSelectTimeRangeWarning') || '请选择时间范围' : '请选择时间范围', 'warning');
+                return;
+            }
+
+            if (new Date(startDate) > new Date(endDate)) {
+                showNotification('开始时间不能晚于结束时间', 'warning');
+                return;
+            }
+
+            if (selectedIndicators.size === 0) {
+                showNotification('请至少选择一个查询指标', 'warning');
+                return;
+            }
+
+            showLoading('正在查询数据...');
+
+            // 模拟数据查询
+            setTimeout(() => {
+                currentData = generateQueryData(startDate, endDate);
+                renderDataTable(currentData);
+                document.getElementById('dataTableContainer').classList.add('show');
+                hideLoading();
+                showNotification(`查询成功！共 ${currentData.length} 条数据`, 'success');
+
+                // 滚动到表格位置
+                document.getElementById('dataTableContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 1000);
+        }
+
+        // 生成查询数据
+        function generateQueryData(startDate, endDate) {
+            const data = [];
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const interval = 5 * 60 * 1000; // 5分钟间隔
+
+            for (let time = start.getTime(); time <= end.getTime(); time += interval) {
+                const row = {};
+                const timestamp = new Date(time);
+
+                selectedIndicators.forEach(id => {
+                    switch(id) {
+                        case 'timestamp':
+                            row['时间'] = formatDateTime(timestamp);
+                            break;
+                        case 'cabinetId':
+                            row['储能柜ID'] = '1';
+                            break;
+                        case 'status':
+                            row['运行状态'] = Math.random() > 0.5 ? '充电' : '放电';
+                            break;
+                        case 'soc':
+                            row['SOC (%)'] = (Math.random() * 20 + 75).toFixed(1);
+                            break;
+                        case 'soh':
+                            row['SOH (%)'] = (Math.random() * 5 + 95).toFixed(1);
+                            break;
+                        case 'voltage':
+                            row['电压 (V)'] = (Math.random() * 10 + 385).toFixed(1);
+                            break;
+                        case 'current':
+                            row['电流 (A)'] = (Math.random() * 50 - 25).toFixed(1);
+                            break;
+                        case 'power':
+                            row['功率 (kW)'] = (Math.random() * 100 - 50).toFixed(1);
+                            break;
+                        case 'temperature':
+                            row['温度 (°C)'] = (Math.random() * 5 + 25).toFixed(1);
+                            break;
+                        case 'dailyCharge':
+                            row['日充电量 (kWh)'] = (Math.random() * 500 + 300).toFixed(1);
+                            break;
+                        case 'dailyDischarge':
+                            row['日放电量 (kWh)'] = (Math.random() * 400 + 200).toFixed(1);
+                            break;
+                        case 'totalCharge':
+                            row['累计充电量 (MWh)'] = (Math.random() * 1000 + 500).toFixed(1);
+                            break;
+                        case 'totalDischarge':
+                            row['累计放电量 (MWh)'] = (Math.random() * 900 + 400).toFixed(1);
+                            break;
+                        case 'packCount':
+                            row['Pack数量'] = '4';
+                            break;
+                        case 'pack1Voltage':
+                            row['Pack1电压 (V)'] = (Math.random() * 10 + 190).toFixed(1);
+                            break;
+                        case 'pack1Current':
+                            row['Pack1电流 (A)'] = (Math.random() * 10 + 40).toFixed(1);
+                            break;
+                        case 'pack1Soc':
+                            row['Pack1 SOC (%)'] = (Math.random() * 15 + 85).toFixed(1);
+                            break;
+                        case 'pack1Temp':
+                            row['Pack1温度 (°C)'] = (Math.random() * 5 + 28).toFixed(1);
+                            break;
+                        case 'alarmCount':
+                            row['告警数量'] = Math.floor(Math.random() * 3);
+                            break;
+                        case 'alarmLevel':
+                            const levels = ['正常', '警告', '严重'];
+                            row['告警级别'] = levels[Math.floor(Math.random() * levels.length)];
+                            break;
+                        case 'alarmType':
+                            const types = ['无', '温度告警', '电压告警', '通信告警'];
+                            row['告警类型'] = types[Math.floor(Math.random() * types.length)];
+                            break;
+                    }
+                });
+
+                data.push(row);
+            }
+
+            return data;
+        }
+
+        // 渲染数据表格
+        function renderDataTable(data) {
+            if (data.length === 0) {
+                document.getElementById('tableHead').innerHTML = '';
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="100%" style="text-align: center; padding: 60px 20px;">
+                            <div class="empty-data">
+                                <i class="fas fa-inbox"></i>
+                                <div class="empty-data-text">暂无数据</div>
+                                <div class="empty-data-hint">请调整查询条件后重试</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('dataCount').textContent = '共 0 条数据';
+                return;
+            }
+
+            // 渲染表头
+            const headers = Object.keys(data[0]);
+            const theadHtml = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            document.getElementById('tableHead').innerHTML = theadHtml;
+
+            // 渲染表格数据
+            const tbodyHtml = data.map(row => {
+                return '<tr>' + headers.map(h => `<td>${row[h]}</td>`).join('') + '</tr>';
+            }).join('');
+            document.getElementById('tableBody').innerHTML = tbodyHtml;
+
+            // 更新数据计数
+            document.getElementById('dataCount').textContent = `共 ${data.length} 条数据`;
+        }
+
+        // 导出数据
+        function handleExport() {
+            if (currentData.length === 0) {
+                showNotification('暂无数据可导出', 'warning');
+                return;
+            }
+
+            showLoading('正在导出数据...');
+
+            setTimeout(() => {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                exportToCSV(currentData, startDate, endDate);
+                hideLoading();
+                showNotification(`成功导出 ${currentData.length} 条数据！`, 'success');
+            }, 500);
+        }
+
+        // 导出为CSV
+        function exportToCSV(data, startDate, endDate) {
+            if (data.length === 0) return;
+
+            const headers = Object.keys(data[0]);
+            let csvContent = '\ufeff' + headers.join(',') + '\n';
+
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header];
+                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                        return '"' + value.replace(/"/g, '""') + '"';
+                    }
+                    return value;
+                });
+                csvContent += values.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const filename = `数据导出_${formatDateForFilename(new Date(startDate))}_${formatDateForFilename(new Date(endDate))}.csv`;
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 返回上一页
+        function goBack() {
+            window.history.back();
+        }
+
+        // ==================== 工具函数 ====================
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+
+            const colors = {
+                success: '#4caf50',
+                error: '#f44336',
+                info: '#2196f3',
+                warning: '#ff9800'
+            };
+
+            notification.innerHTML = `
+                <i class="fas ${icons[type]}" style="color: ${colors[type]}; font-size: 20px;"></i>
+                <span>${message}</span>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function formatDateTime(date) {
+            return date.getFullYear() + '-' +
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(date.getDate()).padStart(2, '0') + ' ' +
+                   String(date.getHours()).padStart(2, '0') + ':' +
+                   String(date.getMinutes()).padStart(2, '0') + ':' +
+                   String(date.getSeconds()).padStart(2, '0');
+        }
+
+        function formatDateForFilename(date) {
+            return date.getFullYear() +
+                   String(date.getMonth() + 1).padStart(2, '0') +
+                   String(date.getDate()).padStart(2, '0') + '_' +
+                   String(date.getHours()).padStart(2, '0') +
+                   String(date.getMinutes()).padStart(2, '0');
+        }
+    </script>
+</body>
+</html>

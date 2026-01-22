@@ -1,0 +1,26 @@
+/* 关键过渡CSS - 必须内联到HTML头部,防止白屏 */
+
+/* 第一优先级: 强制深色背景 */
+html {
+    background-color: #0a0e1a !important;
+}
+
+body {
+    background-color: #0a0e1a !important;
+    visibility: hidden; /* 默认隐藏,等待就绪 */
+}
+
+/* 页面就绪后显示 */
+body.page-ready {
+    visibility: visible !important;
+}
+
+/* 页面切换时的淡出效果 */
+body.page-transitioning {
+    animation: criticalFadeOut 0.35s ease-out forwards;
+}
+
+@keyframes criticalFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
