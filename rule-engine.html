@@ -1572,7 +1572,7 @@
                             <span style="font-size: 13px; color: #9ca3af;" data-translate="ruleCount">条</span>
                         </div>
                         <div style="font-size: 11px; color: #9ca3af; line-height: 1.4;">
-                            <span data-translate="ruleChannelsEnabled">启用 3 个通知渠道</span>
+                            <span data-translate="ruleFaultTotal">故障总策略:</span><span id="faultTotal">0</span><span data-translate="ruleCountUnit"> 条</span>
                         </div>
                     </div>
                     <div style="width: 48px; height: 48px; background: #fef2f2; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -1591,7 +1591,7 @@
                             <span style="font-size: 13px; color: #9ca3af;" data-translate="ruleCount">条</span>
                         </div>
                         <div style="font-size: 11px; color: #9ca3af; line-height: 1.4;">
-                            <span data-translate="ruleChannelsEnabled">启用 2 个通知渠道</span>
+                            <span data-translate="ruleWarningTotal">告警总策略:</span><span id="warningTotal">0</span><span data-translate="ruleCountUnit"> 条</span>
                         </div>
                     </div>
                     <div style="width: 48px; height: 48px; background: #fffbeb; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -1610,7 +1610,7 @@
                             <span style="font-size: 13px; color: #9ca3af;" data-translate="ruleCount">条</span>
                         </div>
                         <div style="font-size: 11px; color: #9ca3af; line-height: 1.4;">
-                            <span data-translate="ruleChannelsEnabled">启用 1 个通知渠道</span>
+                            <span data-translate="ruleNoticeTotal">通知总策略:</span><span id="noticeTotal">0</span><span data-translate="ruleCountUnit"> 条</span>
                         </div>
                     </div>
                     <div style="width: 48px; height: 48px; background: #eff6ff; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -2633,6 +2633,9 @@
             document.getElementById('faultCount').textContent = faultCount;
             document.getElementById('warningCount').textContent = warningCount;
             document.getElementById('noticeCount').textContent = noticeCount;
+            document.getElementById('faultTotal').textContent = faultCount;
+            document.getElementById('warningTotal').textContent = warningCount;
+            document.getElementById('noticeTotal').textContent = noticeCount;
         }
 
         // ==================== 自定义参数下拉框 ====================

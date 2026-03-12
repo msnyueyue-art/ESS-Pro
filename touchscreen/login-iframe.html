@@ -444,10 +444,6 @@
             color: #1e90ff;
             font-weight: 600;
         }
-
-        .lang-flag {
-            font-size: 18px;
-        }
     </style>
 </head>
 <body>
@@ -462,11 +458,9 @@
         <div class="lang-icon" onclick="toggleLanguageDropdown()">🌐</div>
         <div class="lang-dropdown" id="langDropdown">
             <div class="lang-option active" onclick="switchLanguage('zh')">
-                <span class="lang-flag">🇨🇳</span>
                 <span>中文</span>
             </div>
             <div class="lang-option" onclick="switchLanguage('en')">
-                <span class="lang-flag">🇺🇸</span>
                 <span>English</span>
             </div>
         </div>
@@ -639,7 +633,10 @@
         // 切换语言
         function switchLanguage(lang) {
             currentLang = lang;
-            
+
+            // 持久化到 localStorage，登录后各页面读取同一语言
+            localStorage.setItem('touchscreen_language', lang);
+
             // 更新选中状态
             document.querySelectorAll('.lang-option').forEach(option => {
                 const isZh = option.textContent.includes('中文');
@@ -696,13 +693,14 @@
 
         // 页面加载时初始化
         window.addEventListener('DOMContentLoaded', function() {
-            // 设置当前语言为英文(HTML内容已经是英文,无需切换)
-            currentLang = 'en';
-            // 更新语言选项的激活状态
-            document.querySelectorAll('.lang-option').forEach(option => {
-                const isEn = option.textContent.includes('English');
-                option.classList.toggle('active', isEn);
-            });
+            // 读取已保存的语言偏好，首次访问默认英文
+            const savedLang = localStorage.getItem('touchscreen_language') || 'en';
+            // 确保首次访问写入默认值
+            if (!localStorage.getItem('touchscreen_language')) {
+                localStorage.setItem('touchscreen_language', 'en');
+            }
+            // 应用语言（若为中文则翻译页面，否则保持 HTML 默认英文）
+            switchLanguage(savedLang);
         });
     </script>
 </body>

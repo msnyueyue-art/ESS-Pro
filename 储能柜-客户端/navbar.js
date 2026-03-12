@@ -32,12 +32,10 @@ function createTopNavbar() {
             <div class="language-selector-wrapper" style="position: relative; margin: 0 15px;">
                 <i class="fas fa-globe lang-icon" onclick="toggleLanguageDropdown(event)" title="切换语言" style="font-size: 20px; color: #000000; cursor: pointer;"></i>
                 <div id="languageDropdownMenu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 8px; background: white; border: 1px solid #e5e5e5; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 150px; z-index: 1000;">
-                    <div class="language-option" onclick="selectLanguage('zh')" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
-                        <span>🇨🇳</span>
+                    <div class="language-option" onclick="selectLanguage('zh')" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;">
                         <span>中文</span>
                     </div>
-                    <div class="language-option" onclick="selectLanguage('en')" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
-                        <span>🇺🇸</span>
+                    <div class="language-option" onclick="selectLanguage('en')" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;">
                         <span>English</span>
                     </div>
                 </div>

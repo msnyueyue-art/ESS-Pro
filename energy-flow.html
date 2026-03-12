@@ -1051,8 +1051,8 @@
                 <div class="energy-flow-actions" style="display: flex; gap: 12px;">
                     <!-- 编辑/预览切换按钮 -->
                     <button class="toolbar-btn primary" id="editModeBtn" onclick="toggleEditMode()" data-translate-title="energyFlowSwitchEditModeTooltip">
-                        <i class="fas fa-edit"></i>
-                        <span>编辑</span>
+                        <i class="fas fa-eye" style="color: white;"></i>
+                        <span data-translate="energyFlowPreview">预览</span>
                     </button>
 
                     <!-- 保存按钮（只在编辑模式下显示） -->
@@ -3567,7 +3567,8 @@
             const devices = [
                 {
                     id: 'grid-utility',
-                    label: '市电',
+                    labelKey: 'energyFlowDeviceGrid',
+                    get label() { return getDeviceLabel(this.labelKey); },
                     icon: '电网.png',
                     desc: '380V 3相',
                     category: 'power',
@@ -3586,7 +3587,8 @@
                 },
                 {
                     id: 'grid-solar',
-                    label: '光伏',
+                    labelKey: 'energyFlowDeviceSolar',
+                    get label() { return getDeviceLabel(this.labelKey); },
                     icon: '光伏.png',
                     desc: '500KW',
                     category: 'power',
@@ -3605,7 +3607,8 @@
                 },
                 {
                     id: 'grid-storage',
-                    label: '储能柜',
+                    labelKey: 'energyFlowDevicePCS',
+                    get label() { return getDeviceLabel(this.labelKey); },
                     icon: '储能柜.png',
                     desc: '500KWh',
                     category: 'storage',
@@ -3944,6 +3947,16 @@
             window.addEventListener('languageChanged', function() {
                 document.title = getTranslation('energyFlowPageTitle') || 'Energy Flow Settings';
                 document.documentElement.lang = (localStorage.getItem('language') || 'en') === 'zh' ? 'zh-CN' : 'en-US';
+
+                // 同步编辑/预览按钮文字
+                const editModeBtn = document.getElementById('editModeBtn');
+                if (editModeBtn) {
+                    if (isEditMode) {
+                        editModeBtn.innerHTML = '<i class="fas fa-eye" style="color: white;"></i><span>' + t('energyFlowPreview') + '</span>';
+                    } else {
+                        editModeBtn.innerHTML = '<i class="fas fa-edit"></i><span>' + t('energyFlowBackToEdit') + '</span>';
+                    }
+                }
 
                 // 重新渲染已放置的设备,更新设备名称显示
                 renderPlacedDevices();

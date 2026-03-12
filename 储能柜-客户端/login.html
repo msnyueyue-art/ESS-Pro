@@ -474,11 +474,6 @@
             color: #2563eb;  /* 蓝色文字 */
         }
 
-        .lang-option .flag {
-            font-size: 18px;
-            line-height: 1;
-        }
-
         /* 响应式设计 */
         @media (max-width: 1024px) {
             .showcase-section {
@@ -545,11 +540,9 @@
         <i class="fas fa-globe lang-icon" onclick="toggleLangDropdown()" title="切换语言"></i>
         <div class="lang-dropdown" id="langDropdown">
             <div class="lang-option active" onclick="selectLang('zh')">
-                <span class="flag">🇨🇳</span>
                 <span>中文</span>
             </div>
             <div class="lang-option" onclick="selectLang('en')">
-                <span class="flag">🇺🇸</span>
                 <span>English</span>
             </div>
         </div>

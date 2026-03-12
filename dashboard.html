@@ -1855,44 +1855,110 @@
         // 创建能量流向连线
         function createEnergyFlowLines() {
             const svg = document.getElementById('energy-flow-svg-new');
-            if (!svg) {
-                return;
+            if (!svg) return;
+
+            const container = svg.parentElement;
+            const containerRect = container.getBoundingClientRect();
+            const W = containerRect.width;
+            const H = containerRect.height;
+            if (W === 0 || H === 0) return;
+
+            // 使用 img 元素以获取精确的图标位置（排除文字标签偏移）
+            const pvImg      = container.querySelector('.flow-component.pv img');
+            const loadImg    = container.querySelector('.flow-component.load img');
+            const storageImg = container.querySelector('.flow-component.storage img');
+            const gridImg    = container.querySelector('.flow-component.grid img');
+            if (!pvImg || !loadImg || !storageImg || !gridImg) return;
+
+            // 获取元素相对于容器的坐标
+            function relRect(el) {
+                const r = el.getBoundingClientRect();
+                const left = r.left - containerRect.left;
+                const top  = r.top  - containerRect.top;
+                return {
+                    left, top,
+                    right:  left + r.width,
+                    bottom: top  + r.height,
+                    cx: left + r.width  / 2,
+                    cy: top  + r.height / 2,
+                    width:  r.width,
+                    height: r.height
+                };
             }
-            
-            // 设置SVG内容
-            svg.setAttribute('viewBox', '0 0 1000 600');
+
+            const pv      = relRect(pvImg);
+            const load    = relRect(loadImg);
+            const storage = relRect(storageImg);
+            const grid    = relRect(gridImg);
+
+            // 将 SVG 坐标系对齐到容器实际像素尺寸
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+            const stroke = '#EDEDED';
+            const sw = 6;
+            const cr = 14; // 折角圆角半径
+
+            // 横向总线 y：Load 底部与 min(Storage顶, Grid顶) 的中间
+            const busY = load.bottom + (Math.min(storage.top, grid.top) - load.bottom) * 0.5;
+            const busMidX = (storage.cx + grid.cx) / 2;
+
+            // 1. 光伏底部中心 → 负载顶部中心（竖直线）
+            const pvToLoad = `M ${pv.cx} ${pv.bottom} L ${load.cx} ${load.top}`;
+
+            // 2. 总线左端 → 向上 → 折右圆角 → 光伏左侧中心（左外围线）
+            const leftWallUp = `M ${storage.cx} ${busY}
+                L ${storage.cx} ${pv.cy + cr}
+                Q ${storage.cx} ${pv.cy} ${storage.cx + cr} ${pv.cy}
+                L ${pv.left} ${pv.cy}`;
+
+            // 3. 总线左端 → 向下 → 储能顶部（短竖节）
+            const storStub = `M ${storage.cx} ${busY} L ${storage.cx} ${storage.top}`;
+
+            // 4. 光伏右侧中心 → 向右 → 折下圆角 → 总线右端（右外围线）
+            const rightWallDown = `M ${pv.right} ${pv.cy}
+                L ${grid.cx - cr} ${pv.cy}
+                Q ${grid.cx} ${pv.cy} ${grid.cx} ${pv.cy + cr}
+                L ${grid.cx} ${busY}`;
+
+            // 5. 总线右端 → 向下 → 电网顶部（短竖节）
+            const gridStub = `M ${grid.cx} ${busY} L ${grid.cx} ${grid.top}`;
+
+            // 6. 负载底部中心 → 向下 → 总线（单条竖茎，T 型接入）
+            const loadStem = `M ${load.cx} ${load.bottom} L ${load.cx} ${busY}`;
+
             svg.innerHTML = `
-                <!-- 光伏到负载 -->
-                <line x1="500" y1="60" x2="500" y2="210" stroke="#EDEDED" stroke-width="6" />
-                
-                <!-- 储能到光伏 -->
-                <path d="M 100 450 L 100 20 Q 100 0 120 0 L 440 0" 
-                      stroke="#EDEDED" stroke-width="6" fill="none" />
-                
-                <!-- 光伏到电网 -->
-                <path d="M 540 0 L 880 0 Q 900 0 900 20 L 900 450" 
-                      stroke="#EDEDED" stroke-width="6" fill="none" />
-                
-                <!-- 负载到储能 -->
-                <path d="M 480 340 L 480 500 Q 480 520 460 520 L 200 520" 
-                      stroke="#EDEDED" stroke-width="6" fill="none" />
-                
-                <!-- 负载到电网 -->
-                <path d="M 520 340 L 520 500 Q 520 520 540 520 L 800 520" 
-                      stroke="#EDEDED" stroke-width="6" fill="none" />
-                
-                <!-- 储能到电网 -->
-                <line x1="200" y1="540" x2="800" y2="540" stroke="#EDEDED" stroke-width="6" />
-                
-                <!-- 储能到电网动画 -->
-                <line x1="-10" y1="0" x2="10" y2="0" stroke="#5C85FF" stroke-width="4" stroke-linecap="round">
-                    <animateMotion dur="3s" repeatCount="indefinite">
-                        <mpath href="#storageToGridPath"/>
+                <!-- 光伏 → 负载 -->
+                <path d="${pvToLoad}" stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 左外围线：总线左端 → 上 → 光伏左侧 -->
+                <path d="${leftWallUp}" stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 储能短节：总线左端 → 下 → 储能顶部 -->
+                <path d="${storStub}" stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 右外围线：光伏右侧 → 右 → 总线右端 -->
+                <path d="${rightWallDown}" stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 电网短节：总线右端 → 下 → 电网顶部 -->
+                <path d="${gridStub}" stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 负载竖茎（T 型接总线，无矩形框） -->
+                <path d="${loadStem}" stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 横向总线（动画路径） -->
+                <path id="busAnimPath" d="M ${storage.cx} ${busY} L ${grid.cx} ${busY}"
+                      stroke="${stroke}" stroke-width="${sw}" fill="none" />
+
+                <!-- 流动光标动画（储能 → 电网方向） -->
+                <line x1="-14" y1="0" x2="14" y2="0" stroke="#5C85FF" stroke-width="4" stroke-linecap="round">
+                    <animateMotion dur="2.4s" repeatCount="indefinite">
+                        <mpath href="#busAnimPath"/>
                     </animateMotion>
                 </line>
-                <path id="storageToGridPath" d="M 200 540 L 800 540" style="display:none;" />
-                <text x="500" y="570" fill="#5C85FF" font-size="24" font-weight="600">4.2 kW</text>
-                
+
+                <!-- 功率标注 -->
+                <text x="${busMidX}" y="${busY + 22}"
+                      fill="#5C85FF" font-size="15" font-weight="600" text-anchor="middle">4.2 kW</text>
             `;
         }
 

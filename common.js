@@ -2442,6 +2442,10 @@ const translations = {
         ruleNoticeStrategy: '普通消息策略',
         ruleCount: '条',
         ruleChannelsEnabled: '启用 {count} 个通知渠道',
+        ruleFaultTotal: '故障总策略:',
+        ruleWarningTotal: '告警总策略:',
+        ruleNoticeTotal: '通知总策略:',
+        ruleCountUnit: ' 条',
 
         // 筛选选项
         ruleAllNotificationTypes: '全部通知类型',
@@ -6226,6 +6230,10 @@ const translations = {
         ruleNoticeStrategy: 'Notice Message Strategy',
         ruleCount: ' items',
         ruleChannelsEnabled: '{count} notification channels enabled',
+        ruleFaultTotal: 'Fault Total:',
+        ruleWarningTotal: 'Warning Total:',
+        ruleNoticeTotal: 'Notice Total:',
+        ruleCountUnit: ' items',
 
         // Filter Options
         ruleAllNotificationTypes: 'All Notification Types',
