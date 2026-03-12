@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 44" height="36">
+  <!-- XE Icon: Yellow chevron + Green E overlapping -->
+  <!-- Yellow > shape (two diagonal parallelograms forming arrow) -->
+  <polygon points="0,4 7,4 18,22 7,40 0,40 11,22" fill="#F5C518"/>
+  <polygon points="5,4 13,4 24,22 13,40 5,40 16,22" fill="#F5C518"/>
+
+  <!-- Green E shape overlapping the right side -->
+  <!-- Vertical bar -->
+  <rect x="17" y="8"  width="4" height="28" fill="#1B7A40"/>
+  <!-- Top horizontal bar -->
+  <rect x="17" y="8"  width="14" height="5"  fill="#1B7A40"/>
+  <!-- Middle horizontal bar -->
+  <rect x="17" y="20" width="11" height="4"  fill="#1B7A40"/>
+  <!-- Bottom horizontal bar -->
+  <rect x="17" y="31" width="14" height="5"  fill="#1B7A40"/>
+
+  <!-- Text: "X" in yellow -->
+  <text x="40" y="34"
+        font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+        font-size="26" font-weight="900" fill="#F5C518" letter-spacing="0">X</text>
+
+  <!-- Text: " ENERGI" in green -->
+  <text x="62" y="34"
+        font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+        font-size="26" font-weight="900" fill="#1B7A40" letter-spacing="0">ENERGI</text>
+</svg>

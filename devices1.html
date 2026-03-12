@@ -3717,15 +3717,15 @@
             
             toast.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h4 style="font-size: 14px; font-weight: 600; color: #1e293b; margin: 0;" data-translate="otaProgressTitle">EMS升级进度</h4>
+                    <h4 style="font-size: 14px; font-weight: 600; color: #1e293b; margin: 0;">${getTranslation('otaProgressTitle')}</h4>
                 </div>
                 <div style="margin-bottom: 8px;">
                     <p id="upgradePhase" style="font-size: 12px; color: #3b82f6; margin: 0 0 4px 0;">
                         <i class="fas fa-cloud-download-alt" style="margin-right: 4px;"></i>
-                        <span data-translate="otaDownloadingFirmware">正在从云端下载固件...</span>
+                        <span>${getTranslation('otaDownloadingFirmware')}</span>
                     </p>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span style="font-size: 12px; color: #6b7280;"><span data-translate="otaUpgradeProgress">升级进度</span> <span id="upgradingCount">0</span>/${selectedDevices.length} <span data-translate="otaDevices">个设备</span></span>
+                        <span style="font-size: 12px; color: #6b7280;"><span id="upgradeProgressLabel">${getTranslation('otaUpgradeProgress')}</span> <span id="upgradingCount">0</span>/${selectedDevices.length} <span>${getTranslation('otaDevices')}</span></span>
                         <span id="progressPercent" style="font-size: 12px; color: #6b7280;">0%</span>
                     </div>
                     <div style="background: #f3f4f6; border-radius: 4px; height: 6px; overflow: hidden;">
@@ -3733,18 +3733,13 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px; font-size: 12px; color: #6b7280;">
-                    <span><span data-translate="otaSuccess">成功</span>: <span id="successCount" style="color: #10b981; font-weight: 500;">0</span></span>
-                    <span><span data-translate="otaFailed">失败</span>: <span id="failCount" style="color: #ef4444; font-weight: 500;">0</span></span>
-                    <span><span data-translate="otaRemainingTime">剩余时间</span>: <span id="remainingTime" data-translate="otaCalculating">计算中...</span></span>
+                    <span>${getTranslation('otaSuccess')}: <span id="successCount" style="color: #10b981; font-weight: 500;">0</span></span>
+                    <span>${getTranslation('otaFailed')}: <span id="failCount" style="color: #ef4444; font-weight: 500;">0</span></span>
+                    <span>${getTranslation('otaRemainingTime')}: <span id="remainingTime">${getTranslation('otaCalculating')}</span></span>
                 </div>
             `;
 
             document.body.appendChild(toast);
-
-            // 应用翻译到新添加的toast元素（如果翻译函数存在）
-            if (typeof applyTranslations === 'function') {
-                applyTranslations();
-            }
         }
 
         // EMS升级详情状态
@@ -4319,12 +4314,7 @@
                     downloadComplete = true;
                     
                     // 更新阶段显示
-                    phaseElement.innerHTML = '<i class="fas fa-upload" style="margin-right: 4px;"></i><span data-translate="otaUpgradingDevices">正在升级设备...</span>';
-
-                    // 应用翻译（如果翻译函数存在）
-                    if (typeof applyTranslations === 'function') {
-                        applyTranslations();
-                    }
+                    phaseElement.innerHTML = `<i class="fas fa-upload" style="margin-right: 4px;"></i><span>${getTranslation('otaUpgradingDevices')}</span>`;
 
                     // 开始设备升级
                     startDeviceUpgrade();
@@ -4410,7 +4400,7 @@
             const total = selectedDevices.length;
             const remaining = total - current;
             const remainingTime = remaining * 2; // 假设每个设备2秒
-            document.getElementById('remainingTime').textContent = remaining > 0 ? `${remainingTime}秒` : '完成';
+            document.getElementById('remainingTime').textContent = remaining > 0 ? `${remainingTime}${getTranslation('otaSeconds')}` : getTranslation('otaDone');
         }
 
         // 升级完成
@@ -4424,18 +4414,13 @@
                     
                     toast.innerHTML += `
                         <div class="upgrade-complete-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
-                            <p style="font-size: 13px; color: #374151; font-weight: 500; margin-bottom: 8px;" data-translate="otaUpgradeCompleted">升级完成！</p>
+                            <p style="font-size: 13px; color: #374151; font-weight: 500; margin-bottom: 8px;">${getTranslation('otaUpgradeCompleted')}</p>
                             <div style="display: flex; gap: 12px;">
-                                <button onclick="showOTADetails()" class="btn btn-primary" style="flex: 1; height: 32px; font-size: 13px;" data-translate="otaViewDetails">查看详情</button>
-                                <button onclick="this.closest('#otaProgressToast').remove()" class="btn" style="flex: 1; height: 32px; font-size: 13px;" data-translate="otaClose">关闭</button>
+                                <button onclick="showOTADetails()" class="btn btn-primary" style="flex: 1; height: 32px; font-size: 13px;">${getTranslation('otaViewDetails')}</button>
+                                <button onclick="this.closest('#otaProgressToast').remove()" class="btn" style="flex: 1; height: 32px; font-size: 13px;">${getTranslation('otaClose')}</button>
                             </div>
                         </div>
                     `;
-
-                    // 应用翻译到新添加的完成提示（如果翻译函数存在）
-                    if (typeof applyTranslations === 'function') {
-                        applyTranslations();
-                    }
                 }
             }
         }
@@ -4524,13 +4509,13 @@
                                                     <div style="font-size: 14px; color: #6b7280;">${getDeviceDisplayName(device)}</div>
                                                 </div>
                                                 <span style="background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">
-                                                    <i class="fas fa-spinner fa-spin"></i> 升级中
+                                                    <i class="fas fa-spinner fa-spin"></i> ${getTranslation('otaUpgradingTab')}
                                                 </span>
                                             </div>
                                             <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b;">
-                                                <span>当前版本: ${device.currentVersion}</span>
+                                                <span>${getTranslation('otaCurrentVersion')}: ${device.currentVersion}</span>
                                                 <i class="fas fa-arrow-right"></i>
-                                                <span>目标版本: ${device.targetVersion}</span>
+                                                <span>${getTranslation('otaTargetVersion')}: ${device.targetVersion}</span>
                                             </div>
                                         </div>
                                     `).join('')}
@@ -4538,7 +4523,7 @@
                             ` : `
                                 <div style="text-align: center; padding: 60px 20px;">
                                     <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 16px;"></i>
-                                    <p style="font-size: 16px; color: #6b7280; margin: 0;">当前没有正在升级的设备</p>
+                                    <p style="font-size: 16px; color: #6b7280; margin: 0;">${getTranslation('otaNoUpgradingDevices')}</p>
                                 </div>
                             `}
                         </div>
@@ -4553,16 +4538,16 @@
                                                 <div style="flex: 1;">
                                                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
                                                         <h4 style="font-size: 16px; font-weight: 600; color: #1e293b; margin: 0;">${device.code}</h4>
-                                                        <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">升级成功</span>
+                                                        <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">${getTranslation('otaUpgradeSuccess')}</span>
                                                     </div>
                                                     <p style="font-size: 14px; color: #6b7280; margin: 0 0 12px 0;">${getDeviceDisplayName(device)}</p>
                                                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
                                                         <div>
-                                                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 4px 0;">版本更新</p>
+                                                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 4px 0;">${getTranslation('otaVersionUpdate')}</p>
                                                             <p style="font-size: 14px; color: #374151; margin: 0;">v2.4.8 → v2.5.0</p>
                                                         </div>
                                                         <div>
-                                                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 4px 0;">升级时间</p>
+                                                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 4px 0;">${getTranslation('otaUpgradeTime')}</p>
                                                             <p style="font-size: 14px; color: #374151; margin: 0;">${new Date().toLocaleTimeString()}</p>
                                                         </div>
                                                     </div>
@@ -4574,7 +4559,7 @@
                             ` : `
                                 <div style="text-align: center; padding: 60px 20px;">
                                     <i class="fas fa-inbox" style="font-size: 48px; color: #e5e7eb; margin-bottom: 16px;"></i>
-                                    <p style="font-size: 16px; color: #9ca3af; margin: 0;">暂无成功的设备</p>
+                                    <p style="font-size: 16px; color: #9ca3af; margin: 0;">${getTranslation('otaNoSuccessDevices')}</p>
                                 </div>
                             `}
                         </div>
@@ -4596,7 +4581,7 @@
                                                     <div style="font-size: 14px; color: #64748b;">${device.name}</div>
                                                 </div>
                                                 <span style="background: #fee2e2; color: #991b1b; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 500;">
-                                                    <i class="fas fa-times-circle"></i> 升级失败
+                                                    <i class="fas fa-times-circle"></i> ${getTranslation('otaUpgradeFailed')}
                                                 </span>
                                             </div>
                                             <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
@@ -4614,7 +4599,7 @@
                             ` : `
                                 <div style="text-align: center; padding: 60px 20px;">
                                     <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 16px;"></i>
-                                    <p style="font-size: 16px; color: #6b7280; margin: 0;">太好了！没有失败的设备</p>
+                                    <p style="font-size: 16px; color: #6b7280; margin: 0;">${getTranslation('otaNoFailedDevices')}</p>
                                 </div>
                             `}
                         </div>

@@ -7,7 +7,7 @@ function createTopNavbar() {
     <header class="header">
         <div class="header-left">
             <div class="logo">
-                <img src="logo.png" alt="AlwaysControl Technology" />
+                <img src="xenergi-logo.png" alt="AlwaysControl Technology" />
                 <span class="version-badge" data-version="pro" style="
                     display: inline-flex;
                     align-items: center;

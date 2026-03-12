@@ -285,6 +285,116 @@
             box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
         }
 
+        /* ========== 自定义参数下拉框 ========== */
+        .custom-param-dropdown {
+            position: relative;
+        }
+        .custom-param-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 36px;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        [data-theme="dark"] .custom-param-trigger {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        .custom-param-trigger.active,
+        .custom-param-trigger:hover {
+            border-color: #3562E3;
+        }
+        .custom-param-trigger.active {
+            box-shadow: 0 0 0 3px rgba(53, 98, 227, 0.1);
+        }
+        .custom-param-trigger-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+        .custom-param-trigger-text.has-value {
+            color: var(--text-primary);
+        }
+        .custom-param-arrow {
+            font-size: 11px;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        .custom-param-dropdown.open .custom-param-arrow {
+            transform: rotate(180deg);
+        }
+        #ruleParameterPanel {
+            position: fixed;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 99999;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        [data-theme="dark"] #ruleParameterPanel {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        .custom-param-group-header {
+            padding: 8px 12px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: #f8fafc;
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+        }
+        .custom-param-group-header:first-child {
+            border-top: none;
+            border-radius: 8px 8px 0 0;
+        }
+        [data-theme="dark"] .custom-param-group-header {
+            background: #0f172a;
+            border-top-color: #334155;
+        }
+        .custom-param-item {
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: background 0.15s;
+        }
+        .custom-param-item:hover {
+            background: #f1f5f9;
+        }
+        [data-theme="dark"] .custom-param-item:hover {
+            background: #334155;
+        }
+        .custom-param-item.selected {
+            background: #eff6ff;
+            color: #3562E3;
+            font-weight: 500;
+        }
+        [data-theme="dark"] .custom-param-item.selected {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+
         /* ========== 搜索筛选卡片样式 ========== */
         .search-section {
             background: white;
@@ -1665,14 +1775,13 @@
                         </label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <div>
-                                <select class="form-select" id="ruleParameter">
-                                    <option value="">Select Parameter</option>
-                                    <option value="temperature">Temperature</option>
-                                    <option value="soc">SOC</option>
-                                    <option value="voltage">Voltage</option>
-                                    <option value="current">Current</option>
-                                    <option value="power">Power</option>
-                                </select>
+                                <div class="custom-param-dropdown" id="ruleParameterDropdown">
+                                    <div class="custom-param-trigger" id="ruleParameterTrigger" onclick="toggleParamDropdown()">
+                                        <span class="custom-param-trigger-text" id="ruleParameterLabel" data-translate="ruleParamSelectPlaceholder">选择监测参数</span>
+                                        <i class="fas fa-chevron-down custom-param-arrow"></i>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="ruleParameter" value="">
                             </div>
                             <div>
                                 <select class="form-select" id="ruleOperator">
@@ -2429,6 +2538,10 @@
                 if (!e.target.closest('.btn-primary')) {
                     document.getElementById('createMenu').classList.remove('show');
                 }
+                // 关闭自定义参数下拉框
+                if (!e.target.closest('#ruleParameterDropdown') && !e.target.closest('#ruleParameterPanel')) {
+                    closeParamDropdown();
+                }
             });
 
             // 降噪配置：智能降噪开关
@@ -2521,6 +2634,125 @@
             document.getElementById('warningCount').textContent = warningCount;
             document.getElementById('noticeCount').textContent = noticeCount;
         }
+
+        // ==================== 自定义参数下拉框 ====================
+
+        // 参数分组数据
+        const parameterGroups = [
+            {
+                groupKey: 'ruleParamGroupBattery',
+                params: [
+                    { value: 'soc',             labelKey: 'ruleParamSOCFull' },
+                    { value: 'soh',             labelKey: 'ruleParamSOH' },
+                    { value: 'totalVoltage',    labelKey: 'ruleParamTotalVoltage' },
+                    { value: 'totalCurrent',    labelKey: 'ruleParamTotalCurrent' },
+                    { value: 'totalPower',      labelKey: 'ruleParamTotalPower' },
+                    { value: 'maxCellVoltage',  labelKey: 'ruleParamMaxCellVoltage' },
+                    { value: 'minCellVoltage',  labelKey: 'ruleParamMinCellVoltage' },
+                    { value: 'cellVoltageDiff', labelKey: 'ruleParamCellVoltageDiff' }
+                ]
+            },
+            {
+                groupKey: 'ruleParamGroupTemperature',
+                params: [
+                    { value: 'maxTemp',  labelKey: 'ruleParamMaxTemp' },
+                    { value: 'minTemp',  labelKey: 'ruleParamMinTemp' },
+                    { value: 'tempDiff', labelKey: 'ruleParamTempDiff' },
+                    { value: 'avgTemp',  labelKey: 'ruleParamAvgTemp' }
+                ]
+            },
+            {
+                groupKey: 'ruleParamGroupSystem',
+                params: [
+                    { value: 'cycleCount', labelKey: 'ruleParamCycleCount' },
+                    { value: 'insulation', labelKey: 'ruleParamInsulation' },
+                    { value: 'commStatus', labelKey: 'ruleParamCommStatus' }
+                ]
+            },
+            {
+                groupKey: 'ruleParamGroupPCS',
+                params: [
+                    { value: 'gridFreq',    labelKey: 'ruleParamGridFreq' },
+                    { value: 'gridVoltage', labelKey: 'ruleParamGridVoltage' },
+                    { value: 'outputPower', labelKey: 'ruleParamOutputPower' }
+                ]
+            }
+        ];
+
+        // 渲染下拉列表内容
+        function renderParamDropdown() {
+            const panel = document.getElementById('ruleParameterPanel');
+            const currentVal = document.getElementById('ruleParameter').value;
+            panel.innerHTML = '';
+            parameterGroups.forEach(function(group) {
+                const header = document.createElement('div');
+                header.className = 'custom-param-group-header';
+                header.textContent = getTranslation(group.groupKey) || group.groupKey;
+                panel.appendChild(header);
+                group.params.forEach(function(param) {
+                    const item = document.createElement('div');
+                    item.className = 'custom-param-item' + (currentVal === param.value ? ' selected' : '');
+                    item.textContent = getTranslation(param.labelKey) || param.labelKey;
+                    item.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        selectParam(param.value, param.labelKey);
+                    });
+                    panel.appendChild(item);
+                });
+            });
+        }
+
+        // 切换打开/关闭
+        function toggleParamDropdown() {
+            const dropdown = document.getElementById('ruleParameterDropdown');
+            const panel = document.getElementById('ruleParameterPanel');
+            if (dropdown.classList.contains('open')) {
+                closeParamDropdown();
+            } else {
+                renderParamDropdown();
+                // position: fixed 定位，跟随触发器
+                const trigger = document.getElementById('ruleParameterTrigger');
+                const rect = trigger.getBoundingClientRect();
+                panel.style.top    = (rect.bottom + 4) + 'px';
+                panel.style.left   = rect.left + 'px';
+                panel.style.width  = rect.width + 'px';
+                panel.style.display = 'block';
+                dropdown.classList.add('open');
+                trigger.classList.add('active');
+            }
+        }
+
+        // 关闭面板
+        function closeParamDropdown() {
+            const dropdown = document.getElementById('ruleParameterDropdown');
+            const panel    = document.getElementById('ruleParameterPanel');
+            const trigger  = document.getElementById('ruleParameterTrigger');
+            if (dropdown) dropdown.classList.remove('open');
+            if (panel)    panel.style.display = 'none';
+            if (trigger)  trigger.classList.remove('active');
+        }
+
+        // 选中某个参数
+        function selectParam(value, labelKey) {
+            document.getElementById('ruleParameter').value = value;
+            const labelEl = document.getElementById('ruleParameterLabel');
+            labelEl.textContent = getTranslation(labelKey) || labelKey;
+            labelEl.classList.add('has-value');
+            labelEl.removeAttribute('data-translate');
+            closeParamDropdown();
+        }
+
+        // 重置参数下拉框到初始状态
+        function resetParamDropdown() {
+            document.getElementById('ruleParameter').value = '';
+            const labelEl = document.getElementById('ruleParameterLabel');
+            labelEl.textContent = getTranslation('ruleParamSelectPlaceholder') || '选择监测参数';
+            labelEl.classList.remove('has-value');
+            labelEl.setAttribute('data-translate', 'ruleParamSelectPlaceholder');
+            closeParamDropdown();
+        }
+
+        // ==================== 切换创建菜单 ====================
 
         // 切换创建菜单
         function toggleCreateMenu() {
@@ -2785,7 +3017,7 @@
                     document.getElementById('ruleOperator').value = template.operator;
                     document.getElementById('ruleThreshold').value = template.threshold;
                     document.getElementById('ruleDuration').value = template.duration;
-                    document.getElementById('ruleAlarmLevel').value = template.alarmLevel;
+                    if (template.alarmLevel) selectPolicyType(template.alarmLevel);
                 }
             }, 50);
         }
@@ -2847,6 +3079,9 @@
                 modalTitle.textContent = getTranslation('ruleNewRule');
                 document.getElementById('ruleForm').reset();
 
+                // 重置参数下拉框
+                resetParamDropdown();
+
                 // 重置降噪配置
                 document.getElementById('smartNoiseReductionEnabled').checked = false;
                 document.getElementById('smartNoiseReductionConfig').style.display = 'none';
@@ -2879,18 +3114,27 @@
             const operator = document.getElementById('ruleOperator').value;
             const threshold = document.getElementById('ruleThreshold').value;
             const duration = document.getElementById('ruleDuration').value;
-            const alarmLevel = document.getElementById('ruleAlarmLevel').value;
+            const alarmLevel = document.getElementById('ruleType').value;
             const status = document.getElementById('ruleStatus').checked ? 'active' : 'inactive';
 
             if (!name || !parameter || !operator || !threshold || !alarmLevel) {
-                showNotification('请填写所有必填项', 'warning');
+                showNotification(getTranslation('ruleFillAllRequired') || '请填写所有必填项', 'warning');
                 return;
             }
 
-            // 构造条件描述
-            const paramLabels = { temperature: '温度', soc: 'SOC', voltage: '电压', current: '电流', power: '功率' };
+            // 构造条件描述（从 parameterGroups 动态生成 label 映射）
+            const paramLabels = {};
+            parameterGroups.forEach(function(group) {
+                group.params.forEach(function(p) {
+                    paramLabels[p.value] = getTranslation(p.labelKey) || p.value;
+                });
+            });
             const operatorLabels = { gt: '>', lt: '<', gte: '>=', lte: '<=', eq: '=' };
-            const condition = `${paramLabels[parameter]} ${operatorLabels[operator]} ${threshold} 持续${duration || 0}分钟`;
+            const durationText = currentLang === 'en'
+                ? `duration ${duration || 0}min`
+                : `持续${duration || 0}分钟`;
+            const paramLabel = paramLabels[parameter] || parameter;
+            const condition = `${paramLabel} ${operatorLabels[operator]} ${threshold} ${durationText}`;
 
             // 收集降噪配置
             const noiseReduction = {
@@ -2922,7 +3166,7 @@
             filteredRules = [...allRules];
             renderRulesTable();
             closeRuleModal();
-            showNotification('规则创建成功', 'success');
+            showNotification(getTranslation('ruleCreatedSuccess') || '规则创建成功', 'success');
         }
 
         // 查看规则详情
@@ -3692,8 +3936,23 @@
             // 监听语言切换事件
             window.addEventListener('languageChanged', function() {
                 document.title = getTranslation('pageTitleMessagePolicy') || '消息策略管理 - 储能柜管理系统';
+                // 同步已选参数的显示文字
+                const currentVal = document.getElementById('ruleParameter') && document.getElementById('ruleParameter').value;
+                if (currentVal) {
+                    for (var g = 0; g < parameterGroups.length; g++) {
+                        var p = parameterGroups[g].params.find(function(item) { return item.value === currentVal; });
+                        if (p) {
+                            var labelEl = document.getElementById('ruleParameterLabel');
+                            if (labelEl) labelEl.textContent = getTranslation(p.labelKey) || p.labelKey;
+                            break;
+                        }
+                    }
+                }
             });
         });
     </script>
+
+    <!-- 自定义参数下拉面板（挂载到body，避免被弹框overflow裁切） -->
+    <div id="ruleParameterPanel" style="display:none;"></div>
 </body>
 </html>

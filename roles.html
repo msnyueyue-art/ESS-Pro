@@ -1529,16 +1529,16 @@
         function showAddUserModal() {
             // 获取所有用户数据（模拟从人员管理获取）
             const allUsers = [
-                { id: 101, name: '张三', email: 'zhangsan@example.com', roles: ['1'] },
-                { id: 102, name: '李四', email: 'lisi@example.com', roles: ['2'] },
-                { id: 103, name: '王五', email: 'wangwu@example.com', roles: ['3'] },
-                { id: 104, name: '赵六', email: 'zhaoliu@example.com', roles: ['2'] },
-                { id: 105, name: '钱七', email: 'qianqi@example.com', roles: ['3'] },
-                { id: 106, name: '孙八', email: 'sunba@example.com', roles: ['4'] },
-                { id: 107, name: '周九', email: 'zhoujiu@example.com', roles: ['2'] },
-                { id: 108, name: '吴十', email: 'wushi@example.com', roles: ['3'] },
-                { id: 109, name: '郑十一', email: 'zhengshiyi@example.com', roles: [] },
-                { id: 110, name: '陈十二', email: 'chenshier@example.com', roles: [] }
+                { id: 101, name: '张三', username: 'Zhang San', email: 'zhangsan@example.com', roles: ['1'] },
+                { id: 102, name: '李四', username: 'Li Si', email: 'lisi@example.com', roles: ['2'] },
+                { id: 103, name: '王五', username: 'Wang Wu', email: 'wangwu@example.com', roles: ['3'] },
+                { id: 104, name: '赵六', username: 'Zhao Liu', email: 'zhaoliu@example.com', roles: ['2'] },
+                { id: 105, name: '钱七', username: 'Qian Qi', email: 'qianqi@example.com', roles: ['3'] },
+                { id: 106, name: '孙八', username: 'Sun Ba', email: 'sunba@example.com', roles: ['4'] },
+                { id: 107, name: '周九', username: 'Zhou Jiu', email: 'zhoujiu@example.com', roles: ['2'] },
+                { id: 108, name: '吴十', username: 'Wu Shi', email: 'wushi@example.com', roles: ['3'] },
+                { id: 109, name: '郑十一', username: 'Zheng Shiyi', email: 'zhengshiyi@example.com', roles: [] },
+                { id: 110, name: '陈十二', username: 'Chen Shier', email: 'chenshier@example.com', roles: [] }
             ];
             
             // 过滤掉已经在当前角色中的用户
@@ -1582,7 +1582,7 @@
                         ${users.map(user => `
                             <tr>
                                 <td><input type="checkbox" value="${user.id}" data-user='${JSON.stringify(user)}' onchange="selectAvailableUser(${user.id})"></td>
-                                <td>${user.name}</td>
+                                <td>${lang === 'en' ? (user.username || user.name) : user.name}</td>
                                 <td>${user.email}</td>
                             </tr>
                         `).join('')}
