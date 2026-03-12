@@ -1,4 +1,4 @@
-// 公用导航栏组件
+﻿// 公用导航栏组件
 // 艹！统一所有页面的导航栏，让老王省点心！
 
 // 创建顶部导航栏
@@ -7,7 +7,7 @@ function createTopNavbar() {
     <header class="header">
         <div class="header-left">
             <div class="logo">
-                <img src="xenergi-logo.png" alt="AlwaysControl Technology" />
+                <img src="logo.png" alt="AlwaysControl Technology" />
                 <span class="version-badge" data-version="pro" data-translate="versionBadgePro" style="
                     display: inline-flex;
                     align-items: center;

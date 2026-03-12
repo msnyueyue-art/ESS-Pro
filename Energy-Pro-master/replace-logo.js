@@ -1,4 +1,4 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
 
 const base = path.dirname(__filename);
@@ -17,8 +17,8 @@ function walk(dir) {
             const fpath = path.join(dir, entry.name);
             try {
                 const content = fs.readFileSync(fpath, 'utf8');
-                if (content.includes('xenergi-logo.png')) {
-                    fs.writeFileSync(fpath, content.replaceAll('xenergi-logo.png', 'xenergi-logo.png'), 'utf8');
+                if (content.includes('logo.png')) {
+                    fs.writeFileSync(fpath, content.replaceAll('logo.png', 'logo.png'), 'utf8');
                     replaced.push(path.relative(base, fpath));
                 }
             } catch (e) {
